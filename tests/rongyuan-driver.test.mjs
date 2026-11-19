@@ -271,6 +271,8 @@ test('keycode translation covers keys, combos, media, mouse and Fn', async () =>
   const cases = [
     [[0, 0, 4, 0], 0x04],
     [[0, 0xe0, 6, 0], 0x10600],
+    [[0, 0, 0xe0, 0], 0x10000],
+    [[0, 0, 0xe6, 0], 0x400000],
     [[0, 0xe0, 0x29, 0xe1], 0x32900],
     [[3, 0, 0xe9, 0], ui.uiConsumer(0xe9)],
     [[3, 0, 0x8a, 1], ui.uiConsumer(0x18a)],

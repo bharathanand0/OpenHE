@@ -81,6 +81,7 @@ export class LibhmkDriver implements KeyboardDriver {
       continuousRapidTrigger: true,
       advancedKeys: ['nullBind', 'dynamicKeystroke', 'tapHold', 'toggle', 'macro'],
       maxAdvancedKeys: metadata.numAdvancedKeys,
+      dynamicKeystrokeBindings: metadata.numDynamicKeystrokeMaxBindings,
       macros: metadata.numMacroNodes > 0,
       travelStream: true,
       calibration: true,

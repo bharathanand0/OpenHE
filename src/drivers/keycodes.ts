@@ -5,6 +5,7 @@
  * the AULA ByteTech catalog), so the remap pages work unchanged:
  *
  *   0x000000UU            HID keyboard usage UU (0 = no key)
+ *   0x00MM0000            a lone modifier, one bit (L Ctrl 0x01 .. R GUI 0x80)
  *   0x00MMUU00            modifiers MM (bit0 Ctrl, bit1 Shift, bit2 Alt, bit3 GUI) + usage UU
  *   0x02000UUU            consumer-control usage
  *   0x01BB0100            mouse button BB (1 left, 2 right, 3 middle, 4 back, 5 forward)
@@ -19,7 +20,12 @@ export type UiKeycode = number;
 
 export const UI_NONE: UiKeycode = 0;
 
-export const uiHid = (usage: number): UiKeycode => usage & 0xff;
+/**
+ * HID keyboard usage. Modifiers (0xE0..0xE7) take the catalog's form, one
+ * bit in 0x00MM0000 (L Ctrl 0x010000 .. R GUI 0x800000).
+ */
+export const uiHid = (usage: number): UiKeycode =>
+  usage >= 0xe0 && usage <= 0xe7 ? (1 << (usage - 0xe0)) << 16 : usage & 0xff;
 export const uiConsumer = (usage: number): UiKeycode => 0x02000000 | (usage & 0xfff);
 export const uiMouseButton = (button: number): UiKeycode => 0x01000100 | ((button & 0xff) << 16);
 /** Momentary layer `layer` (>= 1). */
@@ -48,6 +54,10 @@ export function decodeUiKeycode(value: UiKeycode): DecodedUiKeycode {
     return { type: 'mouse', button: (value >>> 16) & 0xff };
   if (top === 0) {
     if (value <= 0xff) return { type: 'hid', usage: value };
+    const mods = (value >>> 16) & 0xff;
+    if ((value & 0xffff) === 0 && mods && (mods & (mods - 1)) === 0) {
+      return { type: 'hid', usage: 0xe0 + Math.log2(mods) };
+    }
     if ((value & 0xff) === 0 && value <= 0xffff00) {
       return { type: 'combo', modifiers: (value >>> 16) & 0xff, usage: (value >>> 8) & 0xff };
     }

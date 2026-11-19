@@ -57,6 +57,8 @@ export type DriverCapabilities = {
   continuousRapidTrigger: boolean;
   advancedKeys: readonly AdvancedKeyKind[];
   maxAdvancedKeys: number;
+  /** Keycodes one dynamic keystroke can bind. */
+  dynamicKeystrokeBindings: number;
   macros: boolean;
   /** Live per-key travel readout. */
   travelStream: boolean;

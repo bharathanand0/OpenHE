@@ -206,7 +206,7 @@ test('advanced keys survive the staged write protocol', async () => {
   assert.equal(akSize, 12)
   const keys = [
     { kind: 'nullBind', layer: 0, key: 31, secondaryKey: 33, behavior: 'last', bottomOutMm: 0 },
-    { kind: 'tapHold', layer: 0, key: 30, tap: 0x29, hold: 0xe0, tappingTermMs: 200, holdOnOtherKeyPress: true },
+    { kind: 'tapHold', layer: 0, key: 30, tap: 0x29, hold: 0x10000, tappingTermMs: 200, holdOnOtherKeyPress: true },
     { kind: 'toggle', layer: 1, key: 2, keycode: 0x1e, tappingTermMs: 180 },
     {
       kind: 'dynamicKeystroke', layer: 0, key: 16, keycodes: [0x14, 0x1a, 0, 0],
@@ -257,7 +257,9 @@ test('every libhmk keycode maps to a UI keycode and back', () => {
   }
   assert.equal(kc.hmkToUi(0x02), 0x04) // A
   assert.equal(kc.hmkToUi(0x64), 0x68) // F13
-  assert.equal(kc.hmkToUi(0x7b), 0xe0) // LCtrl
+  assert.equal(kc.hmkToUi(0x7b), 0x10000) // LCtrl, as the remap catalog writes it
+  assert.equal(kc.hmkToUi(0x82), 0x800000) // RGUI
+  assert.equal(kc.uiToHmk(0xe1), 0x7c) // a raw HID modifier usage is still accepted
   assert.equal(kc.hmkToUi(0x9b), 0x01010100) // left mouse, as in the remap catalog
   assert.equal(kc.hmkCodeFromName('MO(2)'), 0xc2)
   assert.equal(kc.hmkCodeFromName('KC_RIGHT_ALT'), 0x81)

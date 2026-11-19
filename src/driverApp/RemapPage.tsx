@@ -3,6 +3,7 @@ import { REMAP_CATEGORIES, remapLabel } from '../protocol/hero68/remap';
 import type { UiKeycode } from '../drivers/keycodes';
 import type { KeyboardDriver } from '../drivers/types';
 import { BoardView } from './BoardView';
+import { useKeycodeGroups } from './KeycodePicker';
 
 export function keyLabel(driver: KeyboardDriver, value: UiKeycode, fnLayer: boolean): string {
   if (value === 0) return fnLayer ? '▽' : '—';
@@ -49,19 +50,7 @@ export function RemapPage({
     };
   }, [driver, profile, layer]);
 
-  const groups = useMemo(() => {
-    const supports = (v: UiKeycode) => driver.supportsKeycode?.(v) ?? true;
-    const out = REMAP_CATEGORIES.map(c => ({
-      id: c.id,
-      label: c.label,
-      actions: c.actions
-        .filter(a => supports(a.value))
-        .map(a => ({ value: a.value, label: a.label }))
-    })).filter(c => c.actions.length);
-    const extra = driver.extraKeycodes?.() ?? [];
-    if (extra.length) out.unshift({ id: 'board', label: 'This board', actions: extra });
-    return out;
-  }, [driver]);
+  const groups = useKeycodeGroups(driver);
 
   const dirty = !!draft && !!saved && draft.some((v, i) => v !== saved[i]);
   const fnLayer = layer > 0;

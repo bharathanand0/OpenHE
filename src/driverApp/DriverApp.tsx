@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Activity, Gauge, Keyboard, Loader2, Plug, Settings } from 'lucide-react';
+import { Activity, Gauge, Keyboard, Layers, Loader2, Plug, Settings } from 'lucide-react';
 import logo from '../assets/openhero68-logo.png';
 import { BRAND } from '../brand';
 import type { KeyboardDriver } from '../drivers/types';
+import { AdvancedKeysPage } from './AdvancedKeysPage';
 import { DevicePage } from './DevicePage';
 import { PerformancePage } from './PerformancePage';
 import { RemapPage } from './RemapPage';
 import { driverConnection } from './store';
 import { TravelPage } from './TravelPage';
 
-type Page = 'performance' | 'remap' | 'travel' | 'device';
+type Page = 'performance' | 'remap' | 'advanced' | 'travel' | 'device';
 
 /** Workspace for boards behind the driver layer (libhmk, RongYuan). */
 export function DriverApp({ driver }: { driver: KeyboardDriver }) {
@@ -48,6 +49,12 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
   const nav: Array<{ id: Page; label: string; icon: typeof Gauge; show: boolean }> = [
     { id: 'performance', label: 'Actuation & RT', icon: Gauge, show: caps.actuation },
     { id: 'remap', label: 'Key remap', icon: Keyboard, show: true },
+    {
+      id: 'advanced',
+      label: 'Advanced keys',
+      icon: Layers,
+      show: caps.advancedKeys.length > 0 && !!driver.getAdvancedKeys
+    },
     { id: 'travel', label: 'Live travel', icon: Activity, show: caps.travelStream },
     { id: 'device', label: 'Device', icon: Settings, show: true }
   ];
@@ -136,6 +143,8 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
             <PerformancePage driver={driver} profile={profile} busy={!!busy} run={run} />
           ) : page === 'remap' ? (
             <RemapPage driver={driver} profile={profile} busy={!!busy} run={run} />
+          ) : page === 'advanced' ? (
+            <AdvancedKeysPage driver={driver} profile={profile} busy={!!busy} run={run} />
           ) : page === 'travel' ? (
             <TravelPage driver={driver} />
           ) : (

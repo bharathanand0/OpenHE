@@ -149,6 +149,7 @@ export class RongyuanDriver implements KeyboardDriver {
       continuousRapidTrigger: false,
       advancedKeys: [],
       maxAdvancedKeys: 0,
+      dynamicKeystrokeBindings: 0,
       macros: false,
       travelStream: columns?.format === 'gen2' && !wire.relay && streamDevices.length > 0,
       calibration: false,
