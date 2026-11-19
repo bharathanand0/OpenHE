@@ -1,0 +1,266 @@
+{
+  "canvas": { "width": 281, "height": 246 },
+  "keys": [
+    {
+      "x": 10,
+      "y": 53,
+      "w": 25,
+      "h": 30,
+      "text": "Esc",
+      "matrixIndex": 1,
+      "matrixEntry": [0, 0, 41, 0]
+    },
+    {
+      "x": 10,
+      "y": 94,
+      "w": 46,
+      "h": 30,
+      "text": "Tab",
+      "matrixIndex": 2,
+      "matrixEntry": [0, 0, 43, 0]
+    },
+    {
+      "x": 10,
+      "y": 134,
+      "w": 56,
+      "h": 30,
+      "text": "Caps",
+      "matrixIndex": 3,
+      "matrixEntry": [0, 0, 57, 0]
+    },
+    {
+      "x": 10,
+      "y": 175,
+      "w": 66,
+      "h": 30,
+      "text": "Shift",
+      "matrixIndex": 4,
+      "matrixEntry": [0, 0, 225, 0]
+    },
+    {
+      "x": 10,
+      "y": 216,
+      "w": 35,
+      "h": 30,
+      "text": "Ctrl",
+      "matrixIndex": 5,
+      "matrixEntry": [0, 0, 224, 0]
+    },
+    {
+      "x": 51,
+      "y": 53,
+      "w": 25,
+      "h": 30,
+      "text": "1!",
+      "matrixIndex": 7,
+      "matrixEntry": [0, 0, 30, 0]
+    },
+    {
+      "x": 71,
+      "y": 94,
+      "w": 25,
+      "h": 30,
+      "text": "Q",
+      "matrixIndex": 8,
+      "matrixEntry": [0, 0, 20, 0]
+    },
+    {
+      "x": 81,
+      "y": 134,
+      "w": 25,
+      "h": 30,
+      "text": "A",
+      "matrixIndex": 9,
+      "matrixEntry": [0, 0, 4, 0]
+    },
+    {
+      "x": 92,
+      "y": 175,
+      "w": 25,
+      "h": 30,
+      "text": "Z",
+      "matrixIndex": 10,
+      "matrixEntry": [0, 0, 29, 0]
+    },
+    {
+      "x": 92,
+      "y": 53,
+      "w": 25,
+      "h": 30,
+      "text": "2@",
+      "matrixIndex": 13,
+      "matrixEntry": [0, 0, 31, 0]
+    },
+    {
+      "x": 112,
+      "y": 94,
+      "w": 25,
+      "h": 30,
+      "text": "W",
+      "matrixIndex": 14,
+      "matrixEntry": [0, 0, 26, 0]
+    },
+    {
+      "x": 122,
+      "y": 134,
+      "w": 25,
+      "h": 30,
+      "text": "S",
+      "matrixIndex": 15,
+      "matrixEntry": [0, 0, 22, 0]
+    },
+    {
+      "x": 133,
+      "y": 175,
+      "w": 25,
+      "h": 30,
+      "text": "X",
+      "matrixIndex": 16,
+      "matrixEntry": [0, 0, 27, 0]
+    },
+    {
+      "x": 62,
+      "y": 216,
+      "w": 35,
+      "h": 30,
+      "text": "Fn",
+      "matrixIndex": 17,
+      "matrixEntry": [10, 1, 0, 0]
+    },
+    {
+      "x": 133,
+      "y": 53,
+      "w": 25,
+      "h": 30,
+      "text": "3#",
+      "matrixIndex": 19,
+      "matrixEntry": [0, 0, 32, 0]
+    },
+    {
+      "x": 153,
+      "y": 94,
+      "w": 25,
+      "h": 30,
+      "text": "E",
+      "matrixIndex": 20,
+      "matrixEntry": [0, 0, 8, 0]
+    },
+    {
+      "x": 163,
+      "y": 134,
+      "w": 25,
+      "h": 30,
+      "text": "D",
+      "matrixIndex": 21,
+      "matrixEntry": [0, 0, 7, 0]
+    },
+    {
+      "x": 174,
+      "y": 175,
+      "w": 25,
+      "h": 30,
+      "text": "C",
+      "matrixIndex": 22,
+      "matrixEntry": [0, 0, 6, 0]
+    },
+    {
+      "x": 113,
+      "y": 216,
+      "w": 35,
+      "h": 30,
+      "text": "Alt",
+      "matrixIndex": 23,
+      "matrixEntry": [0, 0, 226, 0]
+    },
+    {
+      "x": 174,
+      "y": 53,
+      "w": 25,
+      "h": 30,
+      "text": "4$",
+      "matrixIndex": 25,
+      "matrixEntry": [0, 0, 33, 0]
+    },
+    {
+      "x": 194,
+      "y": 94,
+      "w": 25,
+      "h": 30,
+      "text": "R",
+      "matrixIndex": 26,
+      "matrixEntry": [0, 0, 21, 0]
+    },
+    {
+      "x": 204,
+      "y": 134,
+      "w": 25,
+      "h": 30,
+      "text": "F",
+      "matrixIndex": 27,
+      "matrixEntry": [0, 0, 9, 0]
+    },
+    {
+      "x": 215,
+      "y": 175,
+      "w": 25,
+      "h": 30,
+      "text": "V",
+      "matrixIndex": 28,
+      "matrixEntry": [0, 0, 25, 0]
+    },
+    {
+      "x": 164,
+      "y": 216,
+      "w": 105,
+      "h": 30,
+      "text": "Space",
+      "matrixIndex": 29,
+      "matrixEntry": [0, 0, 44, 0]
+    },
+    {
+      "x": 215,
+      "y": 53,
+      "w": 25,
+      "h": 30,
+      "text": "5%",
+      "matrixIndex": 31,
+      "matrixEntry": [0, 0, 34, 0]
+    },
+    {
+      "x": 235,
+      "y": 94,
+      "w": 25,
+      "h": 30,
+      "text": "T",
+      "matrixIndex": 32,
+      "matrixEntry": [0, 0, 23, 0]
+    },
+    {
+      "x": 245,
+      "y": 134,
+      "w": 25,
+      "h": 30,
+      "text": "G",
+      "matrixIndex": 33,
+      "matrixEntry": [0, 0, 10, 0]
+    },
+    {
+      "x": 256,
+      "y": 175,
+      "w": 25,
+      "h": 30,
+      "text": "B",
+      "matrixIndex": 34,
+      "matrixEntry": [0, 0, 5, 0]
+    },
+    {
+      "x": 256,
+      "y": 53,
+      "w": 25,
+      "h": 30,
+      "text": "6^",
+      "matrixIndex": 35,
+      "matrixEntry": [0, 0, 35, 0]
+    }
+  ]
+}

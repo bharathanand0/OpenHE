@@ -1,0 +1,24 @@
+{
+  "canvas": { "width": 185, "height": 291 },
+  "keys": [
+    { "x": 47, "y": 11, "w": 40, "h": 40, "text": "Fn", "matrixEntry": [10, 1, 0, 0] },
+    { "x": 1, "y": 250, "w": 86, "h": 40, "text": "0\nIns", "matrixEntry": [0, 0, 98, 0] },
+    { "x": 139, "y": 112, "w": 40, "h": 86, "text": "+", "matrixEntry": [0, 0, 87, 0] },
+    { "x": 139, "y": 204, "w": 40, "h": 86, "text": "Enter", "matrixEntry": [0, 0, 88, 0] },
+    { "x": 1, "y": 11, "w": 40, "h": 40, "text": "Esc", "matrixEntry": [0, 0, 41, 0] },
+    { "x": 1, "y": 66, "w": 40, "h": 40, "text": "Num", "matrixEntry": [0, 0, 83, 0] },
+    { "x": 47, "y": 66, "w": 40, "h": 40, "text": "/", "matrixEntry": [0, 0, 84, 0] },
+    { "x": 93, "y": 66, "w": 40, "h": 40, "text": "*", "matrixEntry": [0, 0, 85, 0] },
+    { "x": 1, "y": 112, "w": 40, "h": 40, "text": "7\nHome", "matrixEntry": [0, 0, 95, 0] },
+    { "x": 47, "y": 112, "w": 40, "h": 40, "text": "8\n\u2191", "matrixEntry": [0, 0, 96, 0] },
+    { "x": 93, "y": 112, "w": 40, "h": 40, "text": "9\nPgUp", "matrixEntry": [0, 0, 97, 0] },
+    { "x": 1, "y": 158, "w": 40, "h": 40, "text": "4\n\u2190", "matrixEntry": [0, 0, 92, 0] },
+    { "x": 47, "y": 158, "w": 40, "h": 40, "text": "5", "matrixEntry": [0, 0, 93, 0] },
+    { "x": 93, "y": 158, "w": 40, "h": 40, "text": "6\n\u2192", "matrixEntry": [0, 0, 94, 0] },
+    { "x": 1, "y": 204, "w": 40, "h": 40, "text": "1\nEnd", "matrixEntry": [0, 0, 89, 0] },
+    { "x": 47, "y": 204, "w": 40, "h": 40, "text": "2\n\u2193", "matrixEntry": [0, 0, 90, 0] },
+    { "x": 93, "y": 204, "w": 40, "h": 40, "text": "3\nPgDn", "matrixEntry": [0, 0, 91, 0] },
+    { "x": 93, "y": 250, "w": 40, "h": 40, "text": ".\nDel", "matrixEntry": [0, 0, 99, 0] },
+    { "x": 139, "y": 66, "w": 40, "h": 40, "text": "-", "matrixEntry": [0, 0, 86, 0] }
+  ]
+}

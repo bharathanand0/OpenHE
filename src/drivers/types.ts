@@ -30,6 +30,12 @@ export type LayoutKey = {
 
 export type BoardLayout = {
   keys: LayoutKey[];
+  /**
+   * Where the key-to-matrix mapping came from: the board itself, a stored
+   * layout matched against the board's keymap, or a plain grid of matrix
+   * slots when nothing matched.
+   */
+  source?: 'board' | 'registry' | 'inferred' | 'grid';
   /** Overall size in key units. */
   width: number;
   height: number;
@@ -58,6 +64,15 @@ export type DriverCapabilities = {
   rgb: boolean;
   gamepad: boolean;
   pollingRates: readonly number[];
+  /** Separate release point when rapid trigger is off. */
+  releasePoint: boolean;
+  bottomDeadzone: boolean;
+  /** Writes the driver will send. Reads always work. */
+  writable: { keymap: boolean; actuation: boolean; advancedKeys: boolean };
+  /** Whether `getActuation`/`setActuation` work only on the board's active profile. */
+  actuationActiveProfileOnly: boolean;
+  /** Vendor ranges for the sliders, millimetres. */
+  ranges?: Partial<Record<'actuation' | 'rapidTrigger' | 'deadzone', { min: number; max: number }>>;
 };
 
 export type DeviceInfo = {
@@ -75,6 +90,10 @@ export type KeyActuation = {
   rtPressMm: number;
   rtReleaseMm: number;
   continuous: boolean;
+  /** Release point with rapid trigger off (`capabilities.releasePoint`). */
+  releaseMm?: number;
+  /** Distance from the bottom that counts as bottomed out (`capabilities.bottomDeadzone`). */
+  bottomDeadzoneMm?: number;
 };
 
 export type TravelSample = {
@@ -139,6 +158,8 @@ export interface KeyboardDriver {
 
   /** One snapshot of every key's travel. */
   readTravel?(): Promise<TravelSample[]>;
+  /** Push-style travel updates; resolves to a stop function. */
+  subscribeTravel?(listener: (samples: TravelSample[]) => void): Promise<() => Promise<void>>;
 
   recalibrate?(): Promise<void>;
   factoryReset?(): Promise<void>;

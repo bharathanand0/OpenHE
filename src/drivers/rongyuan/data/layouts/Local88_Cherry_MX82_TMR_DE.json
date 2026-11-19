@@ -1,0 +1,797 @@
+{
+  "canvas": { "width": 836, "height": 284 },
+  "keys": [
+    {
+      "x": 1,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "Esc",
+      "matrixIndex": 0,
+      "matrixEntry": [0, 0, 41, 0]
+    },
+    {
+      "x": 1,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "` ~",
+      "matrixIndex": 1,
+      "matrixEntry": [0, 0, 53, 0]
+    },
+    {
+      "x": 1,
+      "y": 105,
+      "w": 63,
+      "h": 40,
+      "text": "Tab",
+      "matrixIndex": 2,
+      "matrixEntry": [0, 0, 43, 0]
+    },
+    {
+      "x": 1,
+      "y": 151,
+      "w": 75,
+      "h": 40,
+      "text": "Caps",
+      "matrixIndex": 3,
+      "matrixEntry": [0, 0, 57, 0]
+    },
+    {
+      "x": 1,
+      "y": 197,
+      "w": 52,
+      "h": 40,
+      "text": "L-Shift",
+      "matrixIndex": 4,
+      "matrixEntry": [0, 0, 225, 0]
+    },
+    {
+      "x": 1,
+      "y": 243,
+      "w": 52,
+      "h": 40,
+      "text": "L-Ctrl",
+      "matrixIndex": 5,
+      "matrixEntry": [0, 0, 224, 0]
+    },
+    {
+      "x": 47,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "1",
+      "matrixIndex": 7,
+      "matrixEntry": [0, 0, 30, 0]
+    },
+    {
+      "x": 70,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "Q",
+      "matrixIndex": 8,
+      "matrixEntry": [0, 0, 20, 0]
+    },
+    {
+      "x": 82,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "A",
+      "matrixIndex": 9,
+      "matrixEntry": [0, 0, 4, 0]
+    },
+    {
+      "x": 59,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": "<>",
+      "matrixIndex": 10,
+      "matrixEntry": [0, 0, 100, 0]
+    },
+    {
+      "x": 59,
+      "y": 243,
+      "w": 52,
+      "h": 40,
+      "text": "L-Win",
+      "matrixIndex": 11,
+      "matrixEntry": [0, 0, 227, 0]
+    },
+    {
+      "x": 93,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F1",
+      "matrixIndex": 12,
+      "matrixEntry": [0, 0, 58, 0]
+    },
+    {
+      "x": 93,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "2",
+      "matrixIndex": 13,
+      "matrixEntry": [0, 0, 31, 0]
+    },
+    {
+      "x": 116,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "W",
+      "matrixIndex": 14,
+      "matrixEntry": [0, 0, 26, 0]
+    },
+    {
+      "x": 128,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "S",
+      "matrixIndex": 15,
+      "matrixEntry": [0, 0, 22, 0]
+    },
+    {
+      "x": 105,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": "Z",
+      "matrixIndex": 16,
+      "matrixEntry": [0, 0, 29, 0]
+    },
+    {
+      "x": 116,
+      "y": 243,
+      "w": 52,
+      "h": 40,
+      "text": "L-Alt",
+      "matrixIndex": 17,
+      "matrixEntry": [0, 0, 226, 0]
+    },
+    {
+      "x": 139,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F2",
+      "matrixIndex": 18,
+      "matrixEntry": [0, 0, 59, 0]
+    },
+    {
+      "x": 139,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "3",
+      "matrixIndex": 19,
+      "matrixEntry": [0, 0, 32, 0]
+    },
+    {
+      "x": 162,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "E",
+      "matrixIndex": 20,
+      "matrixEntry": [0, 0, 8, 0]
+    },
+    {
+      "x": 174,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "D",
+      "matrixIndex": 21,
+      "matrixEntry": [0, 0, 7, 0]
+    },
+    {
+      "x": 151,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": "X",
+      "matrixIndex": 22,
+      "matrixEntry": [0, 0, 27, 0]
+    },
+    {
+      "x": 185,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F3",
+      "matrixIndex": 24,
+      "matrixEntry": [0, 0, 60, 0]
+    },
+    {
+      "x": 185,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "4",
+      "matrixIndex": 25,
+      "matrixEntry": [0, 0, 33, 0]
+    },
+    {
+      "x": 208,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "R",
+      "matrixIndex": 26,
+      "matrixEntry": [0, 0, 21, 0]
+    },
+    {
+      "x": 220,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "F",
+      "matrixIndex": 27,
+      "matrixEntry": [0, 0, 9, 0]
+    },
+    {
+      "x": 197,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": "C",
+      "matrixIndex": 28,
+      "matrixEntry": [0, 0, 6, 0]
+    },
+    {
+      "x": 231,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F4",
+      "matrixIndex": 30,
+      "matrixEntry": [0, 0, 61, 0]
+    },
+    {
+      "x": 231,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "5",
+      "matrixIndex": 31,
+      "matrixEntry": [0, 0, 34, 0]
+    },
+    {
+      "x": 254,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "T",
+      "matrixIndex": 32,
+      "matrixEntry": [0, 0, 23, 0]
+    },
+    {
+      "x": 266,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "G",
+      "matrixIndex": 33,
+      "matrixEntry": [0, 0, 10, 0]
+    },
+    {
+      "x": 243,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": "V",
+      "matrixIndex": 34,
+      "matrixEntry": [0, 0, 25, 0]
+    },
+    {
+      "x": 300,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F5",
+      "matrixIndex": 36,
+      "matrixEntry": [0, 0, 62, 0]
+    },
+    {
+      "x": 277,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "6",
+      "matrixIndex": 37,
+      "matrixEntry": [0, 0, 35, 0]
+    },
+    {
+      "x": 300,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "Y",
+      "matrixIndex": 38,
+      "matrixEntry": [0, 0, 28, 0]
+    },
+    {
+      "x": 312,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "H",
+      "matrixIndex": 39,
+      "matrixEntry": [0, 0, 11, 0]
+    },
+    {
+      "x": 289,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": "B",
+      "matrixIndex": 40,
+      "matrixEntry": [0, 0, 5, 0]
+    },
+    {
+      "x": 174,
+      "y": 243,
+      "w": 282,
+      "h": 40,
+      "text": "Space",
+      "matrixIndex": 41,
+      "matrixEntry": [0, 0, 44, 0]
+    },
+    {
+      "x": 346,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F6",
+      "matrixIndex": 42,
+      "matrixEntry": [0, 0, 63, 0]
+    },
+    {
+      "x": 323,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "7",
+      "matrixIndex": 43,
+      "matrixEntry": [0, 0, 36, 0]
+    },
+    {
+      "x": 346,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "U",
+      "matrixIndex": 44,
+      "matrixEntry": [0, 0, 24, 0]
+    },
+    {
+      "x": 358,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "J",
+      "matrixIndex": 45,
+      "matrixEntry": [0, 0, 13, 0]
+    },
+    {
+      "x": 335,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": "N",
+      "matrixIndex": 46,
+      "matrixEntry": [0, 0, 17, 0]
+    },
+    {
+      "x": 392,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F7",
+      "matrixIndex": 48,
+      "matrixEntry": [0, 0, 64, 0]
+    },
+    {
+      "x": 369,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "8",
+      "matrixIndex": 49,
+      "matrixEntry": [0, 0, 37, 0]
+    },
+    {
+      "x": 392,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "I",
+      "matrixIndex": 50,
+      "matrixEntry": [0, 0, 12, 0]
+    },
+    {
+      "x": 404,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "K",
+      "matrixIndex": 51,
+      "matrixEntry": [0, 0, 14, 0]
+    },
+    {
+      "x": 381,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": "M",
+      "matrixIndex": 52,
+      "matrixEntry": [0, 0, 16, 0]
+    },
+    {
+      "x": 438,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F8",
+      "matrixIndex": 54,
+      "matrixEntry": [0, 0, 65, 0]
+    },
+    {
+      "x": 415,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "9",
+      "matrixIndex": 55,
+      "matrixEntry": [0, 0, 38, 0]
+    },
+    {
+      "x": 438,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "O",
+      "matrixIndex": 56,
+      "matrixEntry": [0, 0, 18, 0]
+    },
+    {
+      "x": 450,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "L",
+      "matrixIndex": 57,
+      "matrixEntry": [0, 0, 15, 0]
+    },
+    {
+      "x": 427,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": ", <",
+      "matrixIndex": 58,
+      "matrixEntry": [0, 0, 54, 0]
+    },
+    {
+      "x": 507,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F9",
+      "matrixIndex": 60,
+      "matrixEntry": [0, 0, 66, 0]
+    },
+    {
+      "x": 461,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "0",
+      "matrixIndex": 61,
+      "matrixEntry": [0, 0, 39, 0]
+    },
+    {
+      "x": 484,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "P",
+      "matrixIndex": 62,
+      "matrixEntry": [0, 0, 19, 0]
+    },
+    {
+      "x": 496,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "; :",
+      "matrixIndex": 63,
+      "matrixEntry": [0, 0, 51, 0]
+    },
+    {
+      "x": 473,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": ". >",
+      "matrixIndex": 64,
+      "matrixEntry": [0, 0, 55, 0]
+    },
+    {
+      "x": 461,
+      "y": 243,
+      "w": 52,
+      "h": 40,
+      "text": "R-Alt",
+      "matrixIndex": 65,
+      "matrixEntry": [0, 0, 230, 0]
+    },
+    {
+      "x": 553,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F10",
+      "matrixIndex": 66,
+      "matrixEntry": [0, 0, 67, 0]
+    },
+    {
+      "x": 507,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "- _",
+      "matrixIndex": 67,
+      "matrixEntry": [0, 0, 45, 0]
+    },
+    {
+      "x": 530,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "[ {",
+      "matrixIndex": 68,
+      "matrixEntry": [0, 0, 47, 0]
+    },
+    {
+      "x": 542,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "' \"",
+      "matrixIndex": 69,
+      "matrixEntry": [0, 0, 52, 0]
+    },
+    {
+      "x": 519,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": "/ ?",
+      "matrixIndex": 70,
+      "matrixEntry": [0, 0, 56, 0]
+    },
+    {
+      "x": 519,
+      "y": 243,
+      "w": 52,
+      "h": 40,
+      "text": "Fn",
+      "matrixIndex": 71,
+      "matrixEntry": [10, 1, 0, 0]
+    },
+    {
+      "x": 599,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F11",
+      "matrixIndex": 72,
+      "matrixEntry": [0, 0, 68, 0]
+    },
+    {
+      "x": 553,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "= +",
+      "matrixIndex": 73,
+      "matrixEntry": [0, 0, 46, 0]
+    },
+    {
+      "x": 576,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "] }",
+      "matrixIndex": 74,
+      "matrixEntry": [0, 0, 48, 0]
+    },
+    {
+      "x": 588,
+      "y": 151,
+      "w": 40,
+      "h": 40,
+      "text": "#",
+      "matrixIndex": 75,
+      "matrixEntry": [0, 0, 50, 0]
+    },
+    {
+      "x": 565,
+      "y": 197,
+      "w": 121,
+      "h": 40,
+      "text": "R-Shift",
+      "matrixIndex": 76,
+      "matrixEntry": [0, 0, 229, 0]
+    },
+    {
+      "x": 576,
+      "y": 243,
+      "w": 52,
+      "h": 40,
+      "text": "Menu",
+      "matrixIndex": 77,
+      "matrixEntry": [0, 0, 101, 0]
+    },
+    {
+      "x": 645,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "F12",
+      "matrixIndex": 78,
+      "matrixEntry": [0, 0, 69, 0]
+    },
+    {
+      "x": 599,
+      "y": 59,
+      "w": 86,
+      "h": 40,
+      "text": "Backspace",
+      "matrixIndex": 79,
+      "matrixEntry": [0, 0, 42, 0]
+    },
+    {
+      "x": 634,
+      "y": 105,
+      "w": 52,
+      "h": 86,
+      "text": "Enter",
+      "matrixIndex": 81,
+      "matrixEntry": [0, 0, 40, 0]
+    },
+    {
+      "x": 634,
+      "y": 243,
+      "w": 52,
+      "h": 40,
+      "text": "R-Ctrl",
+      "matrixIndex": 83,
+      "matrixEntry": [0, 0, 228, 0]
+    },
+    {
+      "x": 703,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "PrtSc",
+      "matrixIndex": 84,
+      "matrixEntry": [0, 0, 70, 0]
+    },
+    {
+      "x": 703,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "Insert",
+      "matrixIndex": 85,
+      "matrixEntry": [0, 0, 73, 0]
+    },
+    {
+      "x": 703,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "Delete",
+      "matrixIndex": 86,
+      "matrixEntry": [0, 0, 76, 0]
+    },
+    {
+      "x": 703,
+      "y": 243,
+      "w": 40,
+      "h": 40,
+      "text": "\u2190",
+      "matrixIndex": 89,
+      "matrixEntry": [0, 0, 80, 0]
+    },
+    {
+      "x": 749,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "ScrLk",
+      "matrixIndex": 90,
+      "matrixEntry": [0, 0, 71, 0]
+    },
+    {
+      "x": 749,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "Home",
+      "matrixIndex": 91,
+      "matrixEntry": [0, 0, 74, 0]
+    },
+    {
+      "x": 749,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "End",
+      "matrixIndex": 92,
+      "matrixEntry": [0, 0, 77, 0]
+    },
+    {
+      "x": 749,
+      "y": 197,
+      "w": 40,
+      "h": 40,
+      "text": "\u2191",
+      "matrixIndex": 94,
+      "matrixEntry": [0, 0, 82, 0]
+    },
+    {
+      "x": 749,
+      "y": 243,
+      "w": 40,
+      "h": 40,
+      "text": "\u2193",
+      "matrixIndex": 95,
+      "matrixEntry": [0, 0, 81, 0]
+    },
+    {
+      "x": 795,
+      "y": 1,
+      "w": 40,
+      "h": 40,
+      "text": "Pause",
+      "matrixIndex": 96,
+      "matrixEntry": [0, 0, 72, 0]
+    },
+    {
+      "x": 795,
+      "y": 59,
+      "w": 40,
+      "h": 40,
+      "text": "PgUp",
+      "matrixIndex": 97,
+      "matrixEntry": [0, 0, 75, 0]
+    },
+    {
+      "x": 795,
+      "y": 105,
+      "w": 40,
+      "h": 40,
+      "text": "PgDn",
+      "matrixIndex": 98,
+      "matrixEntry": [0, 0, 78, 0]
+    },
+    {
+      "x": 795,
+      "y": 243,
+      "w": 40,
+      "h": 40,
+      "text": "\u2192",
+      "matrixIndex": 101,
+      "matrixEntry": [0, 0, 79, 0]
+    }
+  ]
+}

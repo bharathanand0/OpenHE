@@ -85,9 +85,13 @@ export class LibhmkDriver implements KeyboardDriver {
       calibration: true,
       rgb: false,
       gamepad: true,
-      pollingRates: metadata.usbHighSpeed ? [8000, 1000] : [1000]
+      pollingRates: metadata.usbHighSpeed ? [8000, 1000] : [1000],
+      releasePoint: false,
+      bottomDeadzone: false,
+      writable: { keymap: true, actuation: true, advancedKeys: true },
+      actuationActiveProfileOnly: false
     };
-    this.layout = layoutFromMetadata(metadata);
+    this.layout = { ...layoutFromMetadata(metadata), source: 'board' };
   }
 
   /** Open a WebHID device (already granted by the user) as a libhmk board. */
