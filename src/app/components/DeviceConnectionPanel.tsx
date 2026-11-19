@@ -15,6 +15,7 @@ const BUILTIN_THUMBNAILS: Readonly<Record<string, string>> = {
 };
 import { AppSelect } from './AppSelect';
 import { driverConnection, useDriverConnection } from '../../driverApp/store';
+import { appMode } from '../../appMode';
 import { useT } from '../../i18n';
 import {
   ALL_DEVICE_MODELS,
@@ -193,6 +194,9 @@ function OtherKeyboardButton({ disabled }: { disabled: boolean }) {
         onClick={() => void driverConnection.request()}
       >
         {conn.state === 'connecting' ? tr('Connecting…') : tr('Other keyboard (libhmk, RongYuan)')}
+      </button>
+      <button type="button" className="device-home-link" onClick={() => appMode.set('landing')}>
+        {tr('OpenHE home')}
       </button>
       {conn.state === 'idle' && conn.error && (
         <div className="device-feedback is-error">{conn.error}</div>
