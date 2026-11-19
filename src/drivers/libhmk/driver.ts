@@ -22,7 +22,8 @@ import {
   type TravelSample
 } from '../types';
 import type { UiKeycode } from '../keycodes';
-import { hmkCodeFromName, hmkLegendFromName, hmkToUi, uiToHmk } from './keycodes';
+import { hmkCodeFromName, hmkLegendFromName, hmkNativeLabel, hmkToUi, uiToHmk } from './keycodes';
+import { decodeUiKeycode, uiMomentaryLayer, uiNative } from '../keycodes';
 import {
   ACTUATION_CHUNK,
   ACTUATION_SIZE,
@@ -282,6 +283,32 @@ export class LibhmkDriver implements KeyboardDriver {
         out.push({ index: offset + i, raw: rd16(reply, o), travelMm: this.toMm(reply[o + 2]) });
       }
     }
+    return out;
+  }
+
+  supportsKeycode(value: UiKeycode): boolean {
+    return uiToHmk(value) !== null;
+  }
+
+  keycodeLabel(value: UiKeycode): string | null {
+    const d = decodeUiKeycode(value);
+    if (d.type === 'native') return hmkNativeLabel(d.code);
+    if (d.type === 'layer') return d.layer === 1 ? 'Fn' : `Fn${d.layer}`;
+    return null;
+  }
+
+  extraKeycodes(): Array<{ value: UiKeycode; label: string }> {
+    const out: Array<{ value: UiKeycode; label: string }> = [
+      { value: uiNative(0x01), label: '▽ Transparent' }
+    ];
+    for (let l = 1; l < this.metadata.numLayers; l++) {
+      out.push({ value: uiMomentaryLayer(l), label: `Layer ${l} (hold)` });
+    }
+    for (let p = 0; p < this.metadata.numProfiles; p++) {
+      out.push({ value: uiNative(0xc8 + p), label: `Profile ${p}` });
+    }
+    for (const code of [0xd0, 0xd1, 0xd2, 0xd3, 0xd4])
+      out.push({ value: uiNative(code), label: hmkNativeLabel(code) });
     return out;
   }
 

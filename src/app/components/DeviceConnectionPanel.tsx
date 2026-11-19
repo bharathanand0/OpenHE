@@ -14,6 +14,7 @@ const BUILTIN_THUMBNAILS: Readonly<Record<string, string>> = {
   win68: win68Thumb
 };
 import { AppSelect } from './AppSelect';
+import { driverConnection, useDriverConnection } from '../../driverApp/store';
 import { useT } from '../../i18n';
 import {
   ALL_DEVICE_MODELS,
@@ -166,12 +167,35 @@ export function DeviceConnectionPanel({
         </button>
       </div>
 
+      <OtherKeyboardButton disabled={deviceConnected || deviceConnecting} />
+
       {deviceFeedback && (
         <div
           className={`device-feedback ${deviceActionError || deviceError ? 'is-error' : 'is-success'}`}
         >
           {deviceFeedback}
         </div>
+      )}
+    </div>
+  );
+}
+
+/** libhmk and RongYuan boards go through the driver layer and their own workspace. */
+function OtherKeyboardButton({ disabled }: { disabled: boolean }) {
+  const tr = useT();
+  const conn = useDriverConnection();
+  return (
+    <div className="device-other">
+      <button
+        type="button"
+        className="device-read-button"
+        disabled={disabled || conn.state === 'connecting' || !driverConnection.supported()}
+        onClick={() => void driverConnection.request()}
+      >
+        {conn.state === 'connecting' ? tr('Connecting…') : tr('Other keyboard (libhmk, RongYuan)')}
+      </button>
+      {conn.state === 'idle' && conn.error && (
+        <div className="device-feedback is-error">{conn.error}</div>
       )}
     </div>
   );

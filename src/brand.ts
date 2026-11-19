@@ -7,7 +7,7 @@
  * they only change together with a migration.
  */
 export const BRAND = {
-  displayName: 'OpenAula',
+  displayName: 'OpenHE',
   /** Prefix for every localStorage/sessionStorage key in the web app. */
   storagePrefix: 'openhero68',
   /** `schema` field of exported JSON files (profiles, macros). */

@@ -23,7 +23,8 @@ import {
   type TravelSample
 } from '../types';
 import type { UiKeycode } from '../keycodes';
-import { entryToUi, NativeEntries, uiToEntry, type Entry } from './keycodes';
+import { entryToUi, nativeEntryLabel, NativeEntries, uiToEntry, type Entry } from './keycodes';
+import { decodeUiKeycode, uiMomentaryLayer } from '../keycodes';
 import {
   entryAt,
   gridLayout,
@@ -346,6 +347,22 @@ export class RongyuanDriver implements KeyboardDriver {
       if (sameEntry(entryAt(page, slot % 16), entry)) return;
     }
     throw new DriverError('The keyboard did not take the key write.');
+  }
+
+  supportsKeycode(value: UiKeycode): boolean {
+    return uiToEntry(value, this.natives) !== null;
+  }
+
+  keycodeLabel(value: UiKeycode): string | null {
+    const d = decodeUiKeycode(value);
+    if (d.type === 'layer') return 'Fn';
+    if (d.type !== 'native') return null;
+    const e = this.natives.entry(d.code);
+    return e ? nativeEntryLabel(e) : null;
+  }
+
+  extraKeycodes(): Array<{ value: UiKeycode; label: string }> {
+    return [{ value: uiMomentaryLayer(1), label: 'Fn' }];
   }
 
   defaultKeymap(): UiKeycode[] | null {

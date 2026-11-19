@@ -161,6 +161,13 @@ export interface KeyboardDriver {
   /** Push-style travel updates; resolves to a stop function. */
   subscribeTravel?(listener: (samples: TravelSample[]) => void): Promise<() => Promise<void>>;
 
+  /** Label for a keycode only this board knows (driver-native codes). */
+  keycodeLabel?(value: UiKeycode): string | null;
+  /** Whether the board can store this keycode. */
+  supportsKeycode?(value: UiKeycode): boolean;
+  /** Keycodes this board offers beyond the shared catalog (layers, profiles ...). */
+  extraKeycodes?(): Array<{ value: UiKeycode; label: string }>;
+
   recalibrate?(): Promise<void>;
   factoryReset?(): Promise<void>;
 }

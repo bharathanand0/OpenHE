@@ -26,6 +26,7 @@ export const RY_HID_FILTERS = RY_VENDOR_IDS.flatMap(vendorId =>
 );
 
 export function isRongyuanSettingsDevice(device: HidDeviceLike): boolean {
+  if (!(RY_VENDOR_IDS as readonly number[]).includes(device.vendorId)) return false;
   return (device.collections ?? []).some(
     c => c.usagePage === RY_USAGE_PAGE && (c.usage === 1 || c.usage === 2) && hasFeatureReports(c)
   );
