@@ -1,0 +1,265 @@
+/**
+ * libhmk raw HID protocol (firmware 0x0108, include/commands.h).
+ *
+ * 64-byte output reports on usage page 0xFFAB usage 0xAB, report ID 0. Every
+ * request gets one 64-byte input report; byte 0 echoes the command ID, or is
+ * 0xFF (COMMAND_UNKNOWN) when the board rejected it. All integers are
+ * little-endian, all structs packed.
+ */
+
+import type { AdvancedKey, DksAction } from '../types';
+import { hmkToUi, uiToHmk } from './keycodes';
+
+export const HMK_USAGE_PAGE = 0xffab;
+export const HMK_USAGE = 0xab;
+export const HMK_REPORT_SIZE = 64;
+
+export const Cmd = {
+  FIRMWARE_VERSION: 0,
+  REBOOT: 1,
+  BOOTLOADER: 2,
+  FACTORY_RESET: 3,
+  RECALIBRATE: 4,
+  ANALOG_INFO: 5,
+  GET_CALIBRATION: 6,
+  SET_CALIBRATION: 7,
+  GET_PROFILE: 8,
+  GET_OPTIONS: 9,
+  SET_OPTIONS: 10,
+  RESET_PROFILE: 11,
+  DUPLICATE_PROFILE: 12,
+  GET_METADATA: 13,
+  GET_SERIAL: 14,
+  SAVE_CALIBRATION_THRESHOLD: 15,
+  GET_KEYMAP: 128,
+  SET_KEYMAP: 129,
+  GET_ACTUATION_MAP: 130,
+  SET_ACTUATION_MAP: 131,
+  GET_ADVANCED_KEYS: 132,
+  SET_ADVANCED_KEYS: 133,
+  GET_TICK_RATE: 134,
+  SET_TICK_RATE: 135,
+  GET_GAMEPAD_BUTTONS: 136,
+  SET_GAMEPAD_BUTTONS: 137,
+  GET_GAMEPAD_OPTIONS: 138,
+  SET_GAMEPAD_OPTIONS: 139,
+  GET_MACROS: 140,
+  SET_MACROS: 141,
+  UNKNOWN: 255
+} as const;
+
+/** Per-packet chunk sizes fixed by the command structs. */
+export const KEYMAP_CHUNK = 59; // SET; GET returns up to 63
+export const KEYMAP_GET_CHUNK = 63;
+export const ACTUATION_CHUNK = 15;
+export const ANALOG_INFO_CHUNK = 21;
+export const STAGED_SET_CHUNK = 59;
+export const STAGED_GET_CHUNK = 62;
+export const METADATA_CHUNK = 59;
+
+export const ACTUATION_SIZE = 4;
+export const MACRO_NODE_SIZE = 4;
+
+/** Board metadata, the gzipped JSON from COMMAND_GET_METADATA (scripts/metadata.py). */
+export type HmkMetadata = {
+  name: string;
+  vendorId: string;
+  productId: string;
+  usbHighSpeed?: boolean;
+  adcResolution: number;
+  numProfiles: number;
+  numLayers: number;
+  numKeys: number;
+  numAdvancedKeys: number;
+  numDynamicKeystrokeMaxBindings: number;
+  numMacroNodes: number;
+  layout: { keymap: Array<Array<{ key: number; w?: number; h?: number; x?: number; y?: number }>> };
+  defaultKeymaps?: string[][][];
+};
+
+export function request(command: number, payload: ArrayLike<number> = []): Uint8Array {
+  if (payload.length > HMK_REPORT_SIZE - 1) throw new RangeError('payload too long');
+  const out = new Uint8Array(HMK_REPORT_SIZE);
+  out[0] = command;
+  out.set(payload, 1);
+  return out;
+}
+
+export const u16 = (v: number) => [v & 0xff, (v >>> 8) & 0xff];
+export const u32 = (v: number) => [
+  v & 0xff,
+  (v >>> 8) & 0xff,
+  (v >>> 16) & 0xff,
+  (v >>> 24) & 0xff
+];
+export const rd16 = (b: Uint8Array, o: number) => b[o] | (b[o + 1] << 8);
+export const rd32 = (b: Uint8Array, o: number) =>
+  (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)) >>> 0;
+
+// ---------------------------------------------------------------- actuation
+
+export type HmkActuation = {
+  actuationPoint: number;
+  rtDown: number;
+  rtUp: number;
+  continuous: boolean;
+};
+
+export function decodeActuation(b: Uint8Array, o: number): HmkActuation {
+  return { actuationPoint: b[o], rtDown: b[o + 1], rtUp: b[o + 2], continuous: b[o + 3] !== 0 };
+}
+
+export function encodeActuation(a: HmkActuation): number[] {
+  return [a.actuationPoint, a.rtDown, a.rtUp, a.continuous ? 1 : 0];
+}
+
+// ------------------------------------------------------------ advanced keys
+
+export const AK_TYPE = {
+  NONE: 0,
+  NULL_BIND: 1,
+  DYNAMIC_KEYSTROKE: 2,
+  TAP_HOLD: 3,
+  TOGGLE: 4,
+  MACRO: 5
+} as const;
+const NB_BEHAVIORS = ['last', 'primary', 'secondary', 'neutral', 'distance'] as const;
+const DKS_ACTIONS: readonly DksAction[] = ['hold', 'press', 'release', 'tap'];
+
+/** sizeof(advanced_key_t): layer, key, type + the largest union member. */
+export function advancedKeySize(dksBindings: number): number {
+  return 3 + Math.max(3, 2 * dksBindings + 1, 5, 3, 1);
+}
+
+export function decodeAdvancedKey(
+  b: Uint8Array,
+  o: number,
+  dksBindings: number,
+  toMm: (units: number) => number
+): AdvancedKey | null {
+  const layer = b[o];
+  const key = b[o + 1];
+  const p = o + 3;
+  switch (b[o + 2]) {
+    case AK_TYPE.NULL_BIND:
+      return {
+        kind: 'nullBind',
+        layer,
+        key,
+        secondaryKey: b[p],
+        behavior: NB_BEHAVIORS[b[p + 1]] ?? 'last',
+        bottomOutMm: toMm(b[p + 2])
+      };
+    case AK_TYPE.DYNAMIC_KEYSTROKE: {
+      const keycodes = [];
+      const actions: Array<[DksAction, DksAction, DksAction, DksAction]> = [];
+      for (let i = 0; i < dksBindings; i++) {
+        keycodes.push(hmkToUi(b[p + i]));
+        const m = b[p + dksBindings + i];
+        actions.push(
+          [0, 2, 4, 6].map(s => DKS_ACTIONS[(m >> s) & 3]) as [
+            DksAction,
+            DksAction,
+            DksAction,
+            DksAction
+          ]
+        );
+      }
+      return {
+        kind: 'dynamicKeystroke',
+        layer,
+        key,
+        keycodes,
+        actions,
+        bottomOutMm: toMm(b[p + 2 * dksBindings])
+      };
+    }
+    case AK_TYPE.TAP_HOLD:
+      return {
+        kind: 'tapHold',
+        layer,
+        key,
+        tap: hmkToUi(b[p]),
+        hold: hmkToUi(b[p + 1]),
+        tappingTermMs: rd16(b, p + 2),
+        holdOnOtherKeyPress: b[p + 4] !== 0
+      };
+    case AK_TYPE.TOGGLE:
+      return { kind: 'toggle', layer, key, keycode: hmkToUi(b[p]), tappingTermMs: rd16(b, p + 1) };
+    case AK_TYPE.MACRO:
+      return { kind: 'macro', layer, key, macro: b[p] };
+    default:
+      return null;
+  }
+}
+
+function keycodeOrThrow(value: number): number {
+  const code = uiToHmk(value);
+  if (code === null)
+    throw new RangeError(`keycode 0x${value.toString(16)} is not supported by libhmk`);
+  return code;
+}
+
+export function encodeAdvancedKey(
+  ak: AdvancedKey | null,
+  dksBindings: number,
+  toUnits: (mm: number) => number
+): Uint8Array {
+  const out = new Uint8Array(advancedKeySize(dksBindings));
+  if (!ak) return out;
+  out[0] = ak.layer;
+  out[1] = ak.key;
+  const p = 3;
+  switch (ak.kind) {
+    case 'nullBind':
+      out[2] = AK_TYPE.NULL_BIND;
+      out[p] = ak.secondaryKey;
+      out[p + 1] = Math.max(0, NB_BEHAVIORS.indexOf(ak.behavior));
+      out[p + 2] = toUnits(ak.bottomOutMm);
+      break;
+    case 'dynamicKeystroke':
+      out[2] = AK_TYPE.DYNAMIC_KEYSTROKE;
+      if (ak.keycodes.length > dksBindings)
+        throw new RangeError(`at most ${dksBindings} keystrokes`);
+      ak.keycodes.forEach((kc, i) => {
+        out[p + i] = keycodeOrThrow(kc);
+        const a = ak.actions[i] ?? ['hold', 'hold', 'hold', 'hold'];
+        out[p + dksBindings + i] = a.reduce(
+          (m, act, j) => m | (DKS_ACTIONS.indexOf(act) << (2 * j)),
+          0
+        );
+      });
+      out[p + 2 * dksBindings] = toUnits(ak.bottomOutMm);
+      break;
+    case 'tapHold':
+      out[2] = AK_TYPE.TAP_HOLD;
+      out[p] = keycodeOrThrow(ak.tap);
+      out[p + 1] = keycodeOrThrow(ak.hold);
+      out.set(u16(ak.tappingTermMs), p + 2);
+      out[p + 4] = ak.holdOnOtherKeyPress ? 1 : 0;
+      break;
+    case 'toggle':
+      out[2] = AK_TYPE.TOGGLE;
+      out[p] = keycodeOrThrow(ak.keycode);
+      out.set(u16(ak.tappingTermMs), p + 1);
+      break;
+    case 'macro':
+      out[2] = AK_TYPE.MACRO;
+      out[p] = ak.macro;
+      break;
+  }
+  return out;
+}
+
+// ----------------------------------------------------------------- metadata
+
+export async function gunzipJson<T>(bytes: Uint8Array): Promise<T> {
+  const stream = new Blob([bytes as BlobPart])
+    .stream()
+    .pipeThrough(new DecompressionStream('gzip'));
+  return JSON.parse(await new Response(stream).text()) as T;
+}
+
+export function formatFirmwareVersion(v: number): string {
+  return `${(v >> 8) & 0xff}.${v & 0xff}`;
+}
