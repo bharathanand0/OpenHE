@@ -1,6 +1,6 @@
 import type { KeyboardDriver } from '../drivers/types';
 
-const ISSUES = 'https://github.com/bharathanand0/OpenHE/issues';
+const ISSUES = 'https://github.com/camaro2626/OpenHE/issues';
 
 const TOPICS: Array<{ q: string; a: string; only?: KeyboardDriver['id'] }> = [
   {

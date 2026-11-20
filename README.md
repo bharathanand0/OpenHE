@@ -2,7 +2,7 @@
 
 An open, browser-based configurator for **magnetic (Hall-effect and TMR) keyboards**. Plug a keyboard in, open the page in Chrome or Edge, and set actuation, rapid trigger, key remaps, advanced keys, macros and lighting from a picture of your own board. Nothing to install, no account, no telemetry: the page talks only to your keyboard.
 
-**Use it at [bharathanand0.github.io/OpenHE](https://bharathanand0.github.io/OpenHE/)** (Chrome, Edge or another Chromium browser on a desktop).
+**Use it at [camaro2626.github.io/OpenHE](https://camaro2626.github.io/OpenHE/)** (Chrome, Edge or another Chromium browser on a desktop).
 
 OpenHE grew out of [OpenAula](https://github.com/shizunavn/OpenAula) and keeps its interface, adding a driver layer so one app can serve keyboards from different firmware families.
 
@@ -26,7 +26,7 @@ OpenHE grew out of [OpenAula](https://github.com/shizunavn/OpenAula) and keeps i
 
 | Family | Boards | Status |
 | --- | --- | --- |
-| **OpenHE firmware** | Keyboards running OpenHE's own firmware, built on [libhmk](https://github.com/peppapighs/libhmk) (see [gk68tmr_firmware](https://github.com/bharathanand0/gk68tmr_firmware)), starting with the Skyloong GK68 TMR. The board reports its own layout, so no per-board setup is needed. It is not hmkconf-compatible: the firmware has its own actuation model (0.01 mm steps, dead zones, OpenAula-style rapid trigger) and its own HID usage page. | Keymap, actuation, rapid trigger, dead zones, advanced keys, macros, switch profiles, live travel, calibration, gamepad |
+| **OpenHE firmware** | Keyboards running OpenHE's own firmware, built on [libhmk](https://github.com/peppapighs/libhmk) (see [gk68tmr_firmware](https://github.com/camaro2626/gk68tmr_firmware)), starting with the Skyloong GK68 TMR. The board reports its own layout, so no per-board setup is needed. It is not hmkconf-compatible: the firmware has its own actuation model (0.01 mm steps, dead zones, OpenAula-style rapid trigger) and its own HID usage page. | Keymap, actuation, rapid trigger, dead zones, advanced keys, macros, switch profiles, live travel, calibration, gamepad |
 | **RongYuan** | About 770 magnetic boards on RongYuan firmware, sold under Akko, MonsGeek, AttackShark, Epomaker, Hator, Ajazz, YUNZII and many other names. Board list, layouts and protocol from [sharkfin](https://github.com/dniminenn/sharkfin). | Keymap, Fn layer, macros, lighting and board settings on all of them; switch settings read on all, **written** on the ry5088 and yc3121 firmware lines (the ones whose write path is verified) |
 | **AULA** | HERO 68, HERO 84, HERO 68 XS, WIN 68 HE MAX | Through the original OpenAula app, linked from the start screen |
 
@@ -56,7 +56,7 @@ RongYuan boards are identified by the ID the board reports, not by USB product I
 
 ## Quick start
 
-1. Open **[bharathanand0.github.io/OpenHE](https://bharathanand0.github.io/OpenHE/)** in **Chrome or Edge** on a desktop (WebHID is not available in Firefox or Safari).
+1. Open **[camaro2626.github.io/OpenHE](https://camaro2626.github.io/OpenHE/)** in **Chrome or Edge** on a desktop (WebHID is not available in Firefox or Safari).
 2. Plug the keyboard in **by cable** and click **Connect keyboard**.
 3. Pick the keyboard in the browser's list. Close the vendor's own software first: only one app can own the settings channel at a time.
 4. Change settings and press **Save to keyboard** (lighting is written as you change it).
@@ -70,7 +70,7 @@ On Linux the keyboard's HID node belongs to root; add a udev rule (sharkfin's [R
 It needs **Node.js 22.12 or later**:
 
 ```sh
-git clone https://github.com/bharathanand0/OpenHE.git
+git clone https://github.com/camaro2626/OpenHE.git
 cd OpenHE
 npm ci
 npm run dev
