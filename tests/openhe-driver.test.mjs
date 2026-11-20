@@ -39,6 +39,8 @@ function fakeOpenHE(md = metadata, opts = {}) {
   const staged = { id: 0, profile: 0, offset: 0, buf: new Uint8Array(akSize) }
   const log = []
   const cal = { rest: 4095, bottom: 500 }
+  let switchProfiles = Array.from({ length: 4 }, () => [0, 400 & 0xff, 400 >> 8, 15])
+  const keySwitch = new Uint8Array(N)
   let options = 0b100
   const u16 = v => [v & 0xff, (v >> 8) & 0xff]
   const handle = req => {
@@ -59,7 +61,7 @@ function fakeOpenHE(md = metadata, opts = {}) {
         break
       }
       case 14: out.set(Buffer.from('GK68-TEST'), 1); break
-      case 16: if (opts.notOpenHE) return fail(); out.set([0x4f, 0x50, 0x48, 0x45, 1, 0, 0x08, 0x01, 400 & 0xff, 400 >> 8, 7, 0, 0, 0], 1); break
+      case 16: if (opts.notOpenHE) return fail(); out.set([0x4f, 0x50, 0x48, 0x45, 1, 0, 0x08, 0x01, 400 & 0xff, 400 >> 8, 7 | 16, 0, 0, 0], 1); break
       case 5: {
         const off = req[1]; if (off >= N) return fail()
         for (let i = 0; i < 15 && off + i < N; i++) {
@@ -129,6 +131,21 @@ function fakeOpenHE(md = metadata, opts = {}) {
       case 11: if (req[1] >= P) return fail(); log.push(`reset ${req[1]}`); break
       case 12: if (req[1] >= P || req[2] >= P) return fail(); log.push(`dup ${req[2]}->${req[1]}`); break
       case 15: log.push('save-cal'); break
+      case 17: out[1] = 4; switchProfiles.forEach((p, i) => out.set(p, 2 + i * 4)); break
+      case 18: {
+        if (req[1] !== 4) return fail()
+        const next = [0, 1, 2, 3].map(i => [...req.subarray(2 + i * 4, 6 + i * 4)])
+        if (next.some(p => (p[1] | (p[2] << 8)) < 100 || (p[1] | (p[2] << 8)) > 1000 || p[3] > 250)) return fail()
+        switchProfiles = next
+        break
+      }
+      case 19: if (req[1] >= N) return fail(); out.set(keySwitch.subarray(req[1], req[1] + 63), 1); break
+      case 20: {
+        const [, off, len] = req
+        if (off >= N || len > 60 || len > N - off || [...req.subarray(3, 3 + len)].some(v => v >= 4)) return fail()
+        keySwitch.set(req.subarray(3, 3 + len), off)
+        break
+      }
       case 134: if (req[1] >= P) return fail(); out[1] = p.tick; break
       case 135: if (req[1] >= P) return fail(); p.tick = req[2]; break
       case 136: {
@@ -158,7 +175,7 @@ function fakeOpenHE(md = metadata, opts = {}) {
     },
     async close() {}
   }
-  return { transport, profiles, log, akSize, cal, get options() { return options } }
+  return { transport, profiles, log, akSize, cal, keySwitch, get switchProfiles() { return switchProfiles }, get options() { return options } }
 }
 
 const usb = { vendorId: 0x3151, productId: 0x5030, productName: 'GK68' }
@@ -372,4 +389,31 @@ test('options keep reserved bits; calibration, tick rate and profiles', async ()
   await d.resetProfile(2)
   await d.duplicateProfile(3, 0)
   assert.deepEqual(board.log, ['save-cal', 'reset 2', 'dup 0->3'])
+})
+
+test('switch profiles: mixed switches pack into firmware profiles, most used first', async () => {
+  const board = fakeOpenHE()
+  const d = await OpenHEDriver.connect(board.transport, usb)
+  assert.equal(d.maxSwitchTypes, 4)
+  assert.deepEqual(d.switchCatalog().map(s => s.id), ['generic', 'gravastar-ufo', 'skyloong-crystal-blue'])
+  const setup = await d.getSwitchSetup()
+  assert.ok(setup.keySwitch.every(id => id === 'generic'))
+  assert.deepEqual(setup.tuning.generic, { travelMm: 4, curve: 15 })
+  // most keys UFO, a few Crystal Blue with their own travel and curve
+  const keySwitch = setup.keySwitch.map((_, i) => (i < 5 ? 'skyloong-crystal-blue' : 'gravastar-ufo'))
+  await d.setSwitchSetup({
+    keySwitch,
+    tuning: { 'gravastar-ufo': { travelMm: 3.5, curve: 12 }, 'skyloong-crystal-blue': { travelMm: 4, curve: 20 } }
+  })
+  assert.deepEqual(board.switchProfiles[0], [1, 350 & 0xff, 350 >> 8, 12]) // UFO, most used -> profile 0
+  assert.deepEqual(board.switchProfiles[1], [2, 400 & 0xff, 400 >> 8, 20])
+  assert.equal(board.keySwitch[0], 1)
+  assert.equal(board.keySwitch[10], 0)
+  const back = await d.getSwitchSetup()
+  assert.deepEqual(back.keySwitch, keySwitch)
+  assert.deepEqual(back.tuning['gravastar-ufo'], { travelMm: 3.5, curve: 12 })
+  // values out of range are clamped, never refused
+  await d.setSwitchSetup({ keySwitch, tuning: { 'gravastar-ufo': { travelMm: 20, curve: 999 }, 'skyloong-crystal-blue': { travelMm: 4, curve: 20 } } })
+  assert.deepEqual(board.switchProfiles[0], [1, 1000 & 0xff, 1000 >> 8, 250])
+  await assert.rejects(d.setSwitchSetup({ keySwitch: keySwitch.map(() => 'nope'), tuning: {} }), /Unknown switch/)
 })

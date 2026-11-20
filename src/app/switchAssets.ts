@@ -104,12 +104,27 @@ const WIN68_SWITCH_OPTIONS: SwitchOption[] = WIN68_SWITCH_PROFILES.map(option =>
   ...SWITCH_IMAGES[option.id]
 }));
 
+// Switch options of a board registered at runtime (OpenHE driver boards).
+let runtimeSwitchOptions: { model: string; options: SwitchOption[] } | null = null;
+function setRuntimeSwitchOptions(model: string | null, options: SwitchOption[] = []): void {
+  runtimeSwitchOptions = model ? { model, options } : null;
+}
+
 function switchOptionsForModel(model?: HeroDeviceModelId): SwitchOption[] {
+  if (model && runtimeSwitchOptions?.model === model) {
+    return runtimeSwitchOptions.options;
+  }
   if (model && isWin68HeMaxModel(model)) {
     return WIN68_SWITCH_OPTIONS;
   }
   return SWITCH_OPTIONS;
 }
 
-export { SWITCH_IMAGES, SWITCH_OPTIONS, WIN68_SWITCH_OPTIONS, switchOptionsForModel };
+export {
+  SWITCH_IMAGES,
+  SWITCH_OPTIONS,
+  WIN68_SWITCH_OPTIONS,
+  setRuntimeSwitchOptions,
+  switchOptionsForModel
+};
 export type { SwitchTone, SwitchOption };

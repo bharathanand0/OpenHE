@@ -40,6 +40,7 @@ RongYuan boards are identified by the ID the board reports, not by USB product I
 | Advanced Keys | Null bind / SOCD (5 resolution rules and bottom-out override), dynamic keystroke (4 keycodes × 4 stages), tap-hold, toggle (OpenHE firmware), shown with OpenAula's key icons |
 | Gamepad | The firmware's XInput gamepad (OpenHE firmware): per-key button map, analog curve and stick options |
 | Hall Stream | OpenAula's live travel page: every key's travel in mm (polled on OpenHE firmware, streamed by cable on RongYuan gen2) |
+| Switch Selector | OpenAula's switch selector: tell the board which switch each key has. On OpenHE firmware up to 4 switch types at once, each with its own travel and curve, so mixed switches (e.g. Gravastar UFO and Skyloong Crystal Blue) read correct millimetres; on RongYuan boards the vendor's switch models where the board lists them |
 | Device | Firmware version, layout source, recalibration, factory reset; confirming an inferred RongYuan layout before writes |
 | Profiles | Every on-board profile the board has; RongYuan switch settings follow the active profile, as the firmware stores them |
 

@@ -33,6 +33,10 @@ export const Cmd = {
   GET_SERIAL: 14,
   SAVE_CALIBRATION_THRESHOLD: 15,
   FIRMWARE_INFO: 16,
+  GET_SWITCH_PROFILES: 17,
+  SET_SWITCH_PROFILES: 18,
+  GET_KEY_SWITCHES: 19,
+  SET_KEY_SWITCHES: 20,
   GET_KEYMAP: 128,
   SET_KEYMAP: 129,
   GET_ACTUATION_MAP: 130,
@@ -64,7 +68,19 @@ export const ACTUATION_SIZE = 9;
 /** COMMAND_FIRMWARE_INFO signature, "OPHE" little-endian. */
 export const OPENHE_SIGNATURE = 0x4548504f;
 export const OPENHE_PROTOCOL_VERSION = 1;
-export const Feature = { DEADZONE: 1, CONTINUOUS_RT: 2, GAMEPAD: 4, WIRELESS: 8 } as const;
+export const Feature = {
+  DEADZONE: 1,
+  CONTINUOUS_RT: 2,
+  GAMEPAD: 4,
+  WIRELESS: 8,
+  SWITCH_PROFILES: 16
+} as const;
+
+/** switch_profile_t: catalog id, travel (0.01 mm), curve. */
+export type HmkSwitchProfile = { catalogId: number; travelCmm: number; curve: number };
+export const SWITCH_PROFILE_SIZE = 4;
+export const KEY_SWITCH_GET_CHUNK = 63;
+export const KEY_SWITCH_SET_CHUNK = 60;
 
 export type FirmwareInfo = {
   protocolVersion: number;

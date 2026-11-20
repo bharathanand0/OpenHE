@@ -19,6 +19,8 @@ import {
   type DeviceInfo,
   type DriverCapabilities,
   type KeyActuation,
+  type SwitchCatalogEntry,
+  type SwitchSetup,
   type KeyboardDriver,
   type TravelSample
 } from '../types';
@@ -498,6 +500,89 @@ export class RongyuanDriver implements KeyboardDriver {
       this.stamp();
     });
     this.columnsCache = { profile, values: next };
+  }
+
+  /**
+   * Switch Selector: the board's per-key switch model (column 252), offered
+   * only where the board's registry record lists the vendor's switch models,
+   * and written only with a listed code, as sharkfin does.
+   */
+  switchCatalog(): SwitchCatalogEntry[] {
+    const listed = this.spec.switchTypes ?? [];
+    if (!this.columns || !listed.length) return [];
+    return [
+      ...listed.map(t => ({
+        id: `code-${t.code}`,
+        name: t.name,
+        brand: this.spec.company ?? 'RongYuan',
+        travelMm: this.capabilities.travelMm,
+        tunable: false
+      })),
+      {
+        id: 'unset',
+        name: 'Not set',
+        brand: this.spec.company ?? 'RongYuan',
+        travelMm: this.capabilities.travelMm,
+        tunable: false
+      }
+    ];
+  }
+
+  private switchCodes: number[] | null = null;
+
+  async getSwitchSetup(): Promise<SwitchSetup> {
+    const f = this.columns;
+    const listed = new Set((this.spec.switchTypes ?? []).map(t => t.code));
+    if (!f || !listed.size) throw new DriverError('This board does not list switch models.');
+    const codes = await this.wire.exclusive(async () => {
+      const pages: Uint8Array[] = [];
+      for (let page = 0; page < f.getPages(Col.SWITCH_TYPE); page++) {
+        pages.push(await this.wire.readRawPage(f.readRequest(Col.SWITCH_TYPE, page)));
+      }
+      return f.decode(Col.SWITCH_TYPE, concat(pages));
+    });
+    this.switchCodes = codes;
+    return {
+      keySwitch: this.slots.map(slot =>
+        listed.has(codes[slot]) ? `code-${codes[slot]}` : 'unset'
+      ),
+      tuning: {}
+    };
+  }
+
+  async setSwitchSetup(setup: SwitchSetup): Promise<void> {
+    const f = this.columns;
+    if (!f || !this.capabilities.writable.actuation) {
+      throw new DriverError(
+        `Switch settings on ${this.info.name} can be read but not written yet.`
+      );
+    }
+    this.requireConfirmedLayout();
+    if (setup.keySwitch.length !== this.slots.length) {
+      throw new RangeError('switch assignment length does not match the board');
+    }
+    const listed = new Set((this.spec.switchTypes ?? []).map(t => t.code));
+    const before = this.switchCodes ?? (await this.getSwitchSetup(), this.switchCodes!);
+    const next = [...before];
+    setup.keySwitch.forEach((id, i) => {
+      if (id === 'unset') return; // an unlisted code goes back as it was
+      const code = Number(id.replace(/^code-/, ''));
+      if (!listed.has(code)) throw new DriverError(`Switch "${id}" is not offered for this board.`);
+      next[this.slots[i]] = code;
+    });
+    if (next.every((v, i) => v === before[i])) return;
+    await this.wire.exclusive(async () => {
+      const cooldown = this.lastFlash + FLASH_COOLDOWN_MS - this.wire.clock.now();
+      if (cooldown > 0) await this.wire.clock.sleep(cooldown);
+      for (const pkt of f.setAll(Col.SWITCH_TYPE, next, true)) {
+        await this.wire.send(pkt);
+        await this.wire.clock.sleep(FLASH_PAGE_GAP_MS);
+      }
+      await this.wire.clock.sleep(FLASH_SETTLE_MS);
+      this.lastFlash = this.wire.clock.now();
+      this.stamp();
+    });
+    this.switchCodes = next;
   }
 
   async subscribeTravel(listener: (samples: TravelSample[]) => void): Promise<() => Promise<void>> {

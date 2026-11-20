@@ -18,6 +18,8 @@ import type { ActuationDraft } from './actuationDraft';
 import { SaveBar } from './SaveBar';
 import type { OpenAulaPerformance } from './usePerformance';
 import type { useDriverHall } from './useDriverHall';
+import type { SwitchSetupState } from './useSwitchSetup';
+import { indexOfKeyId } from './boardModel';
 
 type Run = (label: string, task: () => Promise<void>) => Promise<boolean>;
 type Hall = ReturnType<typeof useDriverHall>;
@@ -31,8 +33,13 @@ type Props = {
   run: Run;
 };
 
-function useSwitch(driver: KeyboardDriver): SwitchOption {
-  return useMemo(() => {
+/** The switch the travel picture shows: the selected keys' switch when the board knows it. */
+function useSwitch(
+  driver: KeyboardDriver,
+  perf?: OpenAulaPerformance,
+  sw?: SwitchSetupState
+): { option: SwitchOption; mixed: boolean } {
+  const generic = useMemo(() => {
     const base = switchOptionsForModel('hero68')[0];
     return {
       ...base,
@@ -43,6 +50,14 @@ function useSwitch(driver: KeyboardDriver): SwitchOption {
       travelMm: driver.capabilities.travelMm
     };
   }, [driver]);
+  if (!sw?.draft || !perf) return { option: generic, mixed: false };
+  const keys = perf.selectedKeys.size ? [...perf.selectedKeys] : [];
+  const options = keys.map(id => sw.optionOfKey(indexOfKeyId(id)));
+  const first = options[0] ?? sw.optionOfKey(0);
+  return {
+    option: first ?? generic,
+    mixed: options.some(o => o?.id !== options[0]?.id)
+  };
 }
 
 function ActuationSave({ driver, profile, state, busy, run }: Omit<Props, 'perf'>) {
@@ -143,9 +158,9 @@ function perfPageProps(perf: OpenAulaPerformance) {
   };
 }
 
-export function DriverQuickPage(props: Props) {
-  const { driver, state, perf } = props;
-  const selectedSwitch = useSwitch(driver);
+export function DriverQuickPage(props: Props & { sw?: SwitchSetupState }) {
+  const { driver, state, perf, sw } = props;
+  const { option: selectedSwitch, mixed: switchMixed } = useSwitch(driver, perf, sw);
   if (!state.draft) return <Loading state={state} />;
   return (
     <div className={capClasses(driver)}>
@@ -154,7 +169,7 @@ export function DriverQuickPage(props: Props) {
         {...perfPageProps(perf)}
         actuationByKey={perf.actuationByKey}
         selectedSwitch={selectedSwitch}
-        switchProfileMixed={false}
+        switchProfileMixed={switchMixed}
         actuation={perf.actuation}
         actuationMixed={perf.actuationMixed}
         setActuationForSelection={perf.setActuationForSelection}
@@ -244,9 +259,9 @@ function previewByKey(hall: Hall) {
   );
 }
 
-export function DriverActuationPage(props: Props & { hall: Hall }) {
-  const { driver, state, perf, hall } = props;
-  const selectedSwitch = useSwitch(driver);
+export function DriverActuationPage(props: Props & { hall: Hall; sw?: SwitchSetupState }) {
+  const { driver, state, perf, hall, sw } = props;
+  const { option: selectedSwitch, mixed: switchMixed } = useSwitch(driver, perf, sw);
   const [previewWidth, setPreviewWidth] = useState<number | undefined>();
   if (!state.draft) return <Loading state={state} />;
   const f = focusOf(hall, perf);
@@ -267,7 +282,7 @@ export function DriverActuationPage(props: Props & { hall: Hall }) {
         allSelected={perf.allSelected}
         selectAll={perf.selectAll}
         discardSelection={perf.discardSelection}
-        switchProfileMixed={false}
+        switchProfileMixed={switchMixed}
         selectedSwitch={selectedSwitch}
         actuation={perf.actuation}
         actuationMixed={perf.actuationMixed}

@@ -24,6 +24,9 @@ import { KeyRemapMenuIcon } from '../app/components/KeyRemapMenuIcon';
 import { RailItem } from '../app/components/RailItem';
 import { RapidTriggerMenuIcon } from '../app/components/RapidTriggerMenuIcon';
 import { SidebarItem } from '../app/components/SidebarItem';
+import { SwitchStemMenuIcon } from '../app/components/SwitchStemMenuIcon';
+import { SwitchesPage } from './SwitchesPage';
+import { useSwitchSetup } from './useSwitchSetup';
 import type { KeyboardDriver } from '../drivers/types';
 import { AdvancedKeysPage } from './AdvancedKeysPage';
 import { BoardThumb } from './BoardThumb';
@@ -53,7 +56,7 @@ import { driverConnection } from './store';
 
 type Rail = 'keyboard' | 'settings' | 'help';
 type KeyboardPage = 'quick' | 'actuation' | 'rapid' | 'stream' | 'remap' | 'advanced' | 'gamepad';
-type SettingsPage = 'general' | 'profiles' | 'calibration' | 'device';
+type SettingsPage = 'general' | 'switches' | 'profiles' | 'calibration' | 'device';
 
 type NavItem<T> = { id: T; label: string; icon: ReactNode; show: boolean };
 
@@ -82,6 +85,7 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
     return id;
   }, [driver]);
   const perf = useOpenAulaPerformance(model, actuation);
+  const sw = useSwitchSetup(driver, model);
   const hall = useDriverHall(driver, i => actuation.draft?.[i]?.actuationMm);
 
   useEffect(() => {
@@ -171,6 +175,12 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
       show: !!(driver.setOptions || driver.setTickRate)
     },
     {
+      id: 'switches',
+      label: 'Switch Selector',
+      icon: <SwitchStemMenuIcon />,
+      show: sw.available
+    },
+    {
       id: 'profiles',
       label: 'Profiles',
       icon: <Layers3 size={18} />,
@@ -201,6 +211,8 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
           return <GeneralSettingsPage {...props} />;
         case 'profiles':
           return <ProfilesSettingsPage {...props} />;
+        case 'switches':
+          return <SwitchesPage driver={driver} model={model} sw={sw} busy={!!busy} run={run} />;
         case 'calibration':
           return <CalibrationSettingsPage driver={driver} busy={!!busy} run={run} />;
         default:
@@ -216,9 +228,9 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
     }
     switch (activeKeyboard.id) {
       case 'quick':
-        return <DriverQuickPage {...props} state={actuation} perf={perf} />;
+        return <DriverQuickPage {...props} state={actuation} perf={perf} sw={sw} />;
       case 'actuation':
-        return <DriverActuationPage {...props} state={actuation} perf={perf} hall={hall} />;
+        return <DriverActuationPage {...props} state={actuation} perf={perf} hall={hall} sw={sw} />;
       case 'rapid':
         return <DriverRapidPage {...props} state={actuation} perf={perf} />;
       case 'stream':
@@ -235,7 +247,9 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
   // OpenAula's pages lay themselves out inside the workspace; OpenHE's own
   // pages get the content column.
   const openAulaPage =
-    rail === 'keyboard' && ['quick', 'actuation', 'rapid', 'stream'].includes(activeKeyboard.id);
+    (rail === 'keyboard' &&
+      ['quick', 'actuation', 'rapid', 'stream'].includes(activeKeyboard.id)) ||
+    (rail === 'settings' && activeSettings.id === 'switches');
 
   // Live travel only runs on the pages that show it.
   const hallPage = rail === 'keyboard' && ['actuation', 'stream'].includes(activeKeyboard.id);

@@ -212,6 +212,29 @@ export type CalibrationSettings = {
   initialBottomOutThreshold: number;
 };
 
+/** A switch a board can be told a key has. */
+export type SwitchCatalogEntry = {
+  /** Stable id within this driver. */
+  id: string;
+  name: string;
+  brand: string;
+  /** Full travel, mm (default for editable switches). */
+  travelMm: number;
+  /** Whether travel/curve can be tuned (`SwitchSetup.tuning`). */
+  tunable: boolean;
+  /** Default travel curve (board-specific meaning) for tunable switches. */
+  curve?: number;
+};
+
+export type SwitchTuning = { travelMm: number; curve: number };
+
+export type SwitchSetup = {
+  /** Catalog id of each layout key's switch. */
+  keySwitch: string[];
+  /** Travel and curve per tunable catalog id in use. */
+  tuning: Record<string, SwitchTuning>;
+};
+
 export interface KeyboardDriver {
   readonly id: DriverId;
   readonly info: DeviceInfo;
@@ -240,6 +263,13 @@ export interface KeyboardDriver {
 
   getGamepad?(profile: number): Promise<GamepadConfig>;
   setGamepad?(profile: number, config: GamepadConfig): Promise<void>;
+
+  /** Switches this board can be told about (Switch Selector). */
+  switchCatalog?(): SwitchCatalogEntry[];
+  /** How many different switches can be in use at once (OpenHE: 4). */
+  maxSwitchTypes?: number;
+  getSwitchSetup?(): Promise<SwitchSetup>;
+  setSwitchSetup?(setup: SwitchSetup): Promise<void>;
 
   getOptions?(): Promise<DeviceOptions>;
   setOptions?(options: DeviceOptions): Promise<void>;

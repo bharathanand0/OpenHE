@@ -46,7 +46,7 @@ function fakeGen2({ id, revision = 0x0309, layout, profiles = 4 }) {
     const e = k.matrixEntry ?? [0, 0, 4 + (i % 26), 0]
     for (const km of keymaps) km[0].set(e, slot * 4)
   })
-  const defaults = { 0: 200, 1: 280, 2: 50, 3: 50, 4: 50, 5: 0, 6: 30, 7: 0, 9: 255 }
+  const defaults = { 0: 200, 1: 280, 2: 50, 3: 50, 4: 50, 5: 0, 6: 30, 7: 0, 9: 255, 252: 0 }
   const columns = Array.from({ length: profiles }, () => {
     const m = new Map()
     for (const [c, v] of Object.entries(defaults)) m.set(Number(c), new Array(128).fill(v))
@@ -290,4 +290,28 @@ test('keycode translation covers keys, combos, media, mouse and Fn', async () =>
   }
   const macro = k.entryToUi([9, 0, 3, 0], n)
   assert.deepEqual(k.uiToEntry(macro, n), [9, 0, 3, 0])
+})
+
+test('switch selector writes the per-key switch model with listed codes only', async () => {
+  const { driver, board } = await connect({ id: 2281, layout: layoutFile('Common81_AGK75B~k2') })
+  const cat = driver.switchCatalog()
+  assert.deepEqual(cat.map(c => c.id), ['code-4', 'code-5', 'code-6', 'unset'])
+  const setup = await driver.getSwitchSetup()
+  assert.ok(setup.keySwitch.every(id => id === 'unset')) // code 0: never set
+  setup.keySwitch[0] = 'code-5'
+  setup.keySwitch[1] = 'code-6'
+  await driver.setSwitchSetup(setup)
+  const col = board.columns[0].get(252)
+  assert.equal(col[driver['slots'][0]], 5)
+  assert.equal(col[driver['slots'][1]], 6)
+  assert.equal(col[driver['slots'][2]], 0, 'unset keys keep their code')
+  assert.equal(board.state.commits, 1)
+  const back = await driver.getSwitchSetup()
+  assert.equal(back.keySwitch[0], 'code-5')
+  await assert.rejects(driver.setSwitchSetup({ keySwitch: back.keySwitch.map(() => 'code-9'), tuning: {} }), /not offered/)
+})
+
+test('boards without listed switch models offer no switch selector', async () => {
+  const { driver } = await connect({ id: 2268, layout: layoutFile('Common68_ZAP68') })
+  assert.deepEqual(driver.switchCatalog(), [])
 })

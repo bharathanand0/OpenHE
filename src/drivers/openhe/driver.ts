@@ -18,6 +18,8 @@ import {
   type BoardLayout,
   type CalibrationSettings,
   type DeviceOptions,
+  type SwitchCatalogEntry,
+  type SwitchSetup,
   type GamepadButton,
   type GamepadConfig,
   type DeviceInfo,
@@ -30,6 +32,7 @@ import {
 import type { UiKeycode } from '../keycodes';
 import { hmkCodeFromName, hmkLegendFromName, hmkNativeLabel, hmkToUi, uiToHmk } from './keycodes';
 import { decodeUiKeycode, uiMomentaryLayer, uiNative } from '../keycodes';
+import { OPENHE_SWITCHES, switchByCatalogId } from './switches';
 import {
   ACTUATION_CHUNK,
   ACTUATION_SIZE,
@@ -51,6 +54,10 @@ import {
   ActFlag,
   Feature,
   OPENHE_PROTOCOL_VERSION,
+  KEY_SWITCH_GET_CHUNK,
+  KEY_SWITCH_SET_CHUNK,
+  SWITCH_PROFILE_SIZE,
+  type HmkSwitchProfile,
   type FirmwareInfo,
   gunzipJson,
   rd16,
@@ -416,6 +423,83 @@ export class OpenHEDriver implements KeyboardDriver {
       (config.squareJoystick ? 4 : 0) |
       (config.snappyJoystick ? 8 : 0);
     await this.call(Cmd.SET_GAMEPAD_OPTIONS, [profile, ...points, flags]);
+  }
+
+  private get hasSwitchProfiles(): boolean {
+    return (this.firmware.features & Feature.SWITCH_PROFILES) !== 0;
+  }
+
+  get maxSwitchTypes(): number | undefined {
+    return this.hasSwitchProfiles ? 4 : undefined;
+  }
+
+  switchCatalog(): SwitchCatalogEntry[] {
+    return this.hasSwitchProfiles ? OPENHE_SWITCHES.map(({ catalogId: _, ...s }) => s) : [];
+  }
+
+  private async readSwitchProfiles(): Promise<HmkSwitchProfile[]> {
+    const r = await this.call(Cmd.GET_SWITCH_PROFILES);
+    const n = r[1];
+    return Array.from({ length: n }, (_, i) => {
+      const o = 2 + i * SWITCH_PROFILE_SIZE;
+      return { catalogId: r[o], travelCmm: rd16(r, o + 1), curve: r[o + 3] };
+    });
+  }
+
+  async getSwitchSetup(): Promise<SwitchSetup> {
+    if (!this.hasSwitchProfiles) throw new DriverError('This firmware has no switch profiles.');
+    const profiles = await this.readSwitchProfiles();
+    const n = this.metadata.numKeys;
+    const slots: number[] = [];
+    for (let offset = 0; offset < n; offset += KEY_SWITCH_GET_CHUNK) {
+      const r = await this.call(Cmd.GET_KEY_SWITCHES, [offset]);
+      slots.push(...r.subarray(1, 1 + Math.min(KEY_SWITCH_GET_CHUNK, n - offset)));
+    }
+    const tuning: SwitchSetup['tuning'] = {};
+    const keySwitch = slots.map(slot => {
+      const p = profiles[slot] ?? profiles[0];
+      const sw = switchByCatalogId(p.catalogId);
+      tuning[sw.id] ??= { travelMm: p.travelCmm / 100, curve: p.curve };
+      return sw.id;
+    });
+    return { keySwitch, tuning };
+  }
+
+  async setSwitchSetup(setup: SwitchSetup): Promise<void> {
+    if (!this.hasSwitchProfiles) throw new DriverError('This firmware has no switch profiles.');
+    if (setup.keySwitch.length !== this.metadata.numKeys) {
+      throw new RangeError('switch assignment length does not match the board');
+    }
+    const current = await this.readSwitchProfiles();
+    // One firmware profile per switch in use, most-used first so the
+    // common switch lands on profile 0 (the one FIRMWARE_INFO reports).
+    const counts = new Map<string, number>();
+    for (const id of setup.keySwitch) counts.set(id, (counts.get(id) ?? 0) + 1);
+    const used = [...counts.keys()].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0));
+    if (used.length > current.length) {
+      throw new DriverError(`This keyboard can hold ${current.length} different switches at once.`);
+    }
+    const profiles: HmkSwitchProfile[] = used.map(id => {
+      const sw = OPENHE_SWITCHES.find(s => s.id === id);
+      if (!sw) throw new DriverError(`Unknown switch "${id}"`);
+      const t = setup.tuning[id] ?? { travelMm: sw.travelMm, curve: sw.curve ?? current[0].curve };
+      return {
+        catalogId: sw.catalogId,
+        travelCmm: Math.round(Math.min(10, Math.max(1, t.travelMm)) * 100),
+        curve: Math.round(Math.min(250, Math.max(0, t.curve)))
+      };
+    });
+    // unused profiles keep a valid value
+    while (profiles.length < current.length) profiles.push({ ...profiles[0] });
+    await this.call(Cmd.SET_SWITCH_PROFILES, [
+      profiles.length,
+      ...profiles.flatMap(p => [p.catalogId, ...u16(p.travelCmm), p.curve])
+    ]);
+    const slots = setup.keySwitch.map(id => used.indexOf(id));
+    for (let offset = 0; offset < slots.length; offset += KEY_SWITCH_SET_CHUNK) {
+      const chunk = slots.slice(offset, offset + KEY_SWITCH_SET_CHUNK);
+      await this.call(Cmd.SET_KEY_SWITCHES, [offset, chunk.length, ...chunk]);
+    }
   }
 
   async getOptions(): Promise<DeviceOptions> {
