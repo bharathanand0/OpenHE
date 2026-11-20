@@ -30,6 +30,8 @@ export type ResolvedLayout = {
   slots: number[];
   /** Share of keys with a factory entry that matched a slot (1 for registry/grid). */
   matchRate: number;
+  /** Factory base-layer entry of each layout key, where the file gives one. */
+  factory: Array<Entry | null>;
 };
 
 /** Below this, a stored picture is not trusted and a slot grid is shown instead. */
@@ -74,12 +76,16 @@ function finish(
   keys: LayoutKey[],
   slots: number[],
   source: BoardLayout['source'],
-  matchRate: number
+  matchRate: number,
+  factory: Array<Entry | null> = slots.map(() => null)
 ): ResolvedLayout {
   const width = keys.reduce((m, k) => Math.max(m, k.x + k.w), 0);
   const height = keys.reduce((m, k) => Math.max(m, k.y + k.h), 0);
-  return { layout: { keys, width, height, source }, slots, matchRate };
+  return { layout: { keys, width, height, source }, slots, matchRate, factory };
 }
+
+const factoryOf = (k: RyLayoutKey): Entry | null =>
+  k.matrixEntry?.length === 4 ? (k.matrixEntry as unknown as Entry) : null;
 
 /** Every key with a slot from the file itself, or null when the file names none. */
 export function layoutFromRegistry(file: RyLayoutFile): ResolvedLayout | null {
@@ -89,7 +95,8 @@ export function layoutFromRegistry(file: RyLayoutFile): ResolvedLayout | null {
     toKeys(file, picked),
     picked.map(p => p.slot),
     'registry',
-    1
+    1,
+    picked.map(p => factoryOf(p.key))
   );
 }
 
@@ -121,7 +128,8 @@ export function inferLayout(file: RyLayoutFile, matrix: Uint8Array): ResolvedLay
     toKeys(file, picked),
     picked.map(p => p.slot),
     'inferred',
-    matchRate
+    matchRate,
+    picked.map(p => factoryOf(p.key))
   );
 }
 

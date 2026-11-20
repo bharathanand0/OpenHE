@@ -181,6 +181,18 @@ export function useOpenAulaPerformance(model: HeroDeviceModelId, state: Actuatio
       map(a => a.continuous)
     ),
     setContinuousForSelection: (v: boolean) => update(a => ({ ...a, continuous: v })),
+
+    /** Release point with Rapid Trigger off (RongYuan; not part of OpenAula's pages). */
+    release: pick(
+      selectedKeys,
+      map(a => a.releaseMm ?? a.actuationMm),
+      actuation
+    ),
+    releaseMixed: selectionHasMixedValues(
+      selectedKeys,
+      map(a => a.releaseMm ?? a.actuationMm)
+    ),
+    setReleaseForSelection: (v: number) => update(a => ({ ...a, releaseMm: v })),
     keyIdOf
   };
 }

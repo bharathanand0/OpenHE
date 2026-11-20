@@ -933,3 +933,34 @@
 .drv-macro-step small {
   opacity: 0.65;
 }
+
+.drv-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  cursor: pointer;
+}
+.drv-toggle-row > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.drv-details {
+  margin-top: 18px;
+  font-size: 13px;
+}
+.drv-details summary {
+  cursor: pointer;
+  opacity: 0.8;
+}
+.drv-lighting .rgb-page-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.drv-openaula-extra .setting-card {
+  min-height: 0;
+  height: auto;
+}

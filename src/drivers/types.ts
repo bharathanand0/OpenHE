@@ -222,6 +222,64 @@ export type DeviceOptions = {
   xinput?: boolean;
   /** 8 kHz polling on high-speed USB, 1 kHz otherwise. */
   highPollingRate?: boolean;
+  /** Key debounce, 1..10 (RongYuan). */
+  debounce?: number;
+  /** Windows key disabled. */
+  winLock?: boolean;
+  /** WASD and the arrow keys trade places. */
+  wasdSwap?: boolean;
+  /** Board picks Windows or macOS layout from the computer. */
+  autoOs?: boolean;
+  /** Read-only: the board is in macOS mode. */
+  macMode?: boolean;
+};
+
+/** One lighting effect a board offers. */
+export type LightEffect = {
+  mode: number;
+  label: string;
+  /** Direction or variant names by option index; null hides one the board lacks. */
+  options?: Array<string | null>;
+  /** Takes a colour (else always rainbow / its own colours). */
+  color: boolean;
+  /** Highest speed step, or null when the effect has no speed. */
+  speedMax: number | null;
+};
+
+export type LightZone = {
+  effects: LightEffect[];
+  brightnessMax: number;
+  /** Mode that means off, when the zone has one (edge light: 0). */
+  offMode?: number;
+};
+
+/** What a board's lighting can do (`capabilities.rgb`). */
+export type LightingInfo = {
+  backlight: LightZone;
+  /** Edge / side light, where the board has one. */
+  side?: LightZone;
+  /** Turn the backlight off without losing the effect. */
+  canSwitchOff: boolean;
+  /** Rainbow and fixed colour can be read the other way round on this board. */
+  flagOrder?: { swapped: boolean; fromRegistry: boolean };
+};
+
+export type LightSetting = {
+  mode: number;
+  /** 0 slowest .. speedMax. */
+  speed: number;
+  brightness: number;
+  option: number;
+  rainbow: boolean;
+  /** 0xRRGGBB */
+  color: number;
+};
+
+export type LightingState = {
+  backlight: LightSetting;
+  side?: LightSetting;
+  backlightOff?: boolean;
+  sideOff?: boolean;
 };
 
 export type CalibrationSettings = {
@@ -289,6 +347,14 @@ export interface KeyboardDriver {
   maxSwitchTypes?: number;
   getSwitchSetup?(): Promise<SwitchSetup>;
   setSwitchSetup?(setup: SwitchSetup): Promise<void>;
+
+  lightingInfo?(): LightingInfo;
+  getLighting?(): Promise<LightingState>;
+  setBacklight?(setting: LightSetting): Promise<void>;
+  setSideLight?(setting: LightSetting): Promise<void>;
+  setLightsOff?(off: { backlightOff?: boolean; sideOff?: boolean }): Promise<void>;
+  /** The owner says the board reads rainbow/fixed the other way round. */
+  setLightFlagOrder?(swapped: boolean): void;
 
   getOptions?(): Promise<DeviceOptions>;
   setOptions?(options: DeviceOptions): Promise<void>;

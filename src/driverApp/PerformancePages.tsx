@@ -1,3 +1,4 @@
+import { RangeControl } from '../app/components/RangeControl';
 /**
  * OpenAula's own Quick Settings, Actuation Point, Rapid Trigger and Hall
  * Stream pages on a driver board. The pages are OpenAula's components, fed
@@ -297,6 +298,31 @@ export function DriverActuationPage(props: Props & { hall: Hall; sw?: SwitchSetu
         actuationHallThresholdPercent={f.thresholdPercent}
         actuationHallThresholdMm={f.thresholdMm}
       />
+      {driver.capabilities.releasePoint && (
+        <section className="drv-openaula-extra">
+          <article className={`setting-card ${!perf.hasSelection ? 'is-unavailable' : ''}`}>
+            <div className="card-head compact-head">
+              <div>
+                <h2>Release point</h2>
+                <p>
+                  With Rapid Trigger off, the key lets go when it rises above this depth. Set it
+                  just above the actuation point for a quick release, or higher to avoid chatter.
+                </p>
+              </div>
+            </div>
+            <RangeControl
+              value={perf.release}
+              min={driver.capabilities.travelStepMm}
+              max={driver.capabilities.ranges?.actuation?.max ?? driver.capabilities.travelMm}
+              step={Math.max(driver.capabilities.travelStepMm, 0.01)}
+              suffix="mm"
+              disabled={!perf.hasSelection || props.busy}
+              onChange={perf.setReleaseForSelection}
+            />
+            {perf.releaseMixed && <p className="drv-muted">The selected keys differ.</p>}
+          </article>
+        </section>
+      )}
       <ActuationSave {...props} />
     </div>
   );

@@ -14,6 +14,7 @@ async function bundle(path) {
 const { RongyuanDriver } = await bundle('src/drivers/rongyuan/driver.ts')
 const { Wire } = await bundle('src/drivers/rongyuan/wire.ts')
 const proto = await bundle('src/drivers/rongyuan/protocol.ts')
+const extras = await bundle('src/drivers/rongyuan/extras.ts')
 const ui = await bundle('src/drivers/keycodes.ts')
 
 const devices = JSON.parse(readFileSync('src/drivers/rongyuan/data/devices.json'))
@@ -24,9 +25,11 @@ const deps = {
 }
 
 const checksumOk = buf => {
+  // LEDPARAM and the edge light sum bytes 0..7 into byte 8
+  const end = buf[0] === 0x07 || buf[0] === 0x08 ? 8 : 7
   let s = 0
-  for (let i = 0; i < 7; i++) s += buf[i]
-  return buf[7] === 0xff - (s & 0xff)
+  for (let i = 0; i < end; i++) s += buf[i]
+  return buf[end] === 0xff - (s & 0xff)
 }
 
 /**
@@ -52,7 +55,11 @@ function fakeGen2({ id, revision = 0x0309, layout, profiles = 4 }) {
     for (const [c, v] of Object.entries(defaults)) m.set(Number(c), new Array(128).fill(v))
     return m
   })
-  const state = { profile: 0, stream: 0, commits: 0, writes: [], bad: 0 }
+  const state = {
+    profile: 0, stream: 0, commits: 0, writes: [], bad: 0,
+    led: [3, 2, 4, 8, 0, 0, 0], side: [1, 2, 3, 7, 255, 0, 0], debounce: 5, autoOs: 0, resets: 0
+  }
+  const macros = Array.from({ length: 50 }, () => new Uint8Array(256))
   let reply = new Uint8Array(64)
   const colBytes = (p, col) => {
     const vals = columns[p].get(col)
@@ -102,6 +109,24 @@ function fakeGen2({ id, revision = 0x0309, layout, profiles = 4 }) {
         break
       }
       case 0x1b: state.stream = req[1]; break
+      case 0x07: state.led = [...req.subarray(1, 8)]; state.writes.push(['led']); break
+      case 0x87: out[0] = 0x87; out.set(state.led, 1); break
+      case 0x08: state.side = [...req.subarray(1, 8)]; state.writes.push(['side']); break
+      case 0x88: out[0] = 0x88; out.set(state.side, 1); break
+      case 0x06: state.debounce = req[1]; state.writes.push(['debounce', req[1]]); break
+      case 0x86: out[0] = 0x86; out[1] = state.debounce; break
+      case 0x17: state.autoOs = req[1]; break
+      case 0x97: out[0] = 0x97; out[1] = state.autoOs; break
+      case 0x01: state.resets++; break
+      case 0x0b: {
+        const [, slot, page, len, last] = req
+        assert.equal(len, 56)
+        const start = page * 56
+        macros[slot].set(req.subarray(8, 8 + Math.min(56, 256 - start)), start)
+        state.writes.push(['macro', slot, page, last])
+        break
+      }
+      case 0x8b: out.set(macros[req[1]].subarray(req[2] * 64, req[2] * 64 + 64)); break
       default: out[0] = op
     }
     reply = out
@@ -110,7 +135,7 @@ function fakeGen2({ id, revision = 0x0309, layout, profiles = 4 }) {
     async sendFeature(buf) { assert.equal(buf.length, 64); handle(buf) },
     async receiveFeature() { return reply },
   }
-  return { node, state, keymaps, fn, columns }
+  return { node, state, keymaps, fn, columns, macros }
 }
 
 function fakeClock() {
@@ -314,4 +339,126 @@ test('switch selector writes the per-key switch model with listed codes only', a
 test('boards without listed switch models offer no switch selector', async () => {
   const { driver } = await connect({ id: 2268, layout: layoutFile('Common68_ZAP68') })
   assert.deepEqual(driver.switchCatalog(), [])
+})
+
+test('lighting: the board\'s light table, flag order and speed direction', async () => {
+  const { driver, board } = await connect({ id: 2268, layout: layoutFile('Common68_ZAP68') })
+  const info = driver.lightingInfo()
+  assert.ok(info.backlight.effects.length > 5)
+  assert.ok(info.backlight.effects.every(e => e.label))
+  assert.equal(info.side, undefined) // X65HE has no edge light
+  assert.equal(info.canSwitchOff, false) // gen2: options not decoded
+  assert.deepEqual(info.flagOrder, { swapped: true, fromRegistry: true })
+  // registry says swapped: nibble 8 is the fixed colour, wire speed 2 on gen2 is host 2
+  const state = await driver.getLighting()
+  assert.equal(state.backlight.mode, 3)
+  assert.equal(state.backlight.rainbow, false)
+  assert.equal(state.backlight.speed, 2)
+  await driver.setBacklight({ mode: 4, speed: 4, brightness: 3, option: 1, rainbow: true, color: 0xffffff })
+  // fastest is wire 0 on gen2; swapped rainbow is nibble 7; white goes out as FA
+  assert.deepEqual(board.state.led, [4, 0, 3, (1 << 4) | 7, 0xfa, 0xfa, 0xfa])
+  driver.setLightFlagOrder(false)
+  await driver.setBacklight({ mode: 1, speed: 0, brightness: 4, option: 0, rainbow: false, color: 0x000001 })
+  // unswapped fixed is 7; near-black is floored to 8,8,8
+  assert.deepEqual(board.state.led, [1, 4, 4, 7, 8, 8, 8])
+  assert.equal(driver.lightingInfo().flagOrder.fromRegistry, false)
+})
+
+test('lighting packets match sharkfin', () => {
+  const yc = extras.ledWire('yc500', false)
+  const pkt = extras.ledPacket({ mode: 2, speed: 0, brightness: 4, option: 0, rainbow: false, color: [255, 0, 0] }, yc)
+  // yc500 speed 0 (slowest) is wire 5; Bit8 checksum at byte 8
+  assert.deepEqual([...pkt.subarray(0, 8)], [0x07, 2, 5, 4, 7, 255, 0, 0])
+  let sum = 0
+  for (let i = 0; i < 8; i++) sum += pkt[i]
+  assert.equal(pkt[8], 0xff - (sum & 0xff))
+  // a preset nibble on GET overrides the colour
+  const back = extras.parseLed(Uint8Array.from([0x87, 1, 5, 4, 3, 1, 2, 3]), yc)
+  assert.deepEqual(back.color, [0, 255, 0])
+  assert.equal(back.speed, 0)
+  // edge light: speed not inverted, neon forces rainbow
+  const side = extras.sidePacket({ mode: 3, speed: 1, brightness: 2, option: 0, rainbow: false, color: [0, 0, 255] }, false)
+  assert.deepEqual([...side.subarray(0, 5)], [0x08, 3, 1, 2, 8])
+  // yc500 options: read-modify-write keeps keyboard-lock and mac bits
+  const cur = Uint8Array.from([0x86, 0, 0b1000_0010, 5, 6])
+  const o = extras.parseKbOptions(cur, 0x86)
+  assert.equal(o.macMode, true)
+  const out = extras.kbOptionsPacket({ ...o, winLock: true, backlightOff: true }, 0x06, cur)
+  assert.deepEqual([...out.subarray(0, 5)], [0x06, 0, 0b1001_0011, 5, 6])
+  // debounce: yc500 pads a zero, gen2 does not
+  assert.deepEqual([...extras.debouncePacket(extras.familyOps('yc500'), 4).subarray(0, 3)], [0x11, 0, 4])
+  assert.deepEqual([...extras.debouncePacket(extras.familyOps('gen2'), 4).subarray(0, 2)], [0x06, 4])
+})
+
+test('macro blobs round-trip with sharkfin\'s short and long forms', () => {
+  const m = {
+    repeat: 3,
+    events: [
+      { kind: 'key', usage: 0xe0, pressed: true, delayMs: 0 },
+      { kind: 'key', usage: 0x06, pressed: true, delayMs: 20 },
+      { kind: 'key', usage: 0x06, pressed: false, delayMs: 300 },
+      { kind: 'mouse', button: 1, pressed: true, delayMs: 127 },
+      { kind: 'move', dx: -5, dy: 7, delayMs: 8 }
+    ]
+  }
+  const blob = extras.macroToBlob(m)
+  assert.deepEqual([...blob.subarray(0, 8)], [3, 0, 0xe0, 0x80, 0, 0, 0x06, 0x80 | 20])
+  assert.deepEqual(extras.macroFromBlob(blob), m)
+  assert.equal(extras.macroPages(blob), 1)
+  assert.throws(() => extras.macroToBlob({ repeat: 1, events: Array(130).fill(m.events[0]) }), /too long/)
+})
+
+test('macros: bound through the keymap, written to free slots, unbound back to factory', async () => {
+  const file = layoutFile('Common68_ZAP68')
+  const { driver, board } = await connect({ id: 2268, layout: file })
+  assert.deepEqual(await driver.getAdvancedKeys(0), [])
+  // profile 1 already uses slot 0; it must be left alone
+  board.keymaps[1][0].set([9, 0, 0, 0], file.keys[5].matrixIndex * 4)
+  board.macros[0].set([1, 0, 0x04, 0x85])
+  const steps = [
+    { keycode: 0x10000, action: 'press', delayMs: 10 },
+    { keycode: 0x06, action: 'tap', delayMs: 30 },
+    { keycode: 0x10000, action: 'release', delayMs: 0 }
+  ]
+  const keys = [
+    { kind: 'macro', layer: 0, key: 3, steps, mode: 'repeat', repeat: 2 },
+    { kind: 'macro', layer: 1, key: 4, steps, mode: 'hold', repeat: 1 }
+  ]
+  await driver.setAdvancedKeys(0, keys)
+  const slot1 = [...board.keymaps[0][0].subarray(file.keys[3].matrixIndex * 4, file.keys[3].matrixIndex * 4 + 4)]
+  assert.deepEqual(slot1, [9, 0, 1, 0]) // slot 1: slot 0 belongs to profile 1
+  assert.equal(board.macros[0][2], 0x04) // untouched
+  assert.equal(board.macros[1][0], 2) // repeat count
+  // different repeat for the held one: its own slot
+  const fnEntry = [...board.fn[0].subarray(file.keys[4].matrixIndex * 4, file.keys[4].matrixIndex * 4 + 4)]
+  assert.deepEqual(fnEntry, [9, 2, 2, 0])
+  const back = await driver.getAdvancedKeys(0)
+  assert.equal(back.length, 2)
+  assert.deepEqual(back[0].steps, [
+    { keycode: 0x10000, action: 'press', delayMs: 10 },
+    { keycode: 0x06, action: 'press', delayMs: 0 },
+    { keycode: 0x06, action: 'release', delayMs: 30 },
+    { keycode: 0x10000, action: 'release', delayMs: 0 }
+  ])
+  assert.equal(back[0].mode, 'repeat')
+  assert.equal(back[1].mode, 'hold')
+  // saving unchanged writes nothing
+  const before = board.state.writes.length
+  await driver.setAdvancedKeys(0, structuredClone(back))
+  assert.equal(board.state.writes.length, before)
+  // removing the base-layer one restores the key's factory entry
+  await driver.setAdvancedKeys(0, [structuredClone(back[1])])
+  const restored = [...board.keymaps[0][0].subarray(file.keys[3].matrixIndex * 4, file.keys[3].matrixIndex * 4 + 4)]
+  assert.deepEqual(restored, file.keys[3].matrixEntry ?? restored)
+  assert.notEqual(restored[0], 9)
+})
+
+test('board settings: debounce, auto OS and factory reset', async () => {
+  const { driver, board } = await connect({ id: 2268, layout: layoutFile('Common68_ZAP68') })
+  assert.deepEqual(await driver.getOptions(), { debounce: 5, autoOs: false })
+  await driver.setOptions({ debounce: 3, autoOs: true })
+  assert.equal(board.state.debounce, 3)
+  assert.equal(board.state.autoOs, 1)
+  await driver.factoryReset()
+  assert.equal(board.state.resets, 1)
 })

@@ -73,12 +73,14 @@ export function GeneralSettingsPage({
       .catch(() => setTick(null));
   }, [driver, profile]);
 
-  const setOpt = async (patch: DeviceOptions, label: string) => {
+  const setOpt = async (patch: DeviceOptions, label: string, needsReconnect = true) => {
     if (await run(label, () => driver.setOptions!(patch))) {
       setOptions(o => ({ ...o, ...patch }));
-      setReconnect(true);
+      if (needsReconnect) setReconnect(true);
     }
   };
+  const [debounce, setDebounce] = useState<number | null>(null);
+  useEffect(() => setDebounce(options?.debounce ?? null), [options?.debounce]);
   const nothing = !driver.setOptions && !driver.setTickRate;
 
   return (
@@ -139,6 +141,76 @@ export function GeneralSettingsPage({
                 onChange={on =>
                   setOpt({ xinput: on }, on ? 'Turning the gamepad on' : 'Turning the gamepad off')
                 }
+              />
+            </Section>
+          )}
+          {debounce !== null && driver.setOptions && (
+            <Section
+              title="Debounce"
+              text="How long the keyboard waits for a key's signal to settle before it counts. Higher ignores chatter; lower is quicker."
+              hint="1 to 10 (the board's own steps)."
+            >
+              <span className="drv-term">
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  value={debounce}
+                  disabled={busy}
+                  aria-label="Debounce"
+                  onChange={e => setDebounce(Number(e.target.value))}
+                  onPointerUp={() =>
+                    debounce !== options?.debounce &&
+                    setOpt({ debounce }, 'Setting debounce', false)
+                  }
+                  onKeyUp={() =>
+                    debounce !== options?.debounce &&
+                    setOpt({ debounce }, 'Setting debounce', false)
+                  }
+                />
+                <b>{debounce}</b>
+              </span>
+            </Section>
+          )}
+          {options?.winLock !== undefined && (
+            <Section
+              toggle
+              title="Windows key lock"
+              text="Disables the Windows key, so a game cannot be minimised by a stray press."
+            >
+              <Toggle
+                label="Windows key lock"
+                checked={options.winLock}
+                disabled={busy}
+                onChange={on => setOpt({ winLock: on }, 'Setting the Windows key lock', false)}
+              />
+            </Section>
+          )}
+          {options?.wasdSwap !== undefined && (
+            <Section
+              toggle
+              title="WASD and arrows swap"
+              text="WASD and the arrow keys trade places."
+            >
+              <Toggle
+                label="WASD and arrows swap"
+                checked={options.wasdSwap}
+                disabled={busy}
+                onChange={on => setOpt({ wasdSwap: on }, 'Swapping WASD and the arrows', false)}
+              />
+            </Section>
+          )}
+          {options?.autoOs !== undefined && (
+            <Section
+              toggle
+              title="Detect the computer's system"
+              text={`The keyboard switches between its Windows and macOS layouts by itself.${options.macMode !== undefined ? ` Now in ${options.macMode ? 'macOS' : 'Windows'} mode.` : ''}`}
+            >
+              <Toggle
+                label="Detect the computer's system"
+                checked={options.autoOs}
+                disabled={busy}
+                onChange={on => setOpt({ autoOs: on }, 'Setting system detection', false)}
               />
             </Section>
           )}

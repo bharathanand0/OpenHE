@@ -15,6 +15,14 @@
 import type { HidDeviceLike } from '../transport';
 import {
   DriverError,
+  type AdvancedKey,
+  type LightEffect,
+  type LightingInfo,
+  type LightingState,
+  type LightSetting,
+  type LightZone,
+  type MacroStep,
+  type DeviceOptions,
   type BoardLayout,
   type DeviceInfo,
   type DriverCapabilities,
@@ -26,7 +34,29 @@ import {
 } from '../types';
 import type { UiKeycode } from '../keycodes';
 import { entryToUi, nativeEntryLabel, NativeEntries, uiToEntry, type Entry } from './keycodes';
-import { decodeUiKeycode, uiMomentaryLayer } from '../keycodes';
+import { decodeUiKeycode, uiHid, uiMomentaryLayer, uiMouseButton } from '../keycodes';
+import {
+  debouncePacket,
+  familyOps,
+  kbOptionsPacket,
+  ledPacket,
+  ledWire,
+  LightOp,
+  MACRO_ENTRY_TAG,
+  macroFromBlob,
+  macroPages,
+  macroReadPacket,
+  macroToBlob,
+  macroWritePacket,
+  parseKbOptions,
+  parseLed,
+  parseSide,
+  RY_MACRO_SLOTS,
+  sidePacket,
+  type FamilyOps,
+  type LedParam,
+  type RyMacroEvent
+} from './extras';
 import {
   entryAt,
   gridLayout,
@@ -72,11 +102,37 @@ export type RySpec = {
     >
   >;
   switchTypes?: Array<{ code: number; name: string }>;
+  /** Vendor light table name (light-layouts.json); absent: the common set. */
+  light?: string;
+  /** LEDPARAM flags nibble read the other way round (8 fixed, 7 rainbow). */
+  ledFlagsSwapped?: boolean;
+  /** Has an edge / side light. */
+  sideLight?: boolean;
+};
+
+/** One vendor light table (sharkfin data/light-layouts.json). */
+export type RyLightTable = {
+  rgb: boolean;
+  brightnessMax: number;
+  effects: Array<{
+    mode: number;
+    speedMax?: number | null;
+    rgb?: boolean;
+    options?: Array<string | null> | null;
+  }>;
 };
 
 export type RyDeps = {
   findSpec(id: number): Promise<RySpec | null>;
   loadLayout(name: string): Promise<RyLayoutFile | null>;
+  loadLightTable?(name: string): Promise<RyLightTable | null>;
+  /** The owner's answer on the flag order, kept per board (null: none). */
+  flagChoice?: FlagChoiceStore;
+};
+
+export type FlagChoiceStore = {
+  read(id: number): { swapped: boolean; dflt: boolean } | null;
+  write(id: number, choice: { swapped: boolean; dflt: boolean } | null): void;
 };
 
 const YC500_HALL_REVISION = 0x0200;
@@ -85,6 +141,8 @@ const SETTING_GAP_MS = 1000;
 const FLASH_PAGE_GAP_MS = 100;
 const FLASH_SETTLE_MS = 2000;
 const FLASH_COOLDOWN_MS = 10000;
+/** Lighting is flash too: one write per second at most. */
+const LIGHT_GAP_MS = 1000;
 
 const ACTUATION_COLUMNS = [
   Col.MODE,
@@ -122,6 +180,11 @@ export class RongyuanDriver implements KeyboardDriver {
   private columnsCache: { profile: number; values: Map<number, number[]> } | null = null;
   private lastWrite = -Infinity;
   private lastFlash = -Infinity;
+  private readonly ops: FamilyOps;
+  private readonly factory: Array<Entry | null>;
+  private flagsSwapped: boolean;
+  private readonly lightTable: RyLightTable | null;
+  private readonly flagStore: FlagChoiceStore | null;
 
   private constructor(
     private readonly wire: Wire,
@@ -130,10 +193,28 @@ export class RongyuanDriver implements KeyboardDriver {
     readonly family: Family,
     readonly revision: number | null,
     private readonly columns: Columns | null,
-    resolved: { layout: BoardLayout; slots: number[]; matchRate: number },
+    resolved: {
+      layout: BoardLayout;
+      slots: number[];
+      matchRate: number;
+      factory?: Array<Entry | null>;
+    },
     private readonly streamDevices: HidDeviceLike[],
-    private readonly closeNode: () => Promise<void>
+    private readonly closeNode: () => Promise<void>,
+    extras: { lightTable: RyLightTable | null; flagStore: FlagChoiceStore | null } = {
+      lightTable: null,
+      flagStore: null
+    }
   ) {
+    this.ops = familyOps(family);
+    this.factory = resolved.factory ?? resolved.slots.map(() => null);
+    this.lightTable = extras.lightTable;
+    this.flagStore = extras.flagStore;
+    // the owner's answer stands while the registry still says what it said then
+    const dflt = !!spec.ledFlagsSwapped;
+    const choice = this.flagStore?.read(spec.id) ?? null;
+    if (choice && choice.dflt !== dflt) this.flagStore?.write(spec.id, null);
+    this.flagsSwapped = choice && choice.dflt === dflt ? choice.swapped : dflt;
     this.layout = resolved.layout;
     this.slots = resolved.slots;
     this.matchRate = resolved.matchRate;
@@ -149,19 +230,19 @@ export class RongyuanDriver implements KeyboardDriver {
       rapidTrigger: columns !== null,
       rapidTriggerSplit: columns !== null,
       continuousRapidTrigger: false,
-      advancedKeys: [],
-      maxAdvancedKeys: 0,
+      advancedKeys: ['macro'],
+      maxAdvancedKeys: RY_MACRO_SLOTS,
       dynamicKeystrokeBindings: 0,
-      macros: false,
+      macros: true,
       travelStream: columns?.format === 'gen2' && !wire.relay && streamDevices.length > 0,
       calibration: false,
-      rgb: false,
+      rgb: true,
       gamepad: false,
       pollingRates: [],
       releasePoint: columns !== null,
       topDeadzone: false,
       bottomDeadzone: columns !== null,
-      writable: { keymap: true, actuation: switchWrites, advancedKeys: false },
+      writable: { keymap: true, actuation: switchWrites, advancedKeys: true },
       actuationActiveProfileOnly: true,
       ranges: {
         ...(t?.travel ? { actuation: { min: t.travel.min, max: t.travel.max } } : {}),
@@ -216,6 +297,7 @@ export class RongyuanDriver implements KeyboardDriver {
     }
 
     const name = [spec.company, spec.displayName].filter(Boolean).join(' ') || usb.productName;
+    const lightTable = spec.light ? ((await deps.loadLightTable?.(spec.light)) ?? null) : null;
     const driver = new RongyuanDriver(
       wire,
       {
@@ -230,7 +312,8 @@ export class RongyuanDriver implements KeyboardDriver {
       columns,
       resolved,
       options.streamDevices ?? [],
-      options.close ?? (async () => undefined)
+      options.close ?? (async () => undefined),
+      { lightTable, flagStore: deps.flagChoice ?? null }
     );
     return driver;
   }
@@ -369,8 +452,10 @@ export class RongyuanDriver implements KeyboardDriver {
     return [{ value: uiMomentaryLayer(1), label: 'Fn' }];
   }
 
-  defaultKeymap(): UiKeycode[] | null {
-    return null;
+  /** Factory base layer from the layout file, where it gives every key's entry. */
+  defaultKeymap(layer = 0): UiKeycode[] | null {
+    if (layer !== 0 || this.factory.some(e => e === null)) return null;
+    return this.factory.map(e => entryToUi(e!, this.natives));
   }
 
   private async ensureActiveProfile(profile: number) {
@@ -585,6 +670,348 @@ export class RongyuanDriver implements KeyboardDriver {
     this.switchCodes = next;
   }
 
+  // ------------------------------------------------------------ lighting
+
+  private get wireLed() {
+    return ledWire(this.family, this.flagsSwapped, this.lightTable?.brightnessMax ?? 4);
+  }
+
+  lightingInfo(): LightingInfo {
+    const table = this.lightTable;
+    const effects: LightEffect[] = table
+      ? table.effects
+          .filter(e => e.mode in MODE_LABELS)
+          .map(e => ({
+            mode: e.mode,
+            label: MODE_LABELS[e.mode],
+            ...(e.options ? { options: e.options } : {}),
+            color: !!e.rgb,
+            speedMax: e.speedMax == null ? null : Math.min(e.speedMax, 4)
+          }))
+      : COMMON_EFFECTS;
+    const backlight: LightZone = { effects, brightnessMax: Math.max(1, table?.brightnessMax ?? 4) };
+    return {
+      backlight,
+      ...(this.spec.sideLight
+        ? { side: { effects: SIDE_EFFECTS, brightnessMax: 4, offMode: 0 } }
+        : {}),
+      canSwitchOff: this.ops.kbOption !== null,
+      flagOrder: {
+        swapped: this.flagsSwapped,
+        fromRegistry: this.flagsSwapped === !!this.spec.ledFlagsSwapped
+      }
+    };
+  }
+
+  setLightFlagOrder(swapped: boolean): void {
+    this.flagsSwapped = swapped;
+    const dflt = !!this.spec.ledFlagsSwapped;
+    this.flagStore?.write(this.spec.id, swapped === dflt ? null : { swapped, dflt });
+  }
+
+  async getLighting(): Promise<LightingState> {
+    return this.wire.exclusive(async () => {
+      const led = parseLed(await this.wire.roundtrip(packet(LightOp.GET_LED)), this.wireLed);
+      if (!led) throw new DriverError('The keyboard gave an unexpected lighting reply.');
+      const state: LightingState = { backlight: toSetting(led) };
+      if (this.spec.sideLight) {
+        const side = parseSide(
+          await this.wire.roundtrip(packet(LightOp.GET_SIDE)),
+          this.flagsSwapped
+        );
+        if (side) state.side = toSetting(side);
+      }
+      const kb = this.ops.kbOption;
+      if (kb) {
+        const o = parseKbOptions(await this.wire.roundtrip(packet(kb.get, [0])), kb.get);
+        if (o) {
+          state.backlightOff = o.backlightOff;
+          if (this.spec.sideLight) state.sideOff = o.sideLightOff;
+        }
+      }
+      return state;
+    });
+  }
+
+  private async lightWrite(pkt: Uint8Array) {
+    await this.wire.exclusive(async () => {
+      await this.gap(LIGHT_GAP_MS);
+      await this.wire.send(pkt);
+      this.stamp();
+    });
+  }
+
+  async setBacklight(setting: LightSetting): Promise<void> {
+    await this.lightWrite(ledPacket(fromSetting(setting), this.wireLed));
+  }
+
+  async setSideLight(setting: LightSetting): Promise<void> {
+    if (!this.spec.sideLight) throw new DriverError(`${this.info.name} has no edge light.`);
+    await this.lightWrite(sidePacket(fromSetting(setting), this.flagsSwapped));
+  }
+
+  async setLightsOff(off: { backlightOff?: boolean; sideOff?: boolean }): Promise<void> {
+    const kb = this.ops.kbOption;
+    if (!kb) throw new DriverError('This board turns its lights off with an effect, not a switch.');
+    await this.wire.exclusive(async () => {
+      await this.gap(LIGHT_GAP_MS);
+      const cur = await this.wire.roundtrip(packet(kb.get, [0]));
+      const o = parseKbOptions(cur, kb.get);
+      if (!o) throw new DriverError('The keyboard gave an unexpected options reply.');
+      if (off.backlightOff !== undefined) o.backlightOff = off.backlightOff;
+      if (off.sideOff !== undefined) o.sideLightOff = off.sideOff;
+      await this.wire.send(kbOptionsPacket(o, kb.set, cur));
+      this.stamp();
+    });
+  }
+
+  // ------------------------------------------------------------ settings
+
+  async getOptions(): Promise<DeviceOptions> {
+    return this.wire.exclusive(async () => {
+      const out: DeviceOptions = {};
+      const deb = await this.wire.roundtrip(packet(this.ops.getDebounce));
+      if (deb[0] === this.ops.getDebounce) out.debounce = deb[this.ops.debounceAt];
+      const kb = this.ops.kbOption;
+      if (kb) {
+        const o = parseKbOptions(await this.wire.roundtrip(packet(kb.get, [0])), kb.get);
+        if (o) Object.assign(out, { winLock: o.winLock, wasdSwap: o.wasdSwap, macMode: o.macMode });
+      }
+      try {
+        const auto = await this.wire.roundtrip(packet(LightOp.GET_AUTO_OS));
+        if (auto[0] === LightOp.GET_AUTO_OS) out.autoOs = auto[1] === 1;
+      } catch {
+        // not every board answers; leave it out
+      }
+      return out;
+    });
+  }
+
+  async setOptions(options: DeviceOptions): Promise<void> {
+    await this.wire.exclusive(async () => {
+      if (options.debounce !== undefined) {
+        await this.gap(SETTING_GAP_MS);
+        await this.wire.send(debouncePacket(this.ops, options.debounce));
+        this.stamp();
+      }
+      const kb = this.ops.kbOption;
+      if (kb && (options.winLock !== undefined || options.wasdSwap !== undefined)) {
+        await this.gap(SETTING_GAP_MS);
+        const cur = await this.wire.roundtrip(packet(kb.get, [0]));
+        const o = parseKbOptions(cur, kb.get);
+        if (!o) throw new DriverError('The keyboard gave an unexpected options reply.');
+        if (options.winLock !== undefined) o.winLock = options.winLock;
+        if (options.wasdSwap !== undefined) o.wasdSwap = options.wasdSwap;
+        await this.wire.send(kbOptionsPacket(o, kb.set, cur));
+        this.stamp();
+      }
+      if (options.autoOs !== undefined) {
+        await this.gap(SETTING_GAP_MS);
+        await this.wire.send(packet(LightOp.SET_AUTO_OS, [options.autoOs ? 1 : 0]));
+        this.stamp();
+      }
+    });
+  }
+
+  /** Wipes every profile, keymap, macro and light setting on the board. */
+  async factoryReset(): Promise<void> {
+    if (this.wire.relay) throw new DriverError('Plug the keyboard in by cable to reset it.');
+    await this.wire.exclusive(async () => {
+      await this.gap(SETTING_GAP_MS);
+      await this.wire.send(packet(this.ops.reset));
+      await this.wire.clock.sleep(this.ops.resetSettleMs);
+      this.stamp();
+    });
+    this.keymapCache.clear();
+    this.columnsCache = null;
+    this.switchCodes = null;
+  }
+
+  // ------------------------------------------------------------ macros
+
+  private async readMacroBlob(slot: number): Promise<Uint8Array> {
+    return this.wire.exclusive(async () => {
+      const pages: Uint8Array[] = [];
+      for (let page = 0; page < 4; page++)
+        pages.push((await this.wire.readRawPage(macroReadPacket(slot, page))).subarray(0, 64));
+      return concat(pages);
+    });
+  }
+
+  /** Macro contents read or written this connection, by slot. */
+  private readonly macroCache = new Map<number, Uint8Array>();
+
+  private async macroBlob(slot: number): Promise<Uint8Array> {
+    let blob = this.macroCache.get(slot);
+    if (!blob) {
+      blob = await this.readMacroBlob(slot);
+      this.macroCache.set(slot, blob);
+    }
+    return blob;
+  }
+
+  /**
+   * Macro keys on both layers: keymap entries `[9, mode, slot, 0]`. Each
+   * carries `ryMacroSlot` so an unchanged macro keeps its slot (and any
+   * mouse movement, which steps cannot show).
+   */
+  async getAdvancedKeys(profile: number): Promise<AdvancedKey[]> {
+    this.checkProfile(profile);
+    this.macroCache.clear();
+    const out: AdvancedKey[] = [];
+    for (const layer of [0, 1]) {
+      const m = await this.matrix(profile, layer === 1, true);
+      for (const [key, s] of this.slots.entries()) {
+        const [tag, mode, slot] = entryAt(m, s);
+        if (tag !== MACRO_ENTRY_TAG || slot >= RY_MACRO_SLOTS) continue;
+        const macro = macroFromBlob(await this.macroBlob(slot));
+        out.push({
+          kind: 'macro',
+          layer,
+          key,
+          steps: eventsToSteps(macro.events),
+          mode: mode === 1 ? 'toggle' : mode === 2 ? 'hold' : macro.repeat > 1 ? 'repeat' : 'once',
+          repeat: Math.max(1, Math.min(macro.repeat, 255)),
+          ryMacroSlot: slot
+        } as AdvancedKey);
+      }
+    }
+    return out;
+  }
+
+  async setAdvancedKeys(profile: number, keys: readonly AdvancedKey[]): Promise<void> {
+    this.checkProfile(profile);
+    this.requireConfirmedLayout();
+    if (keys.some(k => k.kind !== 'macro'))
+      throw new DriverError('This board only stores macros as advanced keys.');
+    const macros = keys as ReadonlyArray<
+      Extract<AdvancedKey, { kind: 'macro' }> & { ryMacroSlot?: number }
+    >;
+    const hex = (b: Uint8Array) => Array.from(b, v => v.toString(16).padStart(2, '0')).join('');
+
+    // each key's macro as a blob; an untouched one keeps its slot's exact bytes
+    const wanted: Array<{ ak: (typeof macros)[number]; blob: Uint8Array; id: string }> = [];
+    for (const ak of macros) {
+      const repeat = ak.mode === 'repeat' ? Math.max(1, ak.repeat) : 1;
+      const fresh = macroToBlob({ repeat, events: stepsToEvents(ak.steps) });
+      let blob = fresh;
+      if (ak.ryMacroSlot !== undefined) {
+        const had = await this.macroBlob(ak.ryMacroSlot);
+        const was = macroFromBlob(had);
+        if (sameSteps(eventsToSteps(was.events), ak.steps) && Math.max(1, was.repeat) === repeat)
+          blob = had;
+      }
+      wanted.push({ ak, blob, id: hex(blob) });
+    }
+
+    // slots the other profiles bind are not ours to overwrite
+    const others = new Set<number>();
+    for (let p = 0; p < this.spec.profiles; p++) {
+      if (p === profile) continue;
+      for (const fn of [false, true]) {
+        const m = await this.matrix(p, fn);
+        for (let s = 0; s * 4 < m.length; s++) {
+          const e = entryAt(m, s);
+          if (e[0] === MACRO_ENTRY_TAG && e[2] < RY_MACRO_SLOTS) others.add(e[2]);
+        }
+      }
+    }
+
+    const slotOf = new Map<string, number>();
+    const taken = new Set<number>();
+    const hints = new Set(
+      macros.map(ak => ak.ryMacroSlot).filter((s): s is number => s !== undefined)
+    );
+    const writes: Array<{ slot: number; blob: Uint8Array }> = [];
+    const place = (id: string, slot: number, blob: Uint8Array) => {
+      slotOf.set(id, slot);
+      taken.add(slot);
+      if (hex(this.macroCache.get(slot) ?? new Uint8Array()) !== id) writes.push({ slot, blob });
+    };
+    // 1. a slot that already holds exactly this macro
+    for (const w of wanted) {
+      if (slotOf.has(w.id)) continue;
+      const hint = w.ak.ryMacroSlot;
+      const same = [hint, ...this.macroCache.keys()].find(
+        s =>
+          s !== undefined &&
+          !taken.has(s) &&
+          this.macroCache.get(s) &&
+          hex(this.macroCache.get(s)!) === w.id
+      );
+      if (same !== undefined) place(w.id, same, w.blob);
+    }
+    // 2. its own old slot, if no other profile uses it; 3. a free slot
+    for (const w of wanted) {
+      if (slotOf.has(w.id)) continue;
+      const hint = w.ak.ryMacroSlot;
+      let slot = hint !== undefined && !taken.has(hint) && !others.has(hint) ? hint : -1;
+      if (slot < 0) {
+        slot =
+          [...Array(RY_MACRO_SLOTS).keys()].find(
+            s => !taken.has(s) && !others.has(s) && !hints.has(s)
+          ) ??
+          [...Array(RY_MACRO_SLOTS).keys()].find(s => !taken.has(s) && !others.has(s)) ??
+          -1;
+      }
+      if (slot < 0)
+        throw new DriverError(
+          `The keyboard holds ${RY_MACRO_SLOTS} macros, and the other profiles use the rest.`
+        );
+      if (!this.macroCache.has(slot)) await this.macroBlob(slot);
+      place(w.id, slot, w.blob);
+    }
+
+    for (const { slot, blob } of writes) {
+      await this.wire.exclusive(async () => {
+        const cooldown = this.lastFlash + FLASH_COOLDOWN_MS - this.wire.clock.now();
+        if (cooldown > 0) await this.wire.clock.sleep(cooldown);
+        const pages = macroPages(blob);
+        for (let page = 0; page < pages; page++) {
+          await this.wire.send(
+            macroWritePacket(this.ops.setMacro, slot, page, page + 1 === pages, blob)
+          );
+          await this.wire.clock.sleep(FLASH_PAGE_GAP_MS);
+        }
+        this.lastFlash = this.wire.clock.now();
+        this.stamp();
+      });
+      this.macroCache.set(slot, blob);
+    }
+
+    // bind the keys; a key that lost its macro goes back to its factory entry
+    for (const layer of [0, 1]) {
+      const fnLayer = layer === 1;
+      const m = await this.matrix(profile, fnLayer);
+      const next = new Map<number, Entry>();
+      this.slots.forEach((s, key) => {
+        if (entryAt(m, s)[0] === MACRO_ENTRY_TAG)
+          next.set(key, fnLayer ? [0, 0, 0, 0] : (this.factory[key] ?? [0, 0, 0, 0]));
+      });
+      for (const w of wanted) {
+        if (w.ak.layer === layer)
+          next.set(w.ak.key, [MACRO_ENTRY_TAG, MODE_CODE[w.ak.mode], slotOf.get(w.id)!, 0]);
+      }
+      await this.writeEntries(profile, fnLayer, next);
+    }
+  }
+
+  private async writeEntries(profile: number, fnLayer: boolean, entries: Map<number, Entry>) {
+    const current = await this.matrix(profile, fnLayer);
+    for (const [key, entry] of entries) {
+      const slot = this.slots[key];
+      if (slot === undefined || sameEntry(entryAt(current, slot), entry)) continue;
+      await this.wire.exclusive(async () => {
+        await this.gap(KEY_GAP_MS);
+        const pkt = keyWritePacket(this.family, profile, slot, entry, fnLayer);
+        await this.wire.send(pkt);
+        this.stamp();
+        if (this.family === 'yc500') await this.verifyYc500Slot(pkt, profile, slot, entry, fnLayer);
+      });
+      current.set(entry, slot * 4);
+    }
+  }
+
   async subscribeTravel(listener: (samples: TravelSample[]) => void): Promise<() => Promise<void>> {
     const f = this.columns;
     if (!f || !this.capabilities.travelStream)
@@ -617,6 +1044,130 @@ export class RongyuanDriver implements KeyboardDriver {
     };
   }
 }
+
+const MODE_CODE = { once: 0, repeat: 0, toggle: 1, hold: 2 } as const;
+
+const repeatOf = (ak: Extract<AdvancedKey, { kind: 'macro' }>) =>
+  ak.mode === 'repeat' ? Math.max(1, ak.repeat) : 1;
+
+/** Board events as steps; mouse moves have no step form and are left out. */
+function eventsToSteps(events: RyMacroEvent[]): MacroStep[] {
+  const steps: MacroStep[] = [];
+  for (const e of events) {
+    if (e.kind === 'move') continue;
+    const keycode = e.kind === 'key' ? uiHid(e.usage) : uiMouseButton(e.button + 1);
+    steps.push({ keycode, action: e.pressed ? 'press' : 'release', delayMs: e.delayMs });
+  }
+  return steps;
+}
+
+function stepsToEvents(steps: readonly MacroStep[]): RyMacroEvent[] {
+  const events: RyMacroEvent[] = [];
+  for (const step of steps) {
+    const d = decodeUiKeycode(step.keycode);
+    const make = (pressed: boolean, delayMs: number): RyMacroEvent => {
+      if (d.type === 'hid') return { kind: 'key', usage: d.usage, pressed, delayMs };
+      if (d.type === 'mouse' && d.button >= 1 && d.button <= 5)
+        return { kind: 'mouse', button: d.button - 1, pressed, delayMs };
+      throw new DriverError('A macro step uses a key this keyboard cannot play in a macro.');
+    };
+    if (step.action === 'tap') events.push(make(true, 0), make(false, step.delayMs));
+    else events.push(make(step.action === 'press', step.delayMs));
+  }
+  return events;
+}
+
+const sameSteps = (a: readonly MacroStep[], b: readonly MacroStep[]) =>
+  JSON.stringify(stepsToEventsSafe(a)) === JSON.stringify(stepsToEventsSafe(b));
+
+function stepsToEventsSafe(steps: readonly MacroStep[]): RyMacroEvent[] | null {
+  try {
+    return stepsToEvents(steps);
+  } catch {
+    return null;
+  }
+}
+
+/** Effects by wire number (sharkfin lighting-modes.ts). */
+const MODE_LABELS: Record<number, string> = {
+  1: 'Static',
+  2: 'Breathing',
+  3: 'Spectrum cycle',
+  4: 'Wave',
+  5: 'Ripple',
+  6: 'Star dots',
+  7: 'Flow',
+  8: 'Key shadow',
+  9: 'Layers',
+  10: 'Sine wave',
+  11: 'Spring',
+  12: 'Neon',
+  14: 'Radiant',
+  15: 'Loop',
+  16: 'Color grid',
+  17: 'Snowfall',
+  18: 'Meteor',
+  19: 'Silent snow',
+  23: 'Train',
+  24: 'Endless'
+};
+
+const fx = (mode: number, extra: Partial<LightEffect> = {}): LightEffect => ({
+  mode,
+  label: MODE_LABELS[mode],
+  color: true,
+  speedMax: 4,
+  ...extra
+});
+
+/** The common set, for boards without a light table. */
+const COMMON_EFFECTS: LightEffect[] = [
+  fx(1, { speedMax: null }),
+  fx(2),
+  fx(3, { color: false }),
+  fx(4, { options: ['Right', 'Left', 'Down', 'Up'] }),
+  fx(5),
+  fx(6),
+  fx(7, { options: ['Zigzag', 'Spiral'] }),
+  fx(8),
+  fx(9),
+  fx(10),
+  fx(11, { options: ['Outward', 'Inward'] }),
+  fx(12, { options: ['Right', 'Left'] }),
+  fx(14),
+  fx(15, { options: ['CCW', 'CW'] }),
+  fx(16),
+  fx(17),
+  fx(18),
+  fx(19)
+];
+
+const SIDE_EFFECTS: LightEffect[] = [
+  { mode: 0, label: 'Off', color: false, speedMax: null },
+  { mode: 1, label: 'Static', color: true, speedMax: null },
+  { mode: 2, label: 'Breathing', color: true, speedMax: 4 },
+  { mode: 3, label: 'Neon', color: false, speedMax: 4 },
+  { mode: 4, label: 'Wave', color: true, speedMax: 4 },
+  { mode: 5, label: 'Snake', color: true, speedMax: 4 }
+];
+
+const toSetting = (p: LedParam): LightSetting => ({
+  mode: p.mode,
+  speed: p.speed,
+  brightness: p.brightness,
+  option: p.option,
+  rainbow: p.rainbow,
+  color: (p.color[0] << 16) | (p.color[1] << 8) | p.color[2]
+});
+
+const fromSetting = (s: LightSetting): LedParam => ({
+  mode: s.mode,
+  speed: s.speed,
+  brightness: s.brightness,
+  option: s.option,
+  rainbow: s.rainbow,
+  color: [(s.color >> 16) & 0xff, (s.color >> 8) & 0xff, s.color & 0xff]
+});
 
 function sameEntry(a: ArrayLike<number>, b: ArrayLike<number>): boolean {
   return a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3];

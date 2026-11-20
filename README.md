@@ -37,7 +37,11 @@ RongYuan boards are identified by the ID the board reports, not by USB product I
 | Quick Settings, Actuation, Rapid Trigger | OpenAula's own pages: per-key or multi-key actuation point, rapid trigger, top and bottom dead zones (where the board has them), with live Visual Feedback, in 0.01 mm steps |
 | Rapid Trigger | On/off per key, one sensitivity or separate press and release sensitivities, continuous rapid trigger on OpenHE firmware |
 | Key Remap | Every layer, from a picture of your board; the catalog is filtered to what the board can store, plus board-specific keys (layers, profiles, bootloader …) |
-| Advanced Keys | Null bind / SOCD (5 resolution rules and bottom-out override), dynamic keystroke (4 keycodes × 4 stages), tap-hold, toggle (OpenHE firmware), shown with OpenAula's key icons |
+| Actuation extras | Release point with Rapid Trigger off (RongYuan) |
+| Advanced Keys | Null bind / SOCD (5 resolution rules and bottom-out override), dynamic keystroke (4 keycodes × 4 stages), tap-hold, toggle (OpenHE firmware), and macros on any key (both), shown with OpenAula's key icons |
+| Macros | OpenAula's macro editor (record, edit timing, import/export); macros are kept on your computer and put on keys from Advanced Keys. Played once, N times, while held, or toggled. OpenHE firmware stores 128 steps per profile; RongYuan boards hold 50 macros of up to 250 bytes |
+| Lighting | RongYuan: the board's own effect list (from the vendor's light table), brightness, speed, direction, colour or rainbow, the edge light where there is one, and backlight off on yc500 boards |
+| General Settings | RongYuan: debounce, Windows key lock and WASD/arrow swap (yc500), system auto-detect; OpenHE firmware: polling rate, gamepad interface, advanced key timing |
 | Gamepad | The firmware's XInput gamepad (OpenHE firmware): per-key button map, analog curve and stick options |
 | Hall Stream | OpenAula's live travel page: every key's travel in mm (polled on OpenHE firmware, streamed by cable on RongYuan gen2) |
 | Switch Selector | OpenAula's switch selector: tell the board which switch each key has. On OpenHE firmware up to 4 switch types at once, each with its own travel and curve, so mixed switches (e.g. Gravastar UFO and Skyloong Crystal Blue) read correct millimetres; on RongYuan boards the vendor's switch models where the board lists them |
@@ -78,7 +82,7 @@ Open an issue on this repository with what you saw.
 Each keyboard family is a **driver** in `src/drivers/` behind one interface (`KeyboardDriver`). A driver reports what the board can do (`capabilities`: profiles, layers, travel range and step, which advanced keys, live travel, gamepad …) and its layout; the UI shows only what the board supports and always works in millimetres and one shared keycode space.
 
 - `src/drivers/openhe/` speaks the OpenHE firmware's raw HID protocol (usage page `0xFF48`, libhmk's command set with OpenHE's actuation records). The board identifies itself with an `OPHE` signature; name, sizes, layout and default keymap come from its own metadata.
-- `src/drivers/rongyuan/` is a TypeScript port of sharkfin's protocol: 64-byte feature reports on `0xFFFF`, both command families (gen2 and yc500), the magnetic switch columns, write pacing and the 2.4 GHz receiver relay. It writes only what sharkfin writes, with the same spacing between flash writes.
+- `src/drivers/rongyuan/` is a TypeScript port of sharkfin's protocol: 64-byte feature reports on `0xFFFF`, both command families (gen2 and yc500), the magnetic switch columns, write pacing and the 2.4 GHz receiver relay. It writes only what sharkfin writes, with the same spacing between flash writes. `scripts/rongyuan-boards.py` regenerates the bundled board list and light tables from a sharkfin checkout.
 - `src/driverApp/` is the workspace UI for driver-backed boards. The connected board is registered as an OpenAula board model, so OpenAula's own Quick Settings, Actuation Point, Rapid Trigger and Hall Stream pages and keyboard preview draw it.
 
 Both drivers are tested in `tests/openhe-driver.test.mjs` and `tests/rongyuan-driver.test.mjs` against software boards built from the firmware sources and protocol notes.

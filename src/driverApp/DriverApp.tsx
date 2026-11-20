@@ -11,6 +11,7 @@ import {
   Keyboard,
   Layers3,
   ListOrdered,
+  Lightbulb,
   Loader2,
   Settings,
   SlidersHorizontal,
@@ -31,6 +32,7 @@ import { useSwitchSetup } from './useSwitchSetup';
 import type { KeyboardDriver } from '../drivers/types';
 import { AdvancedKeysPage } from './AdvancedKeysPage';
 import MacroPage from '../components/MacroPage';
+import { LightingPage } from './LightingPage';
 import { BoardThumb } from './BoardThumb';
 import { DevicePage } from './DevicePage';
 import { GamepadPage } from './GamepadPage';
@@ -58,7 +60,15 @@ import { driverConnection } from './store';
 
 type Rail = 'keyboard' | 'settings' | 'help';
 type KeyboardPage =
-  'quick' | 'actuation' | 'rapid' | 'stream' | 'remap' | 'advanced' | 'macros' | 'gamepad';
+  | 'quick'
+  | 'actuation'
+  | 'rapid'
+  | 'stream'
+  | 'remap'
+  | 'advanced'
+  | 'macros'
+  | 'lighting'
+  | 'gamepad';
 type SettingsPage = 'general' | 'switches' | 'profiles' | 'calibration' | 'device';
 
 type NavItem<T> = { id: T; label: string; icon: ReactNode; show: boolean };
@@ -179,6 +189,12 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
       show: caps.macros && caps.advancedKeys.includes('macro') && !!driver.setAdvancedKeys
     },
     {
+      id: 'lighting',
+      label: 'Lighting',
+      icon: <Lightbulb size={18} />,
+      show: caps.rgb && !!driver.lightingInfo && !!driver.getLighting
+    },
+    {
       id: 'gamepad',
       label: 'Gamepad',
       icon: <Gamepad2 size={18} />,
@@ -263,6 +279,8 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
             }}
           />
         );
+      case 'lighting':
+        return <LightingPage driver={driver} />;
       case 'gamepad':
         return <GamepadPage {...props} model={model} />;
       default:
@@ -274,7 +292,9 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
   // pages get the content column.
   const openAulaPage =
     (rail === 'keyboard' &&
-      ['quick', 'actuation', 'rapid', 'stream', 'macros'].includes(activeKeyboard.id)) ||
+      ['quick', 'actuation', 'rapid', 'stream', 'macros', 'lighting'].includes(
+        activeKeyboard.id
+      )) ||
     (rail === 'settings' && activeSettings.id === 'switches');
 
   // Live travel only runs on the pages that show it.

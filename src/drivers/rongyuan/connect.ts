@@ -5,7 +5,7 @@
  */
 
 import type { HidDeviceLike } from '../transport';
-import { RongyuanDriver, type RyDeps, type RySpec } from './driver';
+import { RongyuanDriver, type RyDeps, type RyLightTable, type RySpec } from './driver';
 import type { RyLayoutFile } from './layout';
 import { RY_USAGE_PAGE, RY_USAGES } from './protocol';
 import { Wire, type FeatureNode } from './wire';
@@ -56,6 +56,8 @@ export function featureNode(device: FeatureHidDevice): FeatureNode {
 }
 
 let registry: Promise<RySpec[]> | null = null;
+let lightTables: Promise<Record<string, RyLightTable>> | null = null;
+const FLAG_STORE = 'openhe:ry-led-flags';
 const layouts = import.meta.glob<RyLayoutFile>('./data/layouts/*.json', { import: 'default' });
 
 export const bundledDeps: RyDeps = {
@@ -66,6 +68,30 @@ export const bundledDeps: RyDeps = {
   async loadLayout(name) {
     const load = layouts[`./data/layouts/${name}.json`];
     return load ? load() : null;
+  },
+  async loadLightTable(name) {
+    lightTables ??= import('./data/light-layouts.json').then(
+      m => m.default as Record<string, RyLightTable>
+    );
+    return (await lightTables)[name] ?? null;
+  },
+  flagChoice: {
+    read(id) {
+      try {
+        const c = JSON.parse(localStorage.getItem(`${FLAG_STORE}.${id}`) ?? 'null');
+        return typeof c?.swapped === 'boolean' && typeof c?.dflt === 'boolean' ? c : null;
+      } catch {
+        return null;
+      }
+    },
+    write(id, choice) {
+      try {
+        if (choice) localStorage.setItem(`${FLAG_STORE}.${id}`, JSON.stringify(choice));
+        else localStorage.removeItem(`${FLAG_STORE}.${id}`);
+      } catch {
+        // storage blocked: the choice lasts for this connection only
+      }
+    }
   }
 };
 
