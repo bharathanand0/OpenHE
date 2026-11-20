@@ -191,31 +191,20 @@ export function DriverRapidPage(props: Props) {
   return (
     <div className={capClasses(driver)}>
       <ReadOnlyNotice driver={driver} />
-      <RapidPage {...perfPageProps(perf)} rapidTriggerByKey={perf.rapidTriggerByKey} />
-      {caps.continuousRapidTrigger && (
-        <section className="drv-openaula-extra">
-          <article
-            className={`setting-card ${!perf.rapidTriggerControlsEnabled ? 'is-unavailable' : ''}`}
-          >
-            <div className="card-head with-toggle compact-head">
-              <div>
-                <h2>Continuous Rapid Trigger</h2>
-                <p>
-                  Rapid Trigger stays active until the key is fully released, instead of ending once
-                  the key rises above the actuation point.
-                </p>
-              </div>
-              <Toggle
-                checked={perf.continuous}
-                mixed={perf.continuousMixed}
-                onChange={perf.setContinuousForSelection}
-                label="Continuous Rapid Trigger"
-                disabled={!perf.rapidTriggerControlsEnabled || busy}
-              />
-            </div>
-          </article>
-        </section>
-      )}
+      <RapidPage
+        {...perfPageProps(perf)}
+        rapidTriggerByKey={perf.rapidTriggerByKey}
+        continuous={
+          caps.continuousRapidTrigger
+            ? {
+                checked: perf.continuous,
+                mixed: perf.continuousMixed,
+                onChange: perf.setContinuousForSelection,
+                disabled: !perf.rapidTriggerControlsEnabled || busy
+              }
+            : undefined
+        }
+      />
       <ActuationSave {...props} />
     </div>
   );

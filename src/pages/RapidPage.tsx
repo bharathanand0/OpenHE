@@ -66,6 +66,13 @@ export interface RapidPageProps {
   setBottomDeadzoneForSelection: (value: number) => void;
   setQuickPreviewMode: Dispatch<SetStateAction<'none' | 'actuation' | 'rapid' | 'deadzone'>>;
   rapidTriggerByKey: Record<string, boolean>;
+  /** Continuous Rapid Trigger, shown as a sub-option of Rapid Trigger where the board has it. */
+  continuous?: {
+    checked: boolean;
+    mixed: boolean;
+    onChange: (value: boolean) => void;
+    disabled: boolean;
+  };
 }
 function RapidPage({
   model,
@@ -108,7 +115,8 @@ function RapidPage({
   bottomDeadzoneMixed,
   setBottomDeadzoneForSelection,
   setQuickPreviewMode,
-  rapidTriggerByKey
+  rapidTriggerByKey,
+  continuous
 }: RapidPageProps) {
   const { tr } = useI18n();
   const [cardHovered, setCardHovered] = useState(false);
@@ -188,6 +196,27 @@ function RapidPage({
               'Rapid Trigger dynamically actuates and resets your key based on your intention to press or release the key. Rapid Trigger starts and ends after the actuation point.'
             )}
           </p>
+          {continuous && (
+            <div className="rapid-split-row rapid-continuous-row">
+              <span className="rapid-split-label">
+                {tr('Continuous')}{' '}
+                <FeatureHelp
+                  title="Continuous Rapid Trigger"
+                  paragraphs={[
+                    'Rapid Trigger stays active until the key is fully released, instead of ending once the key rises above the actuation point.',
+                    'Useful when you hold keys shallow and want every small lift and press to count, wherever it happens in the travel.'
+                  ]}
+                />
+              </span>
+              <Toggle
+                checked={continuous.checked}
+                mixed={continuous.mixed}
+                onChange={continuous.onChange}
+                label={tr('Continuous Rapid Trigger')}
+                disabled={continuous.disabled}
+              />
+            </div>
+          )}
           <div className="rapid-enabled-summary">
             <span>
               {tr('ENABLED ON')}{' '}
