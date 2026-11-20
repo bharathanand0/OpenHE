@@ -16,6 +16,7 @@ import type { HidDeviceLike } from '../transport';
 import {
   DriverError,
   type AdvancedKey,
+  type DksAction,
   type LightEffect,
   type LightingInfo,
   type LightingState,
@@ -74,6 +75,7 @@ import {
   KEYMAP_PAGES,
   keymapReadRequest,
   keyWritePacket,
+  Kind,
   MODE_RAPID_TRIGGER,
   Op,
   packet,
@@ -155,8 +157,14 @@ const ACTUATION_COLUMNS = [
   Col.LIFT,
   Col.RT_PRESS,
   Col.RT_LIFT,
-  Col.DEAD_BOTTOM
+  Col.DEAD_BOTTOM,
+  Col.DKS_START,
+  Col.MT_TIME,
+  Col.SNAP_PARTNER
 ] as const;
+/** Firmware toggle: held past 60 ticks of 5 ms it acts as a plain key. */
+const TOGGLE_TERM_MS = 300;
+const NO_PARTNER = 0xff;
 
 export function hallReads(spec: RySpec, family: Family, revision: number | null): boolean {
   if (family === 'gen2') return true;
@@ -235,9 +243,23 @@ export class RongyuanDriver implements KeyboardDriver {
       rapidTrigger: columns !== null,
       rapidTriggerSplit: columns !== null,
       continuousRapidTrigger: false,
-      advancedKeys: ['macro'],
-      maxAdvancedKeys: RY_MACRO_SLOTS,
-      dynamicKeystrokeBindings: 0,
+      advancedKeys: switchWrites
+        ? ['nullBind', 'dynamicKeystroke', 'tapHold', 'toggle', 'macro']
+        : ['macro'],
+      maxAdvancedKeys: switchWrites ? resolved.slots.length : RY_MACRO_SLOTS,
+      dynamicKeystrokeBindings: switchWrites ? 4 : 0,
+      advancedKeyLimits: {
+        baseLayerOnly: ['nullBind', 'dynamicKeystroke', 'tapHold', 'toggle'],
+        nullBindBehaviors: ['last'],
+        nullBindBottomOut: false,
+        dksOneActionPerKeycode: true,
+        dksPressPoint: true,
+        dksBottomOutIsActuation: true,
+        tapHoldTermMs: { min: 10, max: 2550, step: 10 },
+        holdOnOtherKeyPress: false,
+        toggleTermFixedMs: TOGGLE_TERM_MS,
+        toggleRepeat: true
+      },
       macros: true,
       travelStream: columns?.format === 'gen2' && !wire.relay && streamDevices.length > 0,
       calibration: false,
@@ -375,11 +397,18 @@ export class RongyuanDriver implements KeyboardDriver {
     this.columnsCache = null;
   }
 
-  private async matrix(profile: number, fnLayer: boolean, fresh = false): Promise<Uint8Array> {
-    const key = `${profile}:${fnLayer ? 1 : 0}`;
+  private async matrix(
+    profile: number,
+    fnLayer: boolean,
+    fresh = false,
+    sublayer = 0
+  ): Promise<Uint8Array> {
+    const key = `${profile}:${fnLayer ? 1 : 0}:${sublayer}`;
     const cached = this.keymapCache.get(key);
     if (cached && !fresh) return cached;
-    const m = await this.wire.exclusive(() => readMatrix(this.wire, this.family, profile, fnLayer));
+    const m = await this.wire.exclusive(() =>
+      readMatrix(this.wire, this.family, profile, fnLayer, sublayer)
+    );
     this.keymapCache.set(key, m);
     return m;
   }
@@ -428,12 +457,13 @@ export class RongyuanDriver implements KeyboardDriver {
     profile: number,
     slot: number,
     entry: Entry,
-    fnLayer: boolean
+    fnLayer: boolean,
+    sublayer = 0
   ) {
     for (const wait of [10, 50, 150]) {
       await this.wire.clock.sleep(wait);
       const page = await this.wire.readRawPage(
-        keymapReadRequest('yc500', profile, slot >> 4, fnLayer)
+        keymapReadRequest('yc500', profile, slot >> 4, fnLayer, sublayer)
       );
       if (page[0] === pkt[0]) continue;
       if (sameEntry(entryAt(page, slot % 16), entry)) return;
@@ -865,6 +895,317 @@ export class RongyuanDriver implements KeyboardDriver {
     });
   }
 
+  // ------------------------------------------------- advanced keys
+
+  /** Every key's dynamic keystroke action bytes, four blocks (one per sub-layer). */
+  private dksCache: { profile: number; blocks: number[][] } | null = null;
+
+  private get kindWrites(): boolean {
+    return this.columns !== null && this.capabilities.writable.actuation;
+  }
+
+  /** Sub-op 10: four blocks of one byte a slot, two raw pages a block. */
+  private async readDksActions(profile: number): Promise<number[][]> {
+    const f = this.columns!;
+    if (this.dksCache?.profile === profile) return this.dksCache.blocks;
+    const blocks = await this.wire.exclusive(async () => {
+      const out: number[][] = [];
+      for (let block = 0; block < 4; block++) {
+        const raw: number[] = [];
+        for (const page of [2 * block, 2 * block + 1])
+          raw.push(...(await this.wire.readRawPage(f.readRequest(Col.DKS_ACTIONS_ALL, page))));
+        out.push(raw.slice(0, f.slots));
+      }
+      return out;
+    });
+    this.dksCache = { profile, blocks };
+    return blocks;
+  }
+
+  /**
+   * Macros (keymap entries) plus, where switch settings are written, the
+   * key kinds sharkfin writes: snap (SOCD), dynamic keystroke, mod-tap and
+   * toggle, from the mode column and keymap sub-layers 0..3.
+   */
+  async getAdvancedKeys(profile: number): Promise<AdvancedKey[]> {
+    this.checkProfile(profile);
+    const out = await this.getMacroKeys(profile);
+    const f = this.columns;
+    if (!f || !this.kindWrites) return out;
+    this.columnsCache = null;
+    this.dksCache = null;
+    const cols = await this.readColumns(profile);
+    const v = (col: number, slot: number) => cols.get(col)?.[slot] ?? 0;
+    const kinds = this.slots.map(s => v(Col.MODE, s) & 0x7f);
+    if (!kinds.some(k => k !== Kind.NORMAL)) return out;
+    const subs: Uint8Array[] = [];
+    for (let i = 0; i < 4; i++) subs.push(await this.matrix(profile, false, true, i));
+    const dks = kinds.includes(Kind.DKS) ? await this.readDksActions(profile) : [];
+    const ui = (sub: number, s: number) => entryToUi(entryAt(subs[sub], s), this.natives);
+    const indexOfSlot = new Map(this.slots.map((s, i) => [s, i]));
+    this.slots.forEach((s, key) => {
+      switch (kinds[key]) {
+        case Kind.DKS:
+          out.push({
+            kind: 'dynamicKeystroke',
+            layer: 0,
+            key,
+            keycodes: [0, 1, 2, 3].map(i => ui(i, s)),
+            actions: [0, 1, 2, 3].map(i => dksToStages(dks[i]?.[s] ?? 0)),
+            bottomOutMm: f.toMm(Col.TRAVEL, v(Col.TRAVEL, s)),
+            pressMm: f.toMm(Col.DKS_START, v(Col.DKS_START, s))
+          });
+          break;
+        case Kind.MOD_TAP:
+          out.push({
+            kind: 'tapHold',
+            layer: 0,
+            key,
+            hold: ui(0, s),
+            tap: ui(1, s),
+            tappingTermMs: Math.max(10, v(Col.MT_TIME, s) * 10),
+            holdOnOtherKeyPress: false
+          });
+          break;
+        case Kind.TOGGLE_HOLD:
+        case Kind.TOGGLE_TAP:
+          out.push({
+            kind: 'toggle',
+            layer: 0,
+            key,
+            keycode: ui(0, s),
+            tappingTermMs: TOGGLE_TERM_MS,
+            repeating: kinds[key] === Kind.TOGGLE_TAP
+          });
+          break;
+        case Kind.SNAP: {
+          const partner = indexOfSlot.get(v(Col.SNAP_PARTNER, s));
+          // one entry per pair, from the lower key
+          if (partner !== undefined && partner < key && kinds[partner] === Kind.SNAP) break;
+          out.push({
+            kind: 'nullBind',
+            layer: 0,
+            key,
+            secondaryKey: partner ?? key,
+            behavior: 'last',
+            bottomOutMm: 0
+          });
+          break;
+        }
+      }
+    });
+    return out;
+  }
+
+  async setAdvancedKeys(profile: number, keys: readonly AdvancedKey[]): Promise<void> {
+    this.checkProfile(profile);
+    this.requireConfirmedLayout();
+    const kindKeys = keys.filter(k => k.kind !== 'macro');
+    const f = this.columns;
+    if (kindKeys.length && (!f || !this.kindWrites))
+      throw new DriverError(`${this.info.name} stores only macros as advanced keys.`);
+    for (const ak of kindKeys) {
+      if (ak.layer !== 0)
+        throw new DriverError('Advanced keys other than macros work on the base layer only.');
+      if (ak.kind === 'nullBind' && ak.behavior !== 'last')
+        throw new DriverError('This board’s SOCD lets the last key pressed win.');
+    }
+    await this.setMacroKeys(profile, keys);
+    if (!f || !this.kindWrites) return;
+    const macroKeys = new Set(
+      keys.filter(k => k.kind === 'macro' && k.layer === 0).map(k => k.key)
+    );
+    await this.setKindKeys(profile, f, kindKeys, macroKeys);
+  }
+
+  private async setKindKeys(
+    profile: number,
+    f: Columns,
+    keys: readonly AdvancedKey[],
+    /** Base-layer keys that now carry a macro: their keymap entry is already written. */
+    macroKeys: ReadonlySet<number> = new Set()
+  ) {
+    this.columnsCache = null;
+    this.dksCache = null;
+    const cols = await this.readColumns(profile);
+    const v = (col: number, slot: number) => cols.get(col)?.[slot] ?? 0;
+    const dksNow = await this.readDksActions(profile);
+
+    // what each slot should hold: kind, its extra columns, its sub-layer entries
+    type Want = {
+      kind: number;
+      cols: Map<number, number>;
+      dks?: number[];
+      subs: Map<number, Entry>;
+    };
+    const want = new Map<number, Want>();
+    const entry = (kc: UiKeycode): Entry => {
+      if (!kc) return [0, 0, 0, 0];
+      const e = uiToEntry(kc, this.natives);
+      if (!e) throw new DriverError('An advanced key uses a keycode this keyboard cannot store.');
+      return e;
+    };
+    for (const ak of keys) {
+      const slot = this.slots[ak.key];
+      switch (ak.kind) {
+        case 'dynamicKeystroke':
+          want.set(slot, {
+            kind: Kind.DKS,
+            cols: new Map([
+              [Col.TRAVEL, f.toWire(Col.TRAVEL, ak.bottomOutMm)],
+              [
+                Col.DKS_START,
+                f.toWire(Col.DKS_START, ak.pressMm ?? f.toMm(Col.DKS_START, v(Col.DKS_START, slot)))
+              ]
+            ]),
+            dks: [0, 1, 2, 3].map(i => (ak.keycodes[i] ? stagesToDks(ak.actions[i]) : 0)),
+            subs: new Map([0, 1, 2, 3].map(i => [i, entry(ak.keycodes[i] ?? 0)]))
+          });
+          break;
+        case 'tapHold':
+          want.set(slot, {
+            kind: Kind.MOD_TAP,
+            cols: new Map([
+              [Col.MT_TIME, Math.min(255, Math.max(1, Math.round(ak.tappingTermMs / 10)))]
+            ]),
+            subs: new Map([
+              [0, entry(ak.hold)],
+              [1, entry(ak.tap)]
+            ])
+          });
+          break;
+        case 'toggle':
+          want.set(slot, {
+            kind: ak.repeating ? Kind.TOGGLE_TAP : Kind.TOGGLE_HOLD,
+            cols: new Map(),
+            subs: new Map([[0, entry(ak.keycode)]])
+          });
+          break;
+        case 'nullBind': {
+          const other = this.slots[ak.secondaryKey];
+          want.set(slot, {
+            kind: Kind.SNAP,
+            cols: new Map([[Col.SNAP_PARTNER, other]]),
+            subs: new Map()
+          });
+          want.set(other, {
+            kind: Kind.SNAP,
+            cols: new Map([[Col.SNAP_PARTNER, slot]]),
+            subs: new Map()
+          });
+          break;
+        }
+      }
+    }
+
+    // sub-layer entries first, as sharkfin does; a key that loses a kind
+    // which replaced its own keycode goes back to its factory entry
+    const subWrites = [
+      new Map<number, Entry>(),
+      new Map<number, Entry>(),
+      new Map<number, Entry>(),
+      new Map<number, Entry>()
+    ];
+    this.slots.forEach((s, key) => {
+      const was = v(Col.MODE, s) & 0x7f;
+      const w = want.get(s);
+      if (w) for (const [i, e] of w.subs) subWrites[i].set(key, e);
+      else if (
+        !macroKeys.has(key) &&
+        (was === Kind.DKS ||
+          was === Kind.MOD_TAP ||
+          was === Kind.TOGGLE_HOLD ||
+          was === Kind.TOGGLE_TAP)
+      )
+        subWrites[0].set(
+          key,
+          this.factory[key] ??
+            entryAt(this.keymapCache.get(`${profile}:0:0`) ?? new Uint8Array(512), s)
+        );
+    });
+    for (let i = 0; i < 4; i++)
+      if (subWrites[i].size) await this.writeEntries(profile, false, subWrites[i], i);
+
+    // then the switch columns, per key the way sharkfin's switch page writes them
+    const next = new Map<number, number[]>([...cols].map(([c, vals]) => [c, [...vals]]));
+    const nextDks = dksNow.map(b => [...b]);
+    const changed: number[] = [];
+    for (const s of this.slots) {
+      const was = v(Col.MODE, s) & 0x7f;
+      const w = want.get(s);
+      const kind =
+        w?.kind ??
+        (was === Kind.SNAP ||
+        was === Kind.DKS ||
+        was === Kind.MOD_TAP ||
+        was === Kind.TOGGLE_HOLD ||
+        was === Kind.TOGGLE_TAP
+          ? Kind.NORMAL
+          : was);
+      let diff = kind !== was;
+      next.get(Col.MODE)![s] = (v(Col.MODE, s) & MODE_RAPID_TRIGGER) | kind;
+      for (const [col, val] of w?.cols ?? []) {
+        if (v(col, s) !== val) diff = true;
+        next.get(col)![s] = val;
+      }
+      if (w?.dks) {
+        w.dks.forEach((b, i) => {
+          if ((dksNow[i]?.[s] ?? 0) !== b) diff = true;
+          nextDks[i][s] = b;
+        });
+      }
+      if (diff) changed.push(s);
+    }
+    if (!changed.length) {
+      this.keymapCache.clear();
+      return;
+    }
+    // a snap pair goes in one visit, at most two keys a visit
+    const groups: number[][] = [];
+    const done = new Set<number>();
+    for (const s of changed) {
+      if (done.has(s)) continue;
+      const kind = next.get(Col.MODE)![s] & 0x7f;
+      const partner = next.get(Col.SNAP_PARTNER)![s];
+      const pair =
+        kind === Kind.SNAP && changed.includes(partner) && !done.has(partner) ? [s, partner] : [s];
+      pair.forEach(x => done.add(x));
+      groups.push(pair);
+    }
+    for (const group of groups) {
+      await this.wire.exclusive(async () => {
+        const cooldown = this.lastFlash + FLASH_COOLDOWN_MS - this.wire.clock.now();
+        if (cooldown > 0) await this.wire.clock.sleep(cooldown);
+        for (const s of group) {
+          const kind = next.get(Col.MODE)![s] & 0x7f;
+          const list: number[] = [...WRITE_COLUMNS];
+          if (kind === Kind.DKS) list.push(Col.DKS_START, Col.DKS_ACTIONS);
+          else if (kind === Kind.MOD_TAP) list.push(Col.MT_TIME);
+          else if (kind === Kind.SNAP) list.push(Col.SNAP_PARTNER);
+          for (const [i, col] of list.entries()) {
+            const last = i + 1 === list.length;
+            const pkt =
+              col === Col.DKS_ACTIONS
+                ? f.setDksActions(
+                    s,
+                    last,
+                    nextDks.map(b => b[s] ?? 0)
+                  )
+                : f.setOne(col, s, last, next.get(col)?.[s] ?? 0);
+            if (!pkt) throw new DriverError('slot out of range');
+            await this.wire.send(pkt);
+          }
+          await this.wire.clock.sleep(FLASH_SETTLE_MS);
+        }
+        this.lastFlash = this.wire.clock.now();
+        this.stamp();
+      });
+    }
+    this.columnsCache = { profile, values: next };
+    this.dksCache = { profile, blocks: nextDks };
+    this.keymapCache.clear();
+  }
+
   /** Macro contents read or written this connection, by slot. */
   private readonly macroCache = new Map<number, Uint8Array>();
 
@@ -882,8 +1223,7 @@ export class RongyuanDriver implements KeyboardDriver {
    * carries `ryMacroSlot` so an unchanged macro keeps its slot (and any
    * mouse movement, which steps cannot show).
    */
-  async getAdvancedKeys(profile: number): Promise<AdvancedKey[]> {
-    this.checkProfile(profile);
+  private async getMacroKeys(profile: number): Promise<AdvancedKey[]> {
     this.macroCache.clear();
     const out: AdvancedKey[] = [];
     for (const layer of [0, 1]) {
@@ -906,12 +1246,8 @@ export class RongyuanDriver implements KeyboardDriver {
     return out;
   }
 
-  async setAdvancedKeys(profile: number, keys: readonly AdvancedKey[]): Promise<void> {
-    this.checkProfile(profile);
-    this.requireConfirmedLayout();
-    if (keys.some(k => k.kind !== 'macro'))
-      throw new DriverError('This board only stores macros as advanced keys.');
-    const macros = keys as ReadonlyArray<
+  private async setMacroKeys(profile: number, keys: readonly AdvancedKey[]): Promise<void> {
+    const macros = keys.filter(k => k.kind === 'macro') as ReadonlyArray<
       Extract<AdvancedKey, { kind: 'macro' }> & { ryMacroSlot?: number }
     >;
     const hex = (b: Uint8Array) => Array.from(b, v => v.toString(16).padStart(2, '0')).join('');
@@ -1023,17 +1359,23 @@ export class RongyuanDriver implements KeyboardDriver {
     }
   }
 
-  private async writeEntries(profile: number, fnLayer: boolean, entries: Map<number, Entry>) {
-    const current = await this.matrix(profile, fnLayer);
+  private async writeEntries(
+    profile: number,
+    fnLayer: boolean,
+    entries: Map<number, Entry>,
+    sublayer = 0
+  ) {
+    const current = await this.matrix(profile, fnLayer, false, sublayer);
     for (const [key, entry] of entries) {
       const slot = this.slots[key];
       if (slot === undefined || sameEntry(entryAt(current, slot), entry)) continue;
       await this.wire.exclusive(async () => {
         await this.gap(KEY_GAP_MS);
-        const pkt = keyWritePacket(this.family, profile, slot, entry, fnLayer);
+        const pkt = keyWritePacket(this.family, profile, slot, entry, fnLayer, sublayer);
         await this.wire.send(pkt);
         this.stamp();
-        if (this.family === 'yc500') await this.verifyYc500Slot(pkt, profile, slot, entry, fnLayer);
+        if (this.family === 'yc500')
+          await this.verifyYc500Slot(pkt, profile, slot, entry, fnLayer, sublayer);
       });
       current.set(entry, slot * 4);
     }
@@ -1073,6 +1415,58 @@ export class RongyuanDriver implements KeyboardDriver {
 }
 
 const MODE_CODE = { once: 0, repeat: 0, toggle: 1, hold: 2 } as const;
+
+type Stages = [DksAction, DksAction, DksAction, DksAction];
+
+/**
+ * One keycode's action byte (sharkfin dks.ts): four 2-bit cells, one per
+ * event (press past the first point, past the second, release past the
+ * second, past the first). Read as one tap or one press..release.
+ */
+export function dksToStages(byte: number): Stages {
+  const cells = [0, 1, 2, 3].map(i => (byte >> (2 * i)) & 3);
+  const out: Stages = ['hold', 'hold', 'hold', 'hold'];
+  for (let i = 0; i < 4; i++) {
+    const c = cells[i];
+    if (c === 1) {
+      out[i] = 'tap';
+      return out;
+    }
+    if (c === 2 || c === 3) {
+      let end: number;
+      if (c === 2) end = Math.min(i + 1, 3);
+      else {
+        let j = i;
+        while (j < 4 && cells[j] === 3) j++;
+        end = Math.min(j < 4 && cells[j] === 2 ? j + 1 : j, 3);
+      }
+      // a hold that ends where it starts is a tap (sharkfin decodeDks)
+      if (end <= i) {
+        out[i] = 'tap';
+        return out;
+      }
+      out[i] = 'press';
+      out[end] = 'release';
+      return out;
+    }
+  }
+  return out;
+}
+
+/** The shortest byte for a tap or a press..release (release at the end when none is given). */
+export function stagesToDks(stages: readonly DksAction[]): number {
+  const tap = stages.indexOf('tap');
+  if (tap >= 0) return 1 << (2 * tap);
+  const start = stages.indexOf('press');
+  if (start < 0) return 0;
+  let end = stages.indexOf('release', start + 1);
+  if (end < 0) end = 3;
+  if (end <= start) return 1 << (2 * start);
+  let byte = 0;
+  for (let i = start; i < end - 1; i++) byte |= 3 << (2 * i);
+  byte |= 2 << (2 * (end - 1));
+  return byte;
+}
 
 const repeatOf = (ak: Extract<AdvancedKey, { kind: 'macro' }>) =>
   ak.mode === 'repeat' ? Math.max(1, ak.repeat) : 1;
@@ -1215,11 +1609,12 @@ async function readMatrix(
   wire: Wire,
   family: Family,
   profile: number,
-  fnLayer: boolean
+  fnLayer: boolean,
+  sublayer = 0
 ): Promise<Uint8Array> {
   const pages: Uint8Array[] = [];
   for (let page = 0; page < KEYMAP_PAGES; page++) {
-    pages.push(await wire.readRawPage(keymapReadRequest(family, profile, page, fnLayer)));
+    pages.push(await wire.readRawPage(keymapReadRequest(family, profile, page, fnLayer, sublayer)));
   }
   return concat(pages);
 }

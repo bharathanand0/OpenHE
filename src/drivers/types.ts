@@ -74,8 +74,31 @@ export type DriverCapabilities = {
   writable: { keymap: boolean; actuation: boolean; advancedKeys: boolean };
   /** Whether `getActuation`/`setActuation` work only on the board's active profile. */
   actuationActiveProfileOnly: boolean;
+  /** What a board's advanced keys can not do; absent: everything the editor offers. */
+  advancedKeyLimits?: AdvancedKeyLimits;
   /** Vendor ranges for the sliders, millimetres. */
   ranges?: Partial<Record<'actuation' | 'rapidTrigger' | 'deadzone', { min: number; max: number }>>;
+};
+
+export type NullBindBehavior = Extract<AdvancedKey, { kind: 'nullBind' }>['behavior'];
+
+export type AdvancedKeyLimits = {
+  /** Kinds that only exist on the base layer. */
+  baseLayerOnly?: AdvancedKeyKind[];
+  nullBindBehaviors?: NullBindBehavior[];
+  nullBindBottomOut?: boolean;
+  /** Each dynamic keystroke keycode does one tap or one press-and-release. */
+  dksOneActionPerKeycode?: boolean;
+  /** The first point is set per key (`pressMm`) rather than the key's actuation point. */
+  dksPressPoint?: boolean;
+  /** The second point is the key's own actuation point. */
+  dksBottomOutIsActuation?: boolean;
+  tapHoldTermMs?: { min: number; max: number; step: number };
+  holdOnOtherKeyPress?: boolean;
+  /** Toggle's hold time is fixed by the firmware. */
+  toggleTermFixedMs?: number;
+  /** Toggle can repeat the latched key. */
+  toggleRepeat?: boolean;
 };
 
 export type DeviceInfo = {
@@ -136,6 +159,8 @@ export type AdvancedKey =
       /** Per keycode, the action at [press, bottom-out, release from bottom-out, release]. */
       actions: Array<[DksAction, DksAction, DksAction, DksAction]>;
       bottomOutMm: number;
+      /** First point, where the board sets it per key (`advancedKeyLimits.dksPressPoint`). */
+      pressMm?: number;
     }
   | {
       kind: 'tapHold';
@@ -146,7 +171,15 @@ export type AdvancedKey =
       tappingTermMs: number;
       holdOnOtherKeyPress: boolean;
     }
-  | { kind: 'toggle'; layer: number; key: number; keycode: UiKeycode; tappingTermMs: number }
+  | {
+      kind: 'toggle';
+      layer: number;
+      key: number;
+      keycode: UiKeycode;
+      tappingTermMs: number;
+      /** The latched key repeats (`advancedKeyLimits.toggleRepeat`). */
+      repeating?: boolean;
+    }
   | {
       kind: 'macro';
       layer: number;

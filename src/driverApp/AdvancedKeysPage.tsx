@@ -7,6 +7,7 @@ import type {
   AdvancedKey,
   AdvancedKeyKind,
   DksAction,
+  AdvancedKeyLimits,
   KeyboardDriver,
   MacroMode,
   MacroStep
@@ -86,11 +87,19 @@ function fresh(
   layer: number,
   key: number,
   bindings: number,
-  travelMm: number
+  travelMm: number,
+  limits: AdvancedKeyLimits = {}
 ): AdvancedKey {
   switch (kind) {
     case 'nullBind':
-      return { kind, layer, key, secondaryKey: key, behavior: 'last', bottomOutMm: 0 };
+      return {
+        kind,
+        layer,
+        key,
+        secondaryKey: key,
+        behavior: limits.nullBindBehaviors?.[0] ?? 'last',
+        bottomOutMm: 0
+      };
     case 'dynamicKeystroke':
       return {
         kind,
@@ -101,12 +110,21 @@ function fresh(
           { length: bindings },
           () => ['hold', 'hold', 'hold', 'hold'] as [DksAction, DksAction, DksAction, DksAction]
         ),
-        bottomOutMm: Math.round(travelMm * 0.85 * 10) / 10
+        bottomOutMm: Math.round(travelMm * 0.85 * 10) / 10,
+        ...(limits.dksPressPoint ? { pressMm: Math.round(travelMm * 0.2 * 10) / 10 } : {})
       };
     case 'tapHold':
-      return { kind, layer, key, tap: 0, hold: 0, tappingTermMs: 200, holdOnOtherKeyPress: false };
+      return {
+        kind,
+        layer,
+        key,
+        tap: 0,
+        hold: 0,
+        tappingTermMs: limits.tapHoldTermMs ? 300 : 200,
+        holdOnOtherKeyPress: false
+      };
     case 'toggle':
-      return { kind, layer, key, keycode: 0, tappingTermMs: 200 };
+      return { kind, layer, key, keycode: 0, tappingTermMs: limits.toggleTermFixedMs ?? 200 };
     case 'macro':
       return { kind, layer, key, steps: [], mode: 'once', repeat: 1 };
   }
@@ -118,7 +136,30 @@ function keysOf(ak: AdvancedKey): number[] {
 }
 
 /** What is wrong with an entry, or null. */
-function problem(ak: AdvancedKey, all: readonly AdvancedKey[], self: number): string | null {
+/** One tap, or one press with an optional later release, and nothing else. */
+function oneAction(row: readonly DksAction[]): boolean {
+  const acts = row.map((a, i) => ({ a, i })).filter(({ a }) => a !== 'hold');
+  if (acts.length === 0) return true;
+  if (acts.length === 1) return acts[0].a === 'tap' || acts[0].a === 'press';
+  return acts.length === 2 && acts[0].a === 'press' && acts[1].a === 'release';
+}
+
+function problem(
+  ak: AdvancedKey,
+  all: readonly AdvancedKey[],
+  self: number,
+  limits: AdvancedKeyLimits = {}
+): string | null {
+  if (
+    ak.kind === 'dynamicKeystroke' &&
+    limits.dksOneActionPerKeycode &&
+    ak.actions.some((row, i) => ak.keycodes[i] && !oneAction(row))
+  )
+    return 'On this board each keycode does one Tap, or one Press with an optional later Release.';
+  if (ak.kind === 'dynamicKeystroke' && ak.pressMm !== undefined && ak.pressMm >= ak.bottomOutMm)
+    return 'The first point must be above the second point.';
+  if (ak.kind !== 'macro' && ak.layer !== 0 && limits.baseLayerOnly?.includes(ak.kind))
+    return 'On this board this kind of key works on the base layer only.';
   if (ak.kind === 'nullBind' && ak.secondaryKey === ak.key) return 'Pick a second key.';
   if (ak.kind === 'dynamicKeystroke' && !ak.keycodes.some(k => k !== 0))
     return 'Bind at least one keycode.';
@@ -161,6 +202,7 @@ export function AdvancedKeysPage({
 }) {
   const caps = driver.capabilities;
   const kinds = caps.advancedKeys.filter(k => k !== 'macro' || caps.macros);
+  const limits: AdvancedKeyLimits = caps.advancedKeyLimits ?? {};
   const [library, setLibrary] = useState<MacroDefinition[]>(readLibrary);
   useEffect(() => {
     const reload = () => setLibrary(readLibrary());
@@ -216,7 +258,7 @@ export function AdvancedKeysPage({
     const short = KINDS[ak.kind].short;
     for (const k of keysOf(ak)) badge.set(k, short);
   }
-  const errors = draft.map((ak, i) => problem(ak, draft, i));
+  const errors = draft.map((ak, i) => problem(ak, draft, i, limits));
   const writable = caps.writable.advancedKeys;
 
   const update = (fn: (ak: AdvancedKey) => AdvancedKey) =>
@@ -224,7 +266,7 @@ export function AdvancedKeysPage({
 
   const add = (kind: EditableKind) => {
     const free = driver.layout.keys.find(k => !badge.has(k.index))?.index ?? 0;
-    const next = fresh(kind, layer, free, caps.dynamicKeystrokeBindings, caps.travelMm);
+    const next = fresh(kind, layer, free, caps.dynamicKeystrokeBindings, caps.travelMm, limits);
     setDraft(d => (d ? [...d, next] : d));
     setEditing(draft.length);
     setTarget({ field: 'key' });
@@ -382,17 +424,19 @@ export function AdvancedKeysPage({
             </div>
           ))}
           <div className="drv-ak-add">
-            {kinds.map(kind => (
-              <button
-                type="button"
-                key={kind}
-                className="secondary-button"
-                disabled={draft.length >= caps.maxAdvancedKeys || busy}
-                onClick={() => add(kind)}
-              >
-                <Plus size={14} /> {KINDS[kind].title}
-              </button>
-            ))}
+            {kinds
+              .filter(kind => layer === 0 || !limits.baseLayerOnly?.includes(kind))
+              .map(kind => (
+                <button
+                  type="button"
+                  key={kind}
+                  className="secondary-button"
+                  disabled={draft.length >= caps.maxAdvancedKeys || busy}
+                  onClick={() => add(kind)}
+                >
+                  <Plus size={14} /> {KINDS[kind].title}
+                </button>
+              ))}
           </div>
         </section>
 
@@ -426,27 +470,31 @@ export function AdvancedKeysPage({
                         }))
                       }
                     >
-                      {NB_BEHAVIORS.map(b => (
+                      {NB_BEHAVIORS.filter(
+                        b => !limits.nullBindBehaviors || limits.nullBindBehaviors.includes(b.value)
+                      ).map(b => (
                         <option key={b.value} value={b.value}>
                           {b.label}
                         </option>
                       ))}
                     </select>
                   </label>
-                  <div className="drv-field drv-field-row">
-                    <span>Both register when both are bottomed out</span>
-                    <Toggle
-                      label="Bottom-out override"
-                      checked={current.bottomOutMm > 0}
-                      onChange={on =>
-                        update(ak => ({
-                          ...ak,
-                          bottomOutMm: on ? Math.round(caps.travelMm * 0.85 * 10) / 10 : 0
-                        }))
-                      }
-                    />
-                  </div>
-                  {current.bottomOutMm > 0 && (
+                  {limits.nullBindBottomOut !== false && (
+                    <div className="drv-field drv-field-row">
+                      <span>Both register when both are bottomed out</span>
+                      <Toggle
+                        label="Bottom-out override"
+                        checked={current.bottomOutMm > 0}
+                        onChange={on =>
+                          update(ak => ({
+                            ...ak,
+                            bottomOutMm: on ? Math.round(caps.travelMm * 0.85 * 10) / 10 : 0
+                          }))
+                        }
+                      />
+                    </div>
+                  )}
+                  {current.bottomOutMm > 0 && limits.nullBindBottomOut !== false && (
                     <RangeControl
                       value={current.bottomOutMm}
                       min={step}
@@ -494,9 +542,36 @@ export function AdvancedKeysPage({
                   </div>
                   <p className="drv-muted">
                     Click a cell to cycle: — (no change), Press, Tap, Release.
+                    {limits.dksOneActionPerKeycode &&
+                      ' On this board each keycode does one Tap, or one Press and a later Release.'}
                   </p>
+                  {current.pressMm !== undefined && (
+                    <div className="drv-field">
+                      <span>First point</span>
+                      <RangeControl
+                        value={current.pressMm}
+                        min={step}
+                        max={caps.travelMm}
+                        step={step}
+                        suffix="mm"
+                        onChange={v =>
+                          update(ak =>
+                            ak.kind === 'dynamicKeystroke' ? { ...ak, pressMm: v } : ak
+                          )
+                        }
+                      />
+                    </div>
+                  )}
                   <div className="drv-field">
-                    <span>Bottom-out point</span>
+                    <span>
+                      {current.pressMm !== undefined ? 'Second point' : 'Bottom-out point'}
+                      {limits.dksBottomOutIsActuation && (
+                        <small className="drv-muted">
+                          {' '}
+                          (also this key's actuation point on this board)
+                        </small>
+                      )}
+                    </span>
                     <RangeControl
                       value={current.bottomOutMm}
                       min={step}
@@ -518,16 +593,24 @@ export function AdvancedKeysPage({
                   </div>
                   <TermField
                     value={current.tappingTermMs}
+                    range={limits.tapHoldTermMs}
+                    label={limits.tapHoldTermMs ? 'Hold time' : undefined}
                     onChange={v => update(ak => ({ ...ak, tappingTermMs: v }))}
                   />
-                  <div className="drv-field drv-field-row">
-                    <span>Hold as soon as another key is pressed</span>
-                    <Toggle
-                      label="Hold on other key press"
-                      checked={current.holdOnOtherKeyPress}
-                      onChange={on => update(ak => ({ ...ak, holdOnOtherKeyPress: on }))}
-                    />
-                  </div>
+                  {limits.holdOnOtherKeyPress !== false && (
+                    <div className="drv-field drv-field-row">
+                      <span>Hold as soon as another key is pressed</span>
+                      <Toggle
+                        label="Hold on other key press"
+                        checked={current.holdOnOtherKeyPress}
+                        onChange={on =>
+                          update(ak =>
+                            ak.kind === 'tapHold' ? { ...ak, holdOnOtherKeyPress: on } : ak
+                          )
+                        }
+                      />
+                    </div>
+                  )}
                 </>
               )}
 
@@ -537,10 +620,29 @@ export function AdvancedKeysPage({
                     {keyButton('key', current.key, 'Key')}
                     {keycodeButton('toggle', current.keycode, 'Keycode')}
                   </div>
-                  <TermField
-                    value={current.tappingTermMs}
-                    onChange={v => update(ak => ({ ...ak, tappingTermMs: v }))}
-                  />
+                  {limits.toggleTermFixedMs !== undefined ? (
+                    <p className="drv-muted">
+                      Held longer than {limits.toggleTermFixedMs} ms it acts as a normal key (set by
+                      the firmware).
+                    </p>
+                  ) : (
+                    <TermField
+                      value={current.tappingTermMs}
+                      onChange={v => update(ak => ({ ...ak, tappingTermMs: v }))}
+                    />
+                  )}
+                  {limits.toggleRepeat && (
+                    <div className="drv-field drv-field-row">
+                      <span>Repeat the key while it is latched</span>
+                      <Toggle
+                        label="Repeating toggle"
+                        checked={!!current.repeating}
+                        onChange={on =>
+                          update(ak => (ak.kind === 'toggle' ? { ...ak, repeating: on } : ak))
+                        }
+                      />
+                    </div>
+                  )}
                 </>
               )}
 
@@ -603,7 +705,11 @@ export function AdvancedKeysPage({
                           min={1}
                           max={255}
                           value={current.repeat}
-                          onChange={e => update(ak => ({ ...ak, repeat: Number(e.target.value) }))}
+                          onChange={e =>
+                            update(ak =>
+                              ak.kind === 'macro' ? { ...ak, repeat: Number(e.target.value) } : ak
+                            )
+                          }
                         />
                         <b>{current.repeat}×</b>
                       </span>
@@ -662,16 +768,26 @@ export function AdvancedKeysPage({
   );
 }
 
-function TermField({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+function TermField({
+  value,
+  onChange,
+  range = { min: 50, max: 1000, step: 10 },
+  label = 'Tapping term'
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  range?: { min: number; max: number; step: number };
+  label?: string;
+}) {
   return (
     <label className="drv-field">
-      <span>Tapping term</span>
+      <span>{label}</span>
       <span className="drv-term">
         <input
           type="range"
-          min={50}
-          max={1000}
-          step={10}
+          min={range.min}
+          max={range.max}
+          step={range.step}
           value={value}
           onChange={e => onChange(Number(e.target.value))}
         />

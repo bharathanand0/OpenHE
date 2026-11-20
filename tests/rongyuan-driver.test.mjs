@@ -60,6 +60,7 @@ function fakeGen2({ id, revision = 0x0309, layout, profiles = 4 }) {
     led: [3, 2, 4, 8, 0, 0, 0], side: [1, 2, 3, 7, 255, 0, 0], debounce: 5, autoOs: 0, resets: 0, sleep: [180, 0, 240, 0, 1800 & 0xff, 1800 >> 8, 2400 & 0xff, 2400 >> 8]
   }
   const macros = Array.from({ length: 50 }, () => new Uint8Array(256))
+  const dks = Array.from({ length: profiles }, () => Array.from({ length: 4 }, () => new Uint8Array(128)))
   let reply = new Uint8Array(64)
   const colBytes = (p, col) => {
     const vals = columns[p].get(col)
@@ -99,9 +100,18 @@ function fakeGen2({ id, revision = 0x0309, layout, profiles = 4 }) {
         fn[req[2]].set(req.subarray(8, 12), req[3] * 4)
         state.writes.push(['fn', req[2], req[3]])
         break
-      case 0xe5: out.set(colBytes(state.profile, req[1]).subarray(req[3] * 64, req[3] * 64 + 64)); break
+      case 0xe5:
+        if (req[1] === 10) { const b = dks[state.profile][req[3] >> 1]; out.set(b.subarray((req[3] & 1) * 64, (req[3] & 1) * 64 + 64)); break }
+        out.set(colBytes(state.profile, req[1]).subarray(req[3] * 64, req[3] * 64 + 64)); break
       case 0x65: {
         const [, col, bulk, at, last] = req
+        if (col === 8) {
+          assert.equal(bulk, 0, 'dks actions are written one slot at a time')
+          for (let i = 0; i < 4; i++) dks[state.profile][i][at] = req[8 + i]
+          state.writes.push(['col', col, bulk, at, last])
+          if (last) state.commits++
+          break
+        }
         if (bulk) setColBytes(state.profile, col, at * 56, req.subarray(8, 8 + 56))
         else setColBytes(state.profile, col, at * (wide.has(col) ? 2 : 1), req.subarray(8, wide.has(col) ? 10 : 9))
         state.writes.push(['col', col, bulk, at, last])
@@ -137,7 +147,7 @@ function fakeGen2({ id, revision = 0x0309, layout, profiles = 4 }) {
     async sendFeature(buf) { assert.equal(buf.length, 64); handle(buf) },
     async receiveFeature() { return reply },
   }
-  return { node, state, keymaps, fn, columns, macros }
+  return { node, state, keymaps, fn, columns, macros, dks }
 }
 
 function fakeClock() {
@@ -488,4 +498,84 @@ test('sleep packets: yc500 writes at 8 but answers at 1; gen2 is symmetric', () 
   assert.deepEqual(extras.parseSleep(ycReply, yc), t)
   const g2Reply = new Uint8Array(64); g2Reply[0] = 0x91; g2Reply.set(pkt.subarray(8, 16), 8)
   assert.deepEqual(extras.parseSleep(g2Reply, g2), t)
+})
+
+test('advanced keys: snap, dynamic keystroke, mod-tap and toggle as sharkfin writes them', async () => {
+  const file = layoutFile('Common68_ZAP68')
+  const { driver, board } = await connect({ id: 2268, layout: file })
+  const caps = driver.capabilities
+  assert.deepEqual(caps.advancedKeys, ['nullBind', 'dynamicKeystroke', 'tapHold', 'toggle', 'macro'])
+  assert.deepEqual(caps.advancedKeyLimits.nullBindBehaviors, ['last'])
+  const slot = i => file.keys[i].matrixIndex
+  const sub = (i, k) => [...board.keymaps[0][i].subarray(slot(k) * 4, slot(k) * 4 + 4)]
+  const keys = [
+    { kind: 'nullBind', layer: 0, key: 31, secondaryKey: 33, behavior: 'last', bottomOutMm: 0 },
+    {
+      kind: 'dynamicKeystroke', layer: 0, key: 16, keycodes: [0x14, 0x1a, 0, 0],
+      actions: [['press', 'hold', 'release', 'hold'], ['hold', 'tap', 'hold', 'hold'], ['hold', 'hold', 'hold', 'hold'], ['hold', 'hold', 'hold', 'hold']],
+      bottomOutMm: 3, pressMm: 0.5
+    },
+    { kind: 'tapHold', layer: 0, key: 30, tap: 0x29, hold: 0x10000, tappingTermMs: 250, holdOnOtherKeyPress: false },
+    { kind: 'toggle', layer: 0, key: 2, keycode: 0x1e, tappingTermMs: 300, repeating: true }
+  ]
+  await driver.setAdvancedKeys(0, keys)
+  const col = (c, k) => board.columns[0].get(c)[slot(k)]
+  // snap: both keys kind 7 carrying each other
+  assert.equal(col(7, 31) & 0x7f, 7); assert.equal(col(7, 33) & 0x7f, 7)
+  assert.equal(col(9, 31), slot(33)); assert.equal(col(9, 33), slot(31))
+  // dks: kind 2, first point column 4, second point the travel column, actions one byte per sub-layer
+  assert.equal(col(7, 16) & 0x7f, 2)
+  assert.equal(col(4, 16), 50); assert.equal(col(0, 16), 300)
+  assert.equal(board.dks[0][0][slot(16)], 0b1011) // press A, release at C: cells 3,2
+  assert.equal(board.dks[0][1][slot(16)], 0b0100) // tap at B
+  assert.deepEqual(sub(1, 16), [0, 0, 0x1a, 0])
+  // mod-tap: hold on sub-layer 0, tap on 1, 10 ms units
+  assert.equal(col(7, 30) & 0x7f, 3); assert.equal(col(5, 30), 25)
+  assert.deepEqual(sub(0, 30), [0, 0, 0xe0, 0]); assert.deepEqual(sub(1, 30), [0, 0, 0x29, 0])
+  // repeating toggle is kind 5
+  assert.equal(col(7, 2) & 0x7f, 5); assert.deepEqual(sub(0, 2), [0, 0, 0x1e, 0])
+  // only per-slot column writes, every key's batch closed with `last`
+  assert.ok(board.state.writes.filter(w => w[0] === 'col').every(w => w[2] === 0))
+
+  const back = await driver.getAdvancedKeys(0)
+  const byKind = k => back.find(a => a.kind === k)
+  assert.deepEqual(byKind('nullBind'), keys[0])
+  assert.deepEqual(byKind('dynamicKeystroke').keycodes, keys[1].keycodes)
+  assert.deepEqual(byKind('dynamicKeystroke').actions.slice(0, 2), keys[1].actions.slice(0, 2))
+  assert.ok(Math.abs(byKind('dynamicKeystroke').pressMm - 0.5) < 1e-9)
+  assert.deepEqual(byKind('tapHold'), keys[2])
+  assert.deepEqual(byKind('toggle'), keys[3])
+
+  // unchanged: nothing written
+  const before = board.state.writes.length
+  await driver.setAdvancedKeys(0, back)
+  assert.equal(board.state.writes.length, before)
+
+  // removing them: plain kind again, rapid trigger bit kept, replaced keycodes back to factory
+  board.columns[0].get(7)[slot(30)] |= 0x80
+  driver.columnsCache = null
+  await driver.setAdvancedKeys(0, [])
+  assert.equal(col(7, 30), 0x80)
+  for (const k of [31, 33, 16, 2]) assert.equal(col(7, k) & 0x7f, 0)
+  assert.deepEqual(sub(0, 30), file.keys[30].matrixEntry)
+  assert.deepEqual(await driver.getAdvancedKeys(0), [])
+})
+
+test('advanced keys: rules the board cannot follow are refused', async () => {
+  const { driver } = await connect({ id: 2268, layout: layoutFile('Common68_ZAP68') })
+  await assert.rejects(driver.setAdvancedKeys(0, [{ kind: 'toggle', layer: 1, key: 2, keycode: 4, tappingTermMs: 300 }]), /base layer/)
+  await assert.rejects(driver.setAdvancedKeys(0, [{ kind: 'nullBind', layer: 0, key: 31, secondaryKey: 33, behavior: 'neutral', bottomOutMm: 0 }]), /last key/)
+})
+
+test('dks action bytes match sharkfin encodeDks/decodeDks', async () => {
+  const { dksToStages, stagesToDks } = await bundle('src/drivers/rongyuan/driver.ts')
+  // sharkfin: hold A..C is 3,2,0,0; tap at B is 0,1,0,0; a run of 3s to the end releases at D
+  assert.equal(stagesToDks(['press', 'hold', 'release', 'hold']), 0b1011)
+  assert.equal(stagesToDks(['hold', 'tap', 'hold', 'hold']), 0b0100)
+  assert.equal(stagesToDks(['press', 'hold', 'hold', 'hold']), 0b101111) // 3,3,2: released at D
+  for (let b = 0; b < 256; b++) {
+    const st = dksToStages(b)
+    const again = stagesToDks(st)
+    assert.deepEqual(dksToStages(again), st, `byte ${b}`)
+  }
 })
