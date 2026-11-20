@@ -6,9 +6,9 @@ import { driverConnection, useDriverConnection } from './store';
 
 const FAMILIES = [
   {
-    name: 'libhmk boards',
+    name: 'OpenHE firmware',
     detail:
-      'Any keyboard running libhmk firmware, the boards hmkconf talks to. The board describes its own layout.'
+      'Keyboards running OpenHE’s own firmware (built on libhmk), starting with the Skyloong GK68 TMR. Actuation in 0.01 mm steps, dead zones, gamepad mode; the board describes its own layout.'
   },
   {
     name: 'RongYuan magnetic boards',
@@ -32,7 +32,7 @@ const FEATURES = [
   }
 ] as const;
 
-/** Start screen: connect a libhmk or RongYuan board, or go to the AULA app. */
+/** Start screen: connect an OpenHE-firmware or RongYuan board, or go to the AULA app. */
 export function Landing() {
   const conn = useDriverConnection();
   const supported = driverConnection.supported();
@@ -114,7 +114,8 @@ export function Landing() {
         <footer className="landing-footer">
           Built on <a href="https://github.com/shizunavn/OpenAula">OpenAula</a>, with the RongYuan
           protocol and board list from <a href="https://github.com/dniminenn/sharkfin">sharkfin</a>{' '}
-          and the <a href="https://github.com/peppapighs/libhmk">libhmk</a> protocol. GPL-3.0.
+          and OpenHE’s firmware built on <a href="https://github.com/peppapighs/libhmk">libhmk</a>.
+          GPL-3.0.
         </footer>
       </main>
     </div>

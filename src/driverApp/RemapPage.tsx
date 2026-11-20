@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { REMAP_CATEGORIES, remapLabel } from '../protocol/hero68/remap';
 import type { UiKeycode } from '../drivers/keycodes';
 import type { KeyboardDriver } from '../drivers/types';
-import { BoardView } from './BoardView';
+import Hero68Preview from '../components/Hero68Preview';
+import type { HeroDeviceModelId } from '../keyboard/devices';
+import { indexOfKeyId, keyIdOf } from './boardModel';
 import { useKeycodeGroups } from './KeycodePicker';
 import { SaveBar } from './SaveBar';
 
@@ -17,11 +19,13 @@ export function keyLabel(driver: KeyboardDriver, value: UiKeycode, fnLayer: bool
 /** Key remapping per layer, with the shared catalog filtered to what the board can store. */
 export function RemapPage({
   driver,
+  model,
   profile,
   busy,
   run
 }: {
   driver: KeyboardDriver;
+  model: HeroDeviceModelId;
   profile: number;
   busy: boolean;
   run: (label: string, task: () => Promise<void>) => Promise<boolean>;
@@ -78,19 +82,22 @@ export function RemapPage({
       </div>
       {loadError && <div className="drv-notice is-error">{loadError}</div>}
       {draft && (
-        <BoardView
-          layout={driver.layout}
-          selected={selected === null ? undefined : new Set([selected])}
-          onKeyClick={i => setSelected(prev => (prev === i ? null : i))}
-          render={i => (
-            <>
-              <small>{driver.layout.keys[i]?.label}</small>
-              <b className={draft[i] !== saved?.[i] ? 'is-changed' : undefined}>
-                {keyLabel(driver, draft[i], fnLayer)}
-              </b>
-            </>
-          )}
-        />
+        <section className="keyboard-stage drv-stage">
+          <Hero68Preview
+            model={model}
+            selectedKeys={new Set(selected === null ? [] : [keyIdOf(selected)])}
+            onToggleKey={keyId => {
+              const i = indexOfKeyId(keyId);
+              setSelected(prev => (prev === i ? null : i));
+            }}
+            keyLabels={Object.fromEntries(
+              draft.map((v, i) => [keyIdOf(i), keyLabel(driver, v, fnLayer)])
+            )}
+            keyClassNames={Object.fromEntries(
+              draft.flatMap((v, i) => (v !== saved?.[i] ? [[keyIdOf(i), 'drv-key-changed']] : []))
+            )}
+          />
+        </section>
       )}
       {!draft && !loadError && <div className="drv-notice">Reading keymap…</div>}
       {draft && (

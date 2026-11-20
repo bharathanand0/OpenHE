@@ -4,7 +4,10 @@ import { RangeControl } from '../app/components/RangeControl';
 import { Toggle } from '../app/components/Toggle';
 import type { UiKeycode } from '../drivers/keycodes';
 import type { AdvancedKey, AdvancedKeyKind, DksAction, KeyboardDriver } from '../drivers/types';
-import { BoardView } from './BoardView';
+import Hero68Preview from '../components/Hero68Preview';
+import type { HeroDeviceModelId } from '../keyboard/devices';
+import type { AdvancedBinding } from '../protocol/hero68/advanced';
+import { indexOfKeyId, keyIdOf } from './boardModel';
 import { KeycodePicker } from './KeycodePicker';
 import { keyLabel } from './RemapPage';
 import { SaveBar } from './SaveBar';
@@ -111,11 +114,13 @@ type Target =
 
 export function AdvancedKeysPage({
   driver,
+  model,
   profile,
   busy,
   run
 }: {
   driver: KeyboardDriver;
+  model: HeroDeviceModelId;
   profile: number;
   busy: boolean;
   run: (label: string, task: () => Promise<void>) => Promise<boolean>;
@@ -244,6 +249,24 @@ export function AdvancedKeysPage({
   };
 
   const highlighted = new Set<number>(current ? keysOf(current) : []);
+  // OpenAula's icons on the keys of this layer's advanced keys (this page only)
+  const ICON_KIND: Record<AdvancedKey['kind'], string> = {
+    nullBind: 'SOCD',
+    dynamicKeystroke: 'DKS',
+    tapHold: 'MT',
+    toggle: 'TGL',
+    macro: 'MACRO'
+  };
+  const bindings: AdvancedBinding[] = onLayer.map(({ ak, i }) => ({
+    id: `ak${i}`,
+    kind: ICON_KIND[ak.kind] as AdvancedBinding['kind'],
+    keys: keysOf(ak).map(keyIdOf),
+    actions: [],
+    thresholds: [],
+    states: [],
+    delay: 0,
+    mode: 0
+  }));
   const step = Math.max(caps.travelStepMm, 0.05);
 
   return (
@@ -265,17 +288,14 @@ export function AdvancedKeysPage({
           ))}
         </div>
       )}
-      <BoardView
-        layout={driver.layout}
-        selected={highlighted}
-        onKeyClick={onBoardClick}
-        render={i => (
-          <>
-            <small>{driver.layout.keys[i]?.label}</small>
-            {badge.has(i) && <em>{badge.get(i)}</em>}
-          </>
-        )}
-      />
+      <section className="keyboard-stage drv-stage">
+        <Hero68Preview
+          model={model}
+          selectedKeys={new Set([...highlighted].map(keyIdOf))}
+          onToggleKey={keyId => onBoardClick(indexOfKeyId(keyId))}
+          advancedBindings={bindings}
+        />
+      </section>
       <div className="drv-ak">
         <section className="drv-panel drv-ak-list">
           <h3>

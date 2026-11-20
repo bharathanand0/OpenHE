@@ -24,7 +24,7 @@ OpenHE grew out of [OpenAula](https://github.com/shizunavn/OpenAula) and keeps i
 
 | Family | Boards | Status |
 | --- | --- | --- |
-| **libhmk** | Any keyboard running [libhmk](https://github.com/peppapighs/libhmk) firmware (the boards [hmkconf](https://github.com/peppapighs/hmkconf) talks to), including the Skyloong GK68 TMR port. The board reports its own layout, so no per-board setup is needed. | Keymap, actuation, rapid trigger, advanced keys, live travel, calibration, gamepad |
+| **OpenHE firmware** | Keyboards running OpenHE's own firmware, built on [libhmk](https://github.com/peppapighs/libhmk) (see [gk68tmr_firmware](https://github.com/bharathanand0/gk68tmr_firmware)), starting with the Skyloong GK68 TMR. The board reports its own layout, so no per-board setup is needed. It is not hmkconf-compatible: the firmware has its own actuation model (0.01 mm steps, dead zones, OpenAula-style rapid trigger) and its own HID usage page. | Keymap, actuation, rapid trigger, dead zones, advanced keys, live travel, calibration, gamepad |
 | **RongYuan** | About 770 magnetic boards on RongYuan firmware, sold under Akko, MonsGeek, AttackShark, Epomaker, Hator, Ajazz, YUNZII and many other names. Board list, layouts and protocol from [sharkfin](https://github.com/dniminenn/sharkfin). | Keymap and Fn layer on all of them; switch settings read on all, **written** on the ry5088 and yc3121 firmware lines (the ones whose write path is verified) |
 | **AULA** | HERO 68, HERO 84, HERO 68 XS, WIN 68 HE MAX | Through the original OpenAula app, linked from the start screen |
 
@@ -34,12 +34,12 @@ RongYuan boards are identified by the ID the board reports, not by USB product I
 
 | Area | What you can do |
 | --- | --- |
-| Actuation | Per-key or multi-key actuation point, release point and bottom dead zone (where the board has them), in millimetres at the board's own resolution |
-| Rapid Trigger | On/off per key, separate press and release sensitivity, continuous rapid trigger on libhmk |
+| Quick Settings, Actuation, Rapid Trigger | OpenAula's own pages: per-key or multi-key actuation point, rapid trigger, top and bottom dead zones (where the board has them), with live Visual Feedback, in 0.01 mm steps |
+| Rapid Trigger | On/off per key, one sensitivity or separate press and release sensitivities, continuous rapid trigger on OpenHE firmware |
 | Key Remap | Every layer, from a picture of your board; the catalog is filtered to what the board can store, plus board-specific keys (layers, profiles, bootloader …) |
-| Advanced Keys | Null bind / SOCD (5 resolution rules and bottom-out override), dynamic keystroke (4 keycodes × 4 stages), tap-hold, toggle (libhmk) |
-| Gamepad | libhmk's built-in XInput gamepad: per-key button map, analog curve and stick options |
-| Live Travel | Per-key travel in mm or raw sensor counts, with peak hold (polled on libhmk, streamed by cable on RongYuan gen2) |
+| Advanced Keys | Null bind / SOCD (5 resolution rules and bottom-out override), dynamic keystroke (4 keycodes × 4 stages), tap-hold, toggle (OpenHE firmware), shown with OpenAula's key icons |
+| Gamepad | The firmware's XInput gamepad (OpenHE firmware): per-key button map, analog curve and stick options |
+| Hall Stream | OpenAula's live travel page: every key's travel in mm (polled on OpenHE firmware, streamed by cable on RongYuan gen2) |
 | Device | Firmware version, layout source, recalibration, factory reset; confirming an inferred RongYuan layout before writes |
 | Profiles | Every on-board profile the board has; RongYuan switch settings follow the active profile, as the firmware stores them |
 
@@ -68,7 +68,7 @@ On Linux the keyboard's HID node belongs to root; add a udev rule (sharkfin's [R
 OpenHE is new and has mostly been checked against software models of the protocols. Reports from real boards are the most useful thing right now:
 
 - **RongYuan owners:** does the picture match your board (Device page)? Do actuation and remap changes take effect and survive a replug? Include the name shown in the sidebar and the firmware version.
-- **libhmk owners:** anything that behaves differently from hmkconf.
+- **GK68 owners on OpenHE firmware:** whether actuation, rapid trigger and the dead zones feel the way the sliders say.
 
 Open an issue on this repository with what you saw.
 
@@ -76,11 +76,11 @@ Open an issue on this repository with what you saw.
 
 Each keyboard family is a **driver** in `src/drivers/` behind one interface (`KeyboardDriver`). A driver reports what the board can do (`capabilities`: profiles, layers, travel range and step, which advanced keys, live travel, gamepad …) and its layout; the UI shows only what the board supports and always works in millimetres and one shared keycode space.
 
-- `src/drivers/libhmk/` speaks libhmk's raw HID protocol (`0xFFAB`). Name, sizes, layout and default keymap come from the board's own gzipped metadata.
+- `src/drivers/openhe/` speaks the OpenHE firmware's raw HID protocol (usage page `0xFF48`, libhmk's command set with OpenHE's actuation records). The board identifies itself with an `OPHE` signature; name, sizes, layout and default keymap come from its own metadata.
 - `src/drivers/rongyuan/` is a TypeScript port of sharkfin's protocol: 64-byte feature reports on `0xFFFF`, both command families (gen2 and yc500), the magnetic switch columns, write pacing and the 2.4 GHz receiver relay. It writes only what sharkfin writes, with the same spacing between flash writes.
-- `src/driverApp/` is the workspace UI for driver-backed boards.
+- `src/driverApp/` is the workspace UI for driver-backed boards. The connected board is registered as an OpenAula board model, so OpenAula's own Quick Settings, Actuation Point, Rapid Trigger and Hall Stream pages and keyboard preview draw it.
 
-Both drivers are tested in `tests/libhmk-driver.test.mjs` and `tests/rongyuan-driver.test.mjs` against software boards built from the firmware sources and protocol notes.
+Both drivers are tested in `tests/openhe-driver.test.mjs` and `tests/rongyuan-driver.test.mjs` against software boards built from the firmware sources and protocol notes.
 
 ## AULA keyboards (OpenAula)
 
@@ -163,7 +163,7 @@ src/
   drivers/           Board-neutral driver layer
     types.ts         KeyboardDriver interface and capabilities
     keycodes.ts      Shared UI keycode space
-    libhmk/          libhmk raw HID driver
+    openhe/          OpenHE firmware driver
     rongyuan/        RongYuan driver (sharkfin port) and bundled board list/layouts
   driverApp/         OpenHE workspace: shell, pages, start screen
   App.tsx, app/, pages/, components/, keyboard/, protocol/, state/
@@ -178,6 +178,6 @@ service/, landing/, functions/, worker/
 
 - [OpenAula](https://github.com/shizunavn/OpenAula) by shizunavn: the app, interface and AULA support this project started from (Apache-2.0, see `LICENSES/Apache-2.0.txt`).
 - [sharkfin](https://github.com/dniminenn/sharkfin) by JR Lanteigne: the RongYuan protocol, board list and layouts the RongYuan driver is ported from (GPL-3.0-or-later).
-- [libhmk](https://github.com/peppapighs/libhmk) and [hmkconf](https://github.com/peppapighs/hmkconf) by peppapighs: the libhmk firmware and protocol.
+- [libhmk](https://github.com/peppapighs/libhmk) by peppapighs: the firmware OpenHE's firmware is built on.
 
 OpenHE as a whole is distributed under the **GNU General Public License v3.0 or later** (`LICENSE`). Files carried over from OpenAula remain available under Apache-2.0 as well.

@@ -193,7 +193,9 @@ function OtherKeyboardButton({ disabled }: { disabled: boolean }) {
         disabled={disabled || conn.state === 'connecting' || !driverConnection.supported()}
         onClick={() => void driverConnection.request()}
       >
-        {conn.state === 'connecting' ? tr('Connecting…') : tr('Other keyboard (libhmk, RongYuan)')}
+        {conn.state === 'connecting'
+          ? tr('Connecting…')
+          : tr('Other keyboard (OpenHE firmware, RongYuan)')}
       </button>
       <button type="button" className="device-home-link" onClick={() => appMode.set('landing')}>
         {tr('OpenHE home')}

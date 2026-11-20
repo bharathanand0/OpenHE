@@ -146,7 +146,7 @@ export function GeneralSettingsPage({
             <Section
               title="Advanced key timing"
               text={`Tick rate for profile ${profile + 1}: how many key-scan ticks advanced-key presses and taps wait before they are sent, which is also how long a tap is held. Lower is faster; some games miss very short taps.`}
-              hint="libhmk default: 30."
+              hint="Default: 30."
             >
               <span className="drv-term">
                 <input

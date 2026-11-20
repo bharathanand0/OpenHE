@@ -31,9 +31,28 @@ const letters: Record<string, string[]> = {
     'M418.2,175.75H384.89l4.64-23.58h94L479,175.75H445.2L425.85,278.57h-27Z'
   ]
 };
-export default function AdvancedKeyIcon({ kind }: { kind: AdvancedKind | 'UNKNOWN' }) {
+export default function AdvancedKeyIcon({ kind }: { kind: AdvancedKind | 'UNKNOWN' | 'MACRO' }) {
   if (kind === 'UNKNOWN') {
     return <span aria-hidden="true">?</span>;
+  }
+  if (kind === 'MACRO') {
+    // OpenHE: macro key, the keycap outline with an M
+    return (
+      <svg viewBox="-50 -50 600 600" focusable="false" aria-hidden="true">
+        <path fill="currentColor" d={top} />
+        <text
+          x="250"
+          y="230"
+          textAnchor="middle"
+          fontSize="210"
+          fontWeight="900"
+          fontStyle="italic"
+          fill="#333"
+        >
+          M
+        </text>
+      </svg>
+    );
   }
   if (kind === 'SOCD') {
     return (

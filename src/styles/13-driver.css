@@ -887,3 +887,19 @@
 .drv-openaula-extra .setting-card {
   max-width: 560px;
 }
+
+/* OpenAula keyboard preview inside OpenHE's own pages */
+.drv-content .drv-stage {
+  margin: -8px 0 4px;
+}
+.hero-key.drv-key-changed .hero-key-content {
+  color: var(--brand);
+}
+.hero-key.drv-gp-digital .hero-key-content {
+  color: #8fd0ff;
+  font-weight: 700;
+}
+.hero-key.drv-gp-analog .hero-key-content {
+  color: var(--brand);
+  font-weight: 700;
+}

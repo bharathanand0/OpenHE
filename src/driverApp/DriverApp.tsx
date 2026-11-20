@@ -224,11 +224,11 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
       case 'stream':
         return <DriverStreamPage driver={driver} perf={perf} hall={hall} />;
       case 'advanced':
-        return <AdvancedKeysPage {...props} />;
+        return <AdvancedKeysPage {...props} model={model} />;
       case 'gamepad':
-        return <GamepadPage {...props} />;
+        return <GamepadPage {...props} model={model} />;
       default:
-        return <RemapPage {...props} />;
+        return <RemapPage {...props} model={model} />;
     }
   };
 

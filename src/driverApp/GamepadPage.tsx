@@ -8,7 +8,9 @@ import type {
   GamepadConfig,
   KeyboardDriver
 } from '../drivers/types';
-import { BoardView, nextSelection } from './BoardView';
+import Hero68Preview from '../components/Hero68Preview';
+import type { HeroDeviceModelId } from '../keyboard/devices';
+import { indexOfKeyId, keyIdOf } from './boardModel';
 import { SaveBar } from './SaveBar';
 
 const GROUPS: Array<{ label: string; buttons: Array<[GamepadButton, string]> }> = [
@@ -303,11 +305,13 @@ function Tester() {
 
 export function GamepadPage({
   driver,
+  model,
   profile,
   busy,
   run
 }: {
   driver: KeyboardDriver;
+  model: HeroDeviceModelId;
   profile: number;
   busy: boolean;
   run: (label: string, task: () => Promise<void>) => Promise<boolean>;
@@ -396,22 +400,30 @@ export function GamepadPage({
         </span>
       </section>
 
-      <BoardView
-        layout={driver.layout}
-        selected={selected}
-        onKeyClick={(i, e) => setSelected(prev => nextSelection(prev, i, e))}
-        render={i => {
-          const b = draft.buttons[i];
-          return (
-            <>
-              <small>{driver.layout.keys[i]?.label}</small>
-              {b !== 'none' && (
-                <b className={ANALOG.has(b) ? 'drv-gp-analog' : 'drv-gp-digital'}>{SHORT.get(b)}</b>
-              )}
-            </>
-          );
-        }}
-      />
+      <section className="keyboard-stage drv-stage">
+        <Hero68Preview
+          model={model}
+          selectedKeys={new Set([...selected].map(keyIdOf))}
+          onToggleKey={keyId => {
+            const i = indexOfKeyId(keyId);
+            setSelected(prev => {
+              const next = new Set(prev);
+              if (next.has(i)) next.delete(i);
+              else next.add(i);
+              return next;
+            });
+          }}
+          onSelectKeys={keys => setSelected(new Set([...keys].map(indexOfKeyId)))}
+          keyLabels={Object.fromEntries(
+            draft.buttons.flatMap((b, i) => (b === 'none' ? [] : [[keyIdOf(i), SHORT.get(b) ?? b]]))
+          )}
+          keyClassNames={Object.fromEntries(
+            draft.buttons.flatMap((b, i) =>
+              b === 'none' ? [] : [[keyIdOf(i), ANALOG.has(b) ? 'drv-gp-analog' : 'drv-gp-digital']]
+            )
+          )}
+        />
+      </section>
       <div className="drv-toolbar">
         <span>
           {selected.size
