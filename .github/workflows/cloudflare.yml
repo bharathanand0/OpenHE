@@ -17,7 +17,8 @@ concurrency:
 jobs:
   deploy:
     # Fork pull requests must not see the Cloudflare token.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # Upstream OpenAula's deployment; OpenHE deploys to GitHub Pages (pages.yml).
+    if: github.repository == 'shizunavn/OpenAula' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

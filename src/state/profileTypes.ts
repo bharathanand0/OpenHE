@@ -196,7 +196,7 @@ export const WOOT_ICON_MAP: Readonly<Record<string, string>> = {
 
 export function resolveWootProfileIconUrl(iconId?: string | null): string {
   const key = iconId && WOOT_ICON_MAP[iconId] ? WOOT_ICON_MAP[iconId] : 'WootingLogo_Plain_black';
-  return `/images/ProfileIcons/${key}.svg`;
+  return `${import.meta.env.BASE_URL}images/ProfileIcons/${key}.svg`;
 }
 
 export type WootIconCategory = 'switchyUwu' | 'wooting' | 'gradients';
@@ -261,7 +261,7 @@ export const WOOT_PROFILE_PRESETS: readonly WootPresetDefinition[] = [
     defaultName: 'New FPS Profile',
     color: '#f87171',
     icon: 'switchy:gamer',
-    imageSrc: '/images/ProfilePresetImages/fps.svg',
+    imageSrc: `${import.meta.env.BASE_URL}images/ProfilePresetImages/fps.svg`,
     actuationMm: 0.4,
     rapidTrigger: true,
     rapidSensitivityMm: 0.15
@@ -273,7 +273,7 @@ export const WOOT_PROFILE_PRESETS: readonly WootPresetDefinition[] = [
     defaultName: 'New Racing Profile',
     color: '#fb923c',
     icon: 'switchy:cool',
-    imageSrc: '/images/ProfilePresetImages/racing.svg',
+    imageSrc: `${import.meta.env.BASE_URL}images/ProfilePresetImages/racing.svg`,
     actuationMm: 1.2,
     rapidTrigger: true,
     rapidSensitivityMm: 0.35
@@ -285,7 +285,7 @@ export const WOOT_PROFILE_PRESETS: readonly WootPresetDefinition[] = [
     defaultName: 'New Typing Profile',
     color: '#38bdf8',
     icon: 'woot:p:blue',
-    imageSrc: '/images/ProfilePresetImages/typing.svg',
+    imageSrc: `${import.meta.env.BASE_URL}images/ProfilePresetImages/typing.svg`,
     actuationMm: 2.0,
     rapidTrigger: false,
     rapidSensitivityMm: 0.65
@@ -297,7 +297,7 @@ export const WOOT_PROFILE_PRESETS: readonly WootPresetDefinition[] = [
     defaultName: 'New Analog Profile',
     color: '#4ade80',
     icon: 'switchy:gamerUltra',
-    imageSrc: '/images/ProfilePresetImages/analogMovement.svg',
+    imageSrc: `${import.meta.env.BASE_URL}images/ProfilePresetImages/analogMovement.svg`,
     actuationMm: 1.0,
     rapidTrigger: true,
     rapidSensitivityMm: 0.25
@@ -309,7 +309,7 @@ export const WOOT_PROFILE_PRESETS: readonly WootPresetDefinition[] = [
     defaultName: 'TenZ Pro Profile',
     color: '#38bdf8',
     icon: 'woot:g:blue',
-    imageSrc: '/images/ProfilePresetImages/tenz.svg',
+    imageSrc: `${import.meta.env.BASE_URL}images/ProfilePresetImages/tenz.svg`,
     actuationMm: 0.2,
     rapidTrigger: true,
     rapidSensitivityMm: 0.15
@@ -321,7 +321,7 @@ export const WOOT_PROFILE_PRESETS: readonly WootPresetDefinition[] = [
     defaultName: 'New Custom Profile',
     color: '#ffd45c',
     icon: 'woot:p:black',
-    imageSrc: '/images/ProfilePresetImages/custom.svg',
+    imageSrc: `${import.meta.env.BASE_URL}images/ProfilePresetImages/custom.svg`,
     actuationMm: 1.6,
     rapidTrigger: false,
     rapidSensitivityMm: 0.65

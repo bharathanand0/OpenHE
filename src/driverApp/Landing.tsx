@@ -1,4 +1,14 @@
-import { ArrowRight, Cable, Gauge, Keyboard, Layers, Loader2, Activity } from 'lucide-react';
+import {
+  ArrowRight,
+  Cable,
+  Gauge,
+  Keyboard,
+  Layers,
+  Lightbulb,
+  ListOrdered,
+  Loader2,
+  Activity
+} from 'lucide-react';
 import logo from '../assets/openhe-logo.png';
 import { appMode } from '../appMode';
 import { BRAND } from '../brand';
@@ -25,6 +35,16 @@ const FEATURES = [
   },
   { icon: Keyboard, title: 'Key remap', text: 'Every layer, from a picture of your own board.' },
   { icon: Layers, title: 'Advanced keys', text: 'SOCD, dynamic keystroke, tap-hold and toggle.' },
+  {
+    icon: ListOrdered,
+    title: 'Macros',
+    text: 'Record a sequence and put it on any key: once, repeated, held or toggled.'
+  },
+  {
+    icon: Lightbulb,
+    title: 'Lighting',
+    text: 'Your board’s own effects, colours and edge light (RongYuan).'
+  },
   {
     icon: Activity,
     title: 'Live travel',

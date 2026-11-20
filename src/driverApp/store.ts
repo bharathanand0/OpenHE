@@ -36,6 +36,8 @@ export const driverConnection = {
   async request(): Promise<void> {
     if (current.state === 'connecting') return;
     await restoring;
+    // the quiet reconnect may have opened the board meanwhile
+    if (current.state !== 'idle') return;
     set({ state: 'connecting' });
     try {
       const driver = await requestDriver();

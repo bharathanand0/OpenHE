@@ -73,6 +73,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'HERO68_')
   const extraDomains = (env.HERO68_DEV_HOSTS ?? '').split(',').map(host => host.trim()).filter(Boolean)
   return {
+    // GitHub Pages serves the app under /<repo>/; set OPENHE_BASE there
+    base: process.env.OPENHE_BASE ?? '/',
     plugins: [
       vendorTapRoutingPlugin(),
       react(),

@@ -1,6 +1,8 @@
 # OpenHE
 
-An open, browser-based configurator for **magnetic (Hall-effect and TMR) keyboards**. Plug a keyboard in, open the page in Chrome or Edge, and set actuation, rapid trigger, key remaps and advanced keys from a picture of your own board. Nothing to install, no account, no telemetry: the page talks only to your keyboard.
+An open, browser-based configurator for **magnetic (Hall-effect and TMR) keyboards**. Plug a keyboard in, open the page in Chrome or Edge, and set actuation, rapid trigger, key remaps, advanced keys, macros and lighting from a picture of your own board. Nothing to install, no account, no telemetry: the page talks only to your keyboard.
+
+**Use it at [bharathanand0.github.io/OpenHE](https://bharathanand0.github.io/OpenHE/)** (Chrome, Edge or another Chromium browser on a desktop).
 
 OpenHE grew out of [OpenAula](https://github.com/shizunavn/OpenAula) and keeps its interface, adding a driver layer so one app can serve keyboards from different firmware families.
 
@@ -24,8 +26,8 @@ OpenHE grew out of [OpenAula](https://github.com/shizunavn/OpenAula) and keeps i
 
 | Family | Boards | Status |
 | --- | --- | --- |
-| **OpenHE firmware** | Keyboards running OpenHE's own firmware, built on [libhmk](https://github.com/peppapighs/libhmk) (see [gk68tmr_firmware](https://github.com/bharathanand0/gk68tmr_firmware)), starting with the Skyloong GK68 TMR. The board reports its own layout, so no per-board setup is needed. It is not hmkconf-compatible: the firmware has its own actuation model (0.01 mm steps, dead zones, OpenAula-style rapid trigger) and its own HID usage page. | Keymap, actuation, rapid trigger, dead zones, advanced keys, live travel, calibration, gamepad |
-| **RongYuan** | About 770 magnetic boards on RongYuan firmware, sold under Akko, MonsGeek, AttackShark, Epomaker, Hator, Ajazz, YUNZII and many other names. Board list, layouts and protocol from [sharkfin](https://github.com/dniminenn/sharkfin). | Keymap and Fn layer on all of them; switch settings read on all, **written** on the ry5088 and yc3121 firmware lines (the ones whose write path is verified) |
+| **OpenHE firmware** | Keyboards running OpenHE's own firmware, built on [libhmk](https://github.com/peppapighs/libhmk) (see [gk68tmr_firmware](https://github.com/bharathanand0/gk68tmr_firmware)), starting with the Skyloong GK68 TMR. The board reports its own layout, so no per-board setup is needed. It is not hmkconf-compatible: the firmware has its own actuation model (0.01 mm steps, dead zones, OpenAula-style rapid trigger) and its own HID usage page. | Keymap, actuation, rapid trigger, dead zones, advanced keys, macros, switch profiles, live travel, calibration, gamepad |
+| **RongYuan** | About 770 magnetic boards on RongYuan firmware, sold under Akko, MonsGeek, AttackShark, Epomaker, Hator, Ajazz, YUNZII and many other names. Board list, layouts and protocol from [sharkfin](https://github.com/dniminenn/sharkfin). | Keymap, Fn layer, macros, lighting and board settings on all of them; switch settings read on all, **written** on the ry5088 and yc3121 firmware lines (the ones whose write path is verified) |
 | **AULA** | HERO 68, HERO 84, HERO 68 XS, WIN 68 HE MAX | Through the original OpenAula app, linked from the start screen |
 
 RongYuan boards are identified by the ID the board reports, not by USB product ID (many unrelated boards share `3151:5030`). A board missing from the list is reported as such; nothing is guessed.
@@ -50,30 +52,38 @@ RongYuan boards are identified by the ID the board reports, not by USB product I
 
 ![Advanced keys](docs/images/openhe-advanced-keys.png)
 
+![Lighting on a RongYuan board](docs/images/openhe-lighting.png)
+
 ## Quick start
 
-There is no hosted copy of OpenHE yet, so run it from source. It needs **Node.js 22.12 or later**:
+1. Open **[bharathanand0.github.io/OpenHE](https://bharathanand0.github.io/OpenHE/)** in **Chrome or Edge** on a desktop (WebHID is not available in Firefox or Safari).
+2. Plug the keyboard in **by cable** and click **Connect keyboard**.
+3. Pick the keyboard in the browser's list. Close the vendor's own software first: only one app can own the settings channel at a time.
+4. Change settings and press **Save to keyboard** (lighting is written as you change it).
+
+The browser remembers the keyboard, so next time the page reconnects by itself.
+
+On Linux the keyboard's HID node belongs to root; add a udev rule (sharkfin's [README](https://github.com/dniminenn/sharkfin#install) has one covering RongYuan vendor IDs) and replug.
+
+### Running from source
+
+It needs **Node.js 22.12 or later**:
 
 ```sh
-git clone -b claude/eager-ritchie-vp804h https://github.com/bharathanand0/OpenHE.git
+git clone https://github.com/bharathanand0/OpenHE.git
 cd OpenHE
 npm ci
 npm run dev
 ```
 
-1. Open the HTTPS address Vite prints in **Chrome or Edge** on a desktop and accept the local certificate warning (WebHID needs a secure page and is not available in Firefox or Safari).
-2. Plug the keyboard in **by cable** and click **Connect keyboard**.
-3. Pick the keyboard in the browser's list. Close the vendor's own software first: only one app can own the settings channel at a time.
-4. Change settings and press **Save to keyboard**.
-
-On Linux the keyboard's HID node belongs to root; add a udev rule (sharkfin's [README](https://github.com/dniminenn/sharkfin#install) has one covering RongYuan vendor IDs) and replug.
+Open the HTTPS address Vite prints and accept the local certificate warning (WebHID needs a secure page).
 
 ## Help test a board
 
 OpenHE is new and has mostly been checked against software models of the protocols. Reports from real boards are the most useful thing right now:
 
-- **RongYuan owners:** does the picture match your board (Device page)? Do actuation and remap changes take effect and survive a replug? Include the name shown in the sidebar and the firmware version.
-- **GK68 owners on OpenHE firmware:** whether actuation, rapid trigger and the dead zones feel the way the sliders say.
+- **RongYuan owners:** does the picture match your board (Device page)? Do actuation and remap changes take effect and survive a replug? On the Lighting page, does Rainbow give a rainbow (if it gives a solid colour, say whether the "swapped" switch fixes it) and does the speed slider go the right way? Does a macro key play, and do the sleep timers stick? Include the name shown in the sidebar and the firmware version.
+- **GK68 owners on OpenHE firmware:** whether actuation, rapid trigger and the dead zones feel the way the sliders say, and whether macros play in each mode.
 
 Open an issue on this repository with what you saw.
 
@@ -83,7 +93,7 @@ Each keyboard family is a **driver** in `src/drivers/` behind one interface (`Ke
 
 - `src/drivers/openhe/` speaks the OpenHE firmware's raw HID protocol (usage page `0xFF48`, libhmk's command set with OpenHE's actuation records). The board identifies itself with an `OPHE` signature; name, sizes, layout and default keymap come from its own metadata.
 - `src/drivers/rongyuan/` is a TypeScript port of sharkfin's protocol: 64-byte feature reports on `0xFFFF`, both command families (gen2 and yc500), the magnetic switch columns, write pacing and the 2.4 GHz receiver relay. It writes only what sharkfin writes, with the same spacing between flash writes. `scripts/rongyuan-boards.py` regenerates the bundled board list and light tables from a sharkfin checkout.
-- `src/driverApp/` is the workspace UI for driver-backed boards. The connected board is registered as an OpenAula board model, so OpenAula's own Quick Settings, Actuation Point, Rapid Trigger and Hall Stream pages and keyboard preview draw it.
+- `src/driverApp/` is the workspace UI for driver-backed boards. The connected board is registered as an OpenAula board model, so OpenAula's own Quick Settings, Actuation Point, Rapid Trigger, Hall Stream, Switch Selector and Macros pages and keyboard preview draw it.
 
 Both drivers are tested in `tests/openhe-driver.test.mjs` and `tests/rongyuan-driver.test.mjs` against software boards built from the firmware sources and protocol notes.
 
@@ -93,10 +103,6 @@ The AULA app from OpenAula is still here, unchanged, behind the **AULA keyboards
 
 ## Development
 
-The separate public landing page lives in `landing/`. Build it with
-`npm run build:landing`, check with `npm run check:landing`, and package it with
-`npm run package:landing`. See [landing page development and deployment](landing/README.md).
-
 Production builds and tests require development dependencies. Use `npm ci` (or
 `npm ci --include=dev` if your environment defaults to omitting them) before
 building; the resulting `dist/` contains static browser assets.
@@ -105,60 +111,23 @@ Copy `.env.example` to `.env.local` to configure `HERO68_DEV_HOSTS`: optional
 comma-separated hostnames/IPs added to the local Vite certificate. Localhost and
 127.0.0.1 remain available without configuration.
 
-Set `HERO68_ALLOWED_ORIGINS` in the **service process environment** to allow
-additional exact HTTP(S) origins, separated by commas. Paths, credentials and
-wildcards are rejected. The service does not load Vite's `.env.local`; its
-deployed Pages and localhost defaults remain available, and `--allow-origin`
-still adds origins explicitly. These variables are not exposed to browser code.
-
 | Command | Description |
 | --- | --- |
 | `npm run dev` | Start the Vite dev server over HTTPS |
 | `npm run build` | Type-check and build the web app into `dist/` (serve it over HTTPS for WebHID) |
 | `npm run preview` | Preview the production build |
 | `npm test` | Run all tests (`node --test tests/*.test.mjs`) |
-| `npm run test:rgb` | Run only the RGB tests |
-| `npm run test:profile-remap` | Run only the profile/remap tests |
-| `npm run typecheck:service` | Type-check the Windows service TypeScript without emitting |
-| `npm run build:service` | Type-check and bundle the service's TypeScript into `service/dist/` |
-| `npm run pages:deploy` | Build and deploy the web app to Cloudflare Pages (`open-aula.pages.dev`) |
-| `npm run cf:dev` | Build and preview as a Cloudflare Worker locally |
-| `npm run cf:deploy` | Build and deploy as a Cloudflare Worker |
+| `npm run lint` | ESLint |
 
-Tech stack: React 19, TypeScript 7, Vite 8, WebHID; the service uses a bundled Node runtime with a native C++ launcher and HID bridge.
+Set `OPENHE_BASE` when building for a sub-path (`OPENHE_BASE=/OpenHE/ npm run build` is what GitHub Pages uses).
 
-### Cloudflare deployment (Pages)
+Tech stack: React 19, TypeScript 7, Vite 8, WebHID.
 
-The deployment setup below is inherited from OpenAula and still targets its project names.
+### Deployment (GitHub Pages)
 
-The web app is deployed to **Cloudflare Pages** at [https://open-aula.pages.dev/](https://open-aula.pages.dev/).
+`.github/workflows/pages.yml` runs the tests, builds with the repository name as the base path and publishes `dist/` to GitHub Pages on every push to `main` (or by hand from the Actions tab). In a fork, enable it once under **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
-API endpoints (`/api/region` for language detection and `/api/health` for monitoring) are implemented via Cloudflare Pages Functions in `functions/api/`, which wrap the shared Worker handlers in `worker/`. Static frontend assets are compiled into `dist/`.
-
-- **Automatic deployment via CI**: On every push to `main`, `.github/workflows/cloudflare.yml` runs TypeScript checks for both the service and the web app, builds the assets, and deploys directly to Cloudflare Pages using `wrangler pages deploy dist --project-name open-aula --branch main` when `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets are set. Pull requests from forks skip deployment.
-- **Manual deployment via CLI**:
-  ```sh
-  npm run pages:deploy
-  ```
-- **Local preview / Workers mode**: Run `npm run cf:dev` to test Worker APIs and asset serving locally with Wrangler.
-
-## Building the Windows service
-
-Requires Windows with **Visual Studio Build Tools** (C++ desktop workload and Windows SDK).
-
-```powershell
-$env:HERO68_VCVARS = 'C:\path\to\VC\Auxiliary\Build\vcvars64.bat'
-npm ci
-npm run build:service
-npm run prepare:setup
-npm run build:setup
-```
-
-The launcher and HID bridge are compiled with MSVC. The TypeScript RGB engine and the Node runtime are bundled into `service/dist/`. Packaging writes `OpenAula-Setup-Windows-x64.exe` to `service/releases/`. `service/version.json` controls the service version, API and pinned toolchain. MSVC is discovered using vswhere; `HERO68_VCVARS` remains an override.
-
-Run `npm run test:setup` for isolated installer/update/rollback smoke tests. See [Setup and release operations](docs/SETUP_UPDATES.md) for release signing and GitHub Actions.
-
-Helper scripts in `tools/` cover verification (`verify-service-package.mjs`, `verify-service-live.mjs`, …), benchmarking, signing and release publishing.
+OpenAula's Cloudflare deployment, Windows tray service and landing site are still in the tree (`functions/`, `worker/`, `service/`, `landing/`) for the AULA app, but OpenHE does not deploy them; the Cloudflare workflow only runs in the upstream OpenAula repository. See [OpenAula](https://github.com/shizunavn/OpenAula) for building those.
 
 ## Project structure
 
