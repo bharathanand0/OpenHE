@@ -1,5 +1,5 @@
 import { ArrowRight, Cable, Gauge, Keyboard, Layers, Loader2, Activity } from 'lucide-react';
-import logo from '../assets/openhero68-logo.png';
+import logo from '../assets/openhe-logo.png';
 import { appMode } from '../appMode';
 import { BRAND } from '../brand';
 import { driverConnection, useDriverConnection } from './store';

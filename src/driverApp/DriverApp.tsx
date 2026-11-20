@@ -16,7 +16,7 @@ import {
   Zap
 } from 'lucide-react';
 import { version as uiVersion } from '../../package.json';
-import logo from '../assets/openhero68-logo.png';
+import logo from '../assets/openhe-logo.png';
 import { BRAND } from '../brand';
 import { AdvancedKeysMenuIcon } from '../app/components/AdvancedKeysMenuIcon';
 import { KeyboardMenuIcon } from '../app/components/KeyboardMenuIcon';

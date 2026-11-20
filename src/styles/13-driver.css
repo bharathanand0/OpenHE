@@ -493,8 +493,9 @@
   font-weight: 800;
 }
 .landing-brand img {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
 }
 .landing-hero {
   display: flex;
