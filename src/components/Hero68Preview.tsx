@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { formatMillimeters } from '../app/helpers';
-import { heroLayout } from '../keyboard/layout';
+import { getBoard, heroLayout } from '../keyboard/layout';
 import type { HeroDeviceModelId } from '../keyboard/devices';
 import { subscribeLightingFrame, type LightingFrame } from '../keyboard/lightingPreviewBus';
 import { useServiceLighting } from '../protocol/serviceLighting';
@@ -44,10 +44,12 @@ function fitKeyboardFontSize(
   width: number,
   height: number,
   rows: number,
-  maxFontPx = WOOTILITY_MAX_FONT_PX
+  maxFontPx = WOOTILITY_MAX_FONT_PX,
+  widthUnits = 16
 ) {
   const designHeightEm = HERO68_DESIGN_HEIGHT_EM + (rows - HERO68_ROWS) * HERO_ROW_PITCH_EM;
-  const widthScale = width / HERO68_DESIGN_WIDTH_EM;
+  // The design width is for 16U boards; wider or narrower boards scale with it.
+  const widthScale = width / ((HERO68_DESIGN_WIDTH_EM * widthUnits) / 16);
   const heightScale = height > 0 ? height / designHeightEm : maxFontPx;
   const fitted = Math.min(widthScale, heightScale, maxFontPx);
   // Preserve the preferred minimum only while the entire keyboard still fits.
@@ -522,6 +524,7 @@ export default function Hero68Preview({
   });
 
   const rows = keyboard.rows.length;
+  const widthUnits = useMemo(() => getBoard(model).capabilities.widthUnits, [model]);
   useLayoutEffect(() => {
     const preview = previewRef.current;
     const container = preview?.parentElement;
@@ -534,7 +537,13 @@ export default function Hero68Preview({
       const availableWidth = Math.max(1, container.clientWidth - horizontalPadding);
       const availableHeight = Math.max(1, container.clientHeight - verticalPadding);
       setKeyboardFontSize(current => {
-        const next = fitKeyboardFontSize(availableWidth, availableHeight, rows, maxFontPx);
+        const next = fitKeyboardFontSize(
+          availableWidth,
+          availableHeight,
+          rows,
+          maxFontPx,
+          widthUnits
+        );
         return Math.abs(current - next) > 0.01 ? next : current;
       });
     };
@@ -542,7 +551,7 @@ export default function Hero68Preview({
     const observer = new ResizeObserver(updateSize);
     observer.observe(container);
     return () => observer.disconnect();
-  }, [maxFontPx, rows]);
+  }, [maxFontPx, rows, widthUnits]);
 
   useLayoutEffect(() => {
     const keyboardEl = previewRef.current?.querySelector<HTMLElement>('.hero68-case');

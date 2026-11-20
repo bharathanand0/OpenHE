@@ -13,7 +13,7 @@
 
 import type { UiKeycode } from './keycodes';
 
-export type DriverId = 'libhmk' | 'rongyuan' | 'aula-bytetech' | 'aula-xsyd';
+export type DriverId = 'openhe' | 'rongyuan' | 'aula-bytetech' | 'aula-xsyd';
 
 /** One physical key in the board's layout, in keycap units. */
 export type LayoutKey = {
@@ -68,6 +68,7 @@ export type DriverCapabilities = {
   pollingRates: readonly number[];
   /** Separate release point when rapid trigger is off. */
   releasePoint: boolean;
+  topDeadzone: boolean;
   bottomDeadzone: boolean;
   /** Writes the driver will send. Reads always work. */
   writable: { keymap: boolean; actuation: boolean; advancedKeys: boolean };
@@ -86,16 +87,29 @@ export type DeviceInfo = {
 };
 
 /** Per-key actuation settings in board-neutral units. */
+/**
+ * Per-key actuation in board-neutral units, following OpenAula's model:
+ * actuation point; Rapid Trigger on/off with one sensitivity or separate
+ * press/release sensitivities; top and bottom dead zones behind one switch.
+ * Values a switch turns off are kept, so turning it back on restores them.
+ */
 export type KeyActuation = {
   actuationMm: number;
-  /** 0 disables rapid trigger. */
+  rapidTrigger: boolean;
+  /** Separate press and release sensitivities (`capabilities.rapidTriggerSplit`). */
+  splitSensitivity: boolean;
+  /** Press sensitivity; also the release sensitivity when not split. */
   rtPressMm: number;
   rtReleaseMm: number;
+  /** Rapid Trigger resets only at the top (`capabilities.continuousRapidTrigger`). */
   continuous: boolean;
-  /** Release point with rapid trigger off (`capabilities.releasePoint`). */
+  deadzoneEnabled: boolean;
+  /** `capabilities.topDeadzone` */
+  topDeadzoneMm: number;
+  /** `capabilities.bottomDeadzone` */
+  bottomDeadzoneMm: number;
+  /** Release point with Rapid Trigger off (`capabilities.releasePoint`, RongYuan). */
   releaseMm?: number;
-  /** Distance from the bottom that counts as bottomed out (`capabilities.bottomDeadzone`). */
-  bottomDeadzoneMm?: number;
 };
 
 export type TravelSample = {

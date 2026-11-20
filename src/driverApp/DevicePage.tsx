@@ -39,7 +39,7 @@ export function DevicePage({
           <dt>Name</dt>
           <dd>{info.name}</dd>
           <dt>Driver</dt>
-          <dd>{driver.id === 'libhmk' ? 'libhmk' : 'RongYuan (sharkfin protocol)'}</dd>
+          <dd>{driver.id === 'openhe' ? 'openhe' : 'RongYuan (sharkfin protocol)'}</dd>
           <dt>Firmware</dt>
           <dd>{info.firmwareVersion}</dd>
           <dt>USB</dt>

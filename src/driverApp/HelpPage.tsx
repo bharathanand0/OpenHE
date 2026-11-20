@@ -22,12 +22,12 @@ const TOPICS: Array<{ q: string; a: string; only?: KeyboardDriver['id'] }> = [
   {
     q: 'The gamepad does not appear in games',
     a: 'Turn on the gamepad interface (Gamepad page or Settings), then restart or replug the keyboard: the controller interface is only added when the keyboard connects. Only the base layer drives the gamepad, and only over the cable.',
-    only: 'libhmk'
+    only: 'openhe'
   },
   {
     q: 'Keys feel off after flashing or swapping switches',
     a: 'Use Settings > Calibration > Recalibrate with every key released, then press each key all the way down once.',
-    only: 'libhmk'
+    only: 'openhe'
   },
   {
     q: 'Why are switch settings read-only on my board?',

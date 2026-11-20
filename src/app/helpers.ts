@@ -33,11 +33,21 @@ export const HERO68_KEY_LABEL_BY_ID: Readonly<Record<string, string>> = Object.f
 
 export const FACTORY_REMAP_LAYERS = defaultRemapLayers(allRegisteredKeyIds());
 
+/** Labels for keys of boards registered at runtime (OpenHE driver boards). */
+const EXTRA_KEY_LABELS = new Map<string, string>();
+export function setExtraKeyLabels(labels: ReadonlyMap<string, string>): void {
+  EXTRA_KEY_LABELS.clear();
+  for (const [id, label] of labels) EXTRA_KEY_LABELS.set(id, label);
+}
 export function hallKeyLabel(keyId: string | null): string {
   if (!keyId) {
     return 'Press a key';
   }
-  return HERO68_KEY_LABEL_BY_ID[keyId] ?? keyId.replace(/^Key/, '').replace(/^Digit/, '');
+  return (
+    EXTRA_KEY_LABELS.get(keyId) ??
+    HERO68_KEY_LABEL_BY_ID[keyId] ??
+    keyId.replace(/^Key/, '').replace(/^Digit/, '')
+  );
 }
 
 export const RAPID_TRIGGER_VALUES_STANDARD = Array.from({ length: 340 }, (_, index) =>

@@ -12,25 +12,25 @@ async function bundle(path) {
   } finally { await build.close() }
 }
 
-const { LibhmkDriver, layoutFromMetadata } = await bundle('src/drivers/libhmk/driver.ts')
-const kc = await bundle('src/drivers/libhmk/keycodes.ts')
+const { OpenHEDriver, layoutFromMetadata } = await bundle('src/drivers/openhe/driver.ts')
+const kc = await bundle('src/drivers/openhe/keycodes.ts')
 const ui = await bundle('src/drivers/keycodes.ts')
 
-const metadataJson = readFileSync('tests/fixtures/libhmk-gk68-metadata.json')
+const metadataJson = readFileSync('tests/fixtures/openhe-gk68-metadata.json')
 const metadata = JSON.parse(metadataJson)
 
 /**
- * A libhmk board in software, following src/commands.c of firmware 0x0108:
+ * An OpenHE board in software, following gk68tmr_firmware src/commands.c:
  * same struct layouts, same COMMAND_VERIFY checks, same staged-write rules.
  */
-function fakeLibhmk(md = metadata) {
+function fakeOpenHE(md = metadata, opts = {}) {
   const gz = gzipSync(Buffer.from(JSON.stringify(md)))
   const N = md.numKeys, P = md.numProfiles, L = md.numLayers
   const dks = md.numDynamicKeystrokeMaxBindings
   const akSize = 3 + Math.max(3, 2 * dks + 1, 5)
   const profiles = Array.from({ length: P }, () => ({
     keymap: Array.from({ length: L }, () => new Uint8Array(N)),
-    actuation: new Uint8Array(N * 4).map((_, i) => (i % 4 === 0 ? 128 : 0)),
+    actuation: (() => { const a = new Uint8Array(N * 9); for (let k = 0; k < N; k++) a.set([200, 0, 30, 0, 30, 0, 10, 10, 1], k * 9); return a })(),
     advanced: new Uint8Array(akSize * md.numAdvancedKeys),
     gamepad: new Uint8Array(N),
     gpOptions: Uint8Array.from([4, 20, 85, 95, 165, 170, 255, 255, 0b1001]),
@@ -59,10 +59,12 @@ function fakeLibhmk(md = metadata) {
         break
       }
       case 14: out.set(Buffer.from('GK68-TEST'), 1); break
+      case 16: if (opts.notOpenHE) return fail(); out.set([0x4f, 0x50, 0x48, 0x45, 1, 0, 0x08, 0x01, 400 & 0xff, 400 >> 8, 7, 0, 0, 0], 1); break
       case 5: {
         const off = req[1]; if (off >= N) return fail()
-        for (let i = 0; i < 21 && off + i < N; i++) {
-          const v = 2600 + off + i; out[1 + i * 3] = v & 0xff; out[2 + i * 3] = v >> 8; out[3 + i * 3] = (off + i) % 256
+        for (let i = 0; i < 15 && off + i < N; i++) {
+          const v = 2600 + off + i, t = (off + i) * 5
+          out.set([v & 0xff, v >> 8, t & 0xff, t >> 8], 1 + i * 4)
         }
         break
       }
@@ -81,13 +83,17 @@ function fakeLibhmk(md = metadata) {
       case 130: {
         const [, prof, off] = req
         if (prof >= P || off >= N) return fail()
-        out.set(p.actuation.subarray(off * 4, (off + 15) * 4), 1)
+        out.set(p.actuation.subarray(off * 9, (off + 6) * 9), 1)
         break
       }
       case 131: {
         const [, prof, off, len] = req
-        if (prof >= P || off >= N || len > 15 || len > N - off) return fail()
-        profiles[prof].actuation.set(req.subarray(4, 4 + len * 4), off * 4)
+        if (prof >= P || off >= N || len > 6 || len > N - off) return fail()
+        for (let i = 0; i < len; i++) {
+          const o = 4 + i * 9, ap = req[o] | (req[o + 1] << 8)
+          if (ap < 1 || ap > 400) return fail()
+        }
+        profiles[prof].actuation.set(req.subarray(4, 4 + len * 9), off * 9)
         break
       }
       case 132: {
@@ -158,10 +164,11 @@ function fakeLibhmk(md = metadata) {
 const usb = { vendorId: 0x3151, productId: 0x5030, productName: 'GK68' }
 
 test('connect reads version, serial and the gzipped metadata', async () => {
-  const { transport } = fakeLibhmk()
-  const d = await LibhmkDriver.connect(transport, usb)
+  const { transport } = fakeOpenHE()
+  const d = await OpenHEDriver.connect(transport, usb)
   assert.equal(d.info.name, 'GK68')
   assert.equal(d.info.firmwareVersion, '1.8')
+  assert.equal(d.id, 'openhe')
   assert.equal(d.info.serial, 'GK68-TEST')
   assert.equal(d.capabilities.profiles, 4)
   assert.equal(d.capabilities.layers, 4)
@@ -185,15 +192,15 @@ test('layout comes from the metadata, legends from the default keymap', () => {
 })
 
 test('keymap round-trips through the board in UI keycodes', async () => {
-  const { transport, profiles } = fakeLibhmk()
-  const d = await LibhmkDriver.connect(transport, usb)
+  const { transport, profiles } = fakeOpenHE()
+  const d = await OpenHEDriver.connect(transport, usb)
   const def = d.defaultKeymap(0)
   assert.equal(def.length, 68)
   assert.equal(def[0], 0x29) // Esc as HID usage
   assert.equal(def[16], 0x14) // Q
   assert.equal(def[63], ui.uiMomentaryLayer(1))
   await d.setKeymap(1, 0, def)
-  assert.equal(profiles[1].keymap[0][0], 0x27) // libhmk KC_ESCAPE
+  assert.equal(profiles[1].keymap[0][0], 0x27) // KC_ESCAPE
   assert.equal(profiles[1].keymap[0][63], 0xc1) // MO(1)
   assert.deepEqual(await d.getKeymap(1, 0), def)
 
@@ -205,33 +212,54 @@ test('keymap round-trips through the board in UI keycodes', async () => {
 })
 
 test('keycodes the board cannot express are refused before anything is written', async () => {
-  const { transport, profiles } = fakeLibhmk()
-  const d = await LibhmkDriver.connect(transport, usb)
+  const { transport, profiles } = fakeOpenHE()
+  const d = await OpenHEDriver.connect(transport, usb)
   const map = d.defaultKeymap(0)
-  map[5] = 0x10600 // Ctrl+C combo, libhmk has no combos
-  await assert.rejects(d.setKeymap(0, 0, map), /not available on libhmk/)
+  map[5] = 0x10600 // Ctrl+C combo: the firmware has no combos
+  await assert.rejects(d.setKeymap(0, 0, map), /not available on this keyboard/)
   assert.equal(profiles[0].keymap[0][0], 0)
 })
 
-test('actuation converts between millimetres and 0..255 units', async () => {
-  const { transport, profiles } = fakeLibhmk()
-  const d = await LibhmkDriver.connect(transport, usb)
+test('actuation uses OpenAula fields, stored in 0.01 mm with flags', async () => {
+  const { transport, profiles } = fakeOpenHE()
+  const d = await OpenHEDriver.connect(transport, usb)
+  assert.equal(d.capabilities.travelMm, 4)
+  assert.equal(d.capabilities.travelStepMm, 0.01)
+  assert.equal(d.capabilities.topDeadzone, true)
+  assert.equal(d.capabilities.continuousRapidTrigger, true)
   const before = await d.getActuation(0)
   assert.equal(before.length, 68)
-  assert.ok(Math.abs(before[0].actuationMm - 2.008) < 0.01)
-  const next = before.map((a, i) => ({ ...a, actuationMm: i === 40 ? 0.4 : 1.2, rtPressMm: 0.1, rtReleaseMm: 0.15, continuous: i === 40 }))
+  assert.deepEqual(before[0], {
+    actuationMm: 2, rapidTrigger: true, splitSensitivity: false, rtPressMm: 0.3, rtReleaseMm: 0.3,
+    continuous: false, deadzoneEnabled: false, topDeadzoneMm: 0.1, bottomDeadzoneMm: 0.1
+  })
+  const next = before.map((a, i) => i === 40
+    ? { ...a, actuationMm: 0.45, splitSensitivity: true, rtPressMm: 0.12, rtReleaseMm: 0.35, continuous: true, deadzoneEnabled: true, topDeadzoneMm: 0.2, bottomDeadzoneMm: 0.35 }
+    : { ...a, actuationMm: 1.2, rapidTrigger: false })
   await d.setActuation(2, next)
   const raw = profiles[2].actuation
-  assert.deepEqual([...raw.subarray(40 * 4, 41 * 4)], [26, 6, 10, 1])
-  assert.deepEqual([...raw.subarray(0, 4)], [77, 6, 10, 0])
+  assert.deepEqual([...raw.subarray(40 * 9, 41 * 9)], [45, 0, 12, 0, 35, 0, 20, 35, 0x01 | 0x02 | 0x04 | 0x08])
+  // RT off keeps the sensitivities
+  assert.deepEqual([...raw.subarray(0, 9)], [120, 0, 30, 0, 30, 0, 10, 10, 0])
   const back = await d.getActuation(2)
-  assert.ok(Math.abs(back[40].actuationMm - 0.4) < d.capabilities.travelStepMm)
-  assert.equal(back[40].continuous, true)
+  assert.deepEqual(back[40], next[40])
+  assert.equal(back[0].rapidTrigger, false)
+  assert.equal(back[0].rtPressMm, 0.3)
+  // values past full travel are clamped, never refused by the board
+  await d.setActuation(2, next.map(a => ({ ...a, actuationMm: 9, rtPressMm: 0 })))
+  assert.equal(raw[0] | (raw[1] << 8), 400)
+  await d.setActuation(2, next.map(a => ({ ...a, actuationMm: 0 })))
+  assert.equal(raw[0] | (raw[1] << 8), 1)
+})
+
+test('boards without OpenHE firmware are refused', async () => {
+  const { transport } = fakeOpenHE(metadata, { notOpenHE: true })
+  await assert.rejects(OpenHEDriver.connect(transport, usb), /not running OpenHE firmware/)
 })
 
 test('advanced keys survive the staged write protocol', async () => {
-  const { transport, profiles, akSize } = fakeLibhmk()
-  const d = await LibhmkDriver.connect(transport, usb)
+  const { transport, profiles, akSize } = fakeOpenHE()
+  const d = await OpenHEDriver.connect(transport, usb)
   assert.equal(akSize, 12)
   const keys = [
     { kind: 'nullBind', layer: 0, key: 31, secondaryKey: 33, behavior: 'last', bottomOutMm: 0 },
@@ -260,26 +288,26 @@ test('advanced keys survive the staged write protocol', async () => {
 })
 
 test('travel readout pages through every key', async () => {
-  const { transport, log } = fakeLibhmk()
-  const d = await LibhmkDriver.connect(transport, usb)
+  const { transport, log } = fakeOpenHE()
+  const d = await OpenHEDriver.connect(transport, usb)
   const before = transport.sent
   const t = await d.readTravel()
-  assert.equal(transport.sent - before, 4) // 68 keys / 21 per report
+  assert.equal(transport.sent - before, 5) // 68 keys / 15 per report
   assert.equal(t.length, 68)
   assert.equal(t[67].raw, 2600 + 67)
-  assert.ok(Math.abs(t[67].travelMm - (67 * 4) / 255) < 1e-9)
+  assert.ok(Math.abs(t[67].travelMm - 3.35) < 1e-9)
   await d.recalibrate()
   assert.deepEqual(log, ['recalibrate'])
 })
 
 test('a rejected command surfaces as an error', async () => {
-  const { transport } = fakeLibhmk()
-  const d = await LibhmkDriver.connect(transport, usb)
+  const { transport } = fakeOpenHE()
+  const d = await OpenHEDriver.connect(transport, usb)
   await assert.rejects(d.getKeymap(9, 0), /out of range/)
   await assert.rejects(d.getKeymap(0, 9), /rejected command 128/)
 })
 
-test('every libhmk keycode maps to a UI keycode and back', () => {
+test('every firmware keycode maps to a UI keycode and back', () => {
   for (let code = 0; code <= 0xd4; code++) {
     if (code > 0x9f && code < 0xc0) continue
     assert.equal(kc.uiToHmk(kc.hmkToUi(code)), code, `0x${code.toString(16)}`)
@@ -295,8 +323,8 @@ test('every libhmk keycode maps to a UI keycode and back', () => {
 })
 
 test('gamepad map, curve and flags round-trip', async () => {
-  const { transport, profiles } = fakeLibhmk()
-  const d = await LibhmkDriver.connect(transport, usb)
+  const { transport, profiles } = fakeOpenHE()
+  const d = await OpenHEDriver.connect(transport, usb)
   const gp = await d.getGamepad(1)
   assert.equal(gp.buttons.length, 68)
   assert.ok(gp.buttons.every(b => b === 'none'))
@@ -327,8 +355,8 @@ test('gamepad map, curve and flags round-trip', async () => {
 })
 
 test('options keep reserved bits; calibration, tick rate and profiles', async () => {
-  const board = fakeLibhmk()
-  const d = await LibhmkDriver.connect(board.transport, usb)
+  const board = fakeOpenHE()
+  const d = await OpenHEDriver.connect(board.transport, usb)
   assert.deepEqual(await d.getOptions(), { xinput: false, highPollingRate: true })
   await d.setOptions({ xinput: true })
   assert.equal(board.options, 0b101)

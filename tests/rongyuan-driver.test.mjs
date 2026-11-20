@@ -196,10 +196,14 @@ test('actuation: per-key path for one key, bulk columns for many', async () => {
   const a = await driver.getActuation(0)
   assert.equal(a.length, 67)
   assert.ok(Math.abs(a[0].actuationMm - 2.0) < 1e-9)
-  assert.equal(a[0].rtPressMm, 0) // rapid trigger off
+  assert.equal(a[0].rapidTrigger, false)
+  assert.ok(Math.abs(a[0].rtPressMm - 0.5) < 1e-9) // kept while RT is off
+  assert.equal(a[0].splitSensitivity, false)
+  assert.equal(a[0].deadzoneEnabled, true)
+  assert.ok(Math.abs(a[0].bottomDeadzoneMm - 0.3) < 1e-9)
   assert.ok(Math.abs(a[0].releaseMm - 2.8) < 1e-9)
 
-  a[5] = { ...a[5], actuationMm: 0.5, rtPressMm: 0.15, rtReleaseMm: 0.2 }
+  a[5] = { ...a[5], actuationMm: 0.5, rapidTrigger: true, splitSensitivity: true, rtPressMm: 0.15, rtReleaseMm: 0.2 }
   await driver.setActuation(0, a)
   const slot5 = driver['slots'][5]
   const col = board.columns[0]

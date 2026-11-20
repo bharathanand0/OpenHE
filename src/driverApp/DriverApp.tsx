@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   Activity,
   ArrowDownToLine,
@@ -12,7 +12,8 @@ import {
   Layers3,
   Loader2,
   Settings,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Zap
 } from 'lucide-react';
 import { version as uiVersion } from '../../package.json';
 import logo from '../assets/openhero68-logo.png';
@@ -29,7 +30,18 @@ import { BoardThumb } from './BoardThumb';
 import { DevicePage } from './DevicePage';
 import { GamepadPage } from './GamepadPage';
 import { HelpPage } from './HelpPage';
-import { PerformancePage, useActuationDraft } from './PerformancePage';
+import { useActuationDraft } from './actuationDraft';
+import {
+  DriverActuationPage,
+  DriverQuickPage,
+  DriverRapidPage,
+  DriverStreamPage
+} from './PerformancePages';
+import { registerDriverBoard } from './boardModel';
+import { setExtraKeyLabels } from '../app/helpers';
+import { useOpenAulaPerformance } from './usePerformance';
+import { useDriverHall } from './useDriverHall';
+import { keyIdOf } from './boardModel';
 import { RemapPage } from './RemapPage';
 import { SaveSlotContext } from './SaveBar';
 import {
@@ -38,22 +50,21 @@ import {
   ProfilesSettingsPage
 } from './SettingsPages';
 import { driverConnection } from './store';
-import { TravelPage } from './TravelPage';
 
 type Rail = 'keyboard' | 'settings' | 'help';
-type KeyboardPage = 'actuation' | 'rapid' | 'travel' | 'remap' | 'advanced' | 'gamepad';
+type KeyboardPage = 'quick' | 'actuation' | 'rapid' | 'stream' | 'remap' | 'advanced' | 'gamepad';
 type SettingsPage = 'general' | 'profiles' | 'calibration' | 'device';
 
 type NavItem<T> = { id: T; label: string; icon: ReactNode; show: boolean };
 
-/** Workspace for boards behind the driver layer (libhmk, RongYuan), laid out like OpenAula. */
+/** Workspace for boards behind the driver layer (OpenHE firmware, RongYuan), laid out like OpenAula. */
 export function DriverApp({ driver }: { driver: KeyboardDriver }) {
   const caps = driver.capabilities;
   const confirmable = driver as KeyboardDriver & { needsLayoutConfirmation?: boolean };
   const [rail, setRail] = useState<Rail>(
     confirmable.needsLayoutConfirmation ? 'settings' : 'keyboard'
   );
-  const [page, setPage] = useState<KeyboardPage>(caps.actuation ? 'actuation' : 'remap');
+  const [page, setPage] = useState<KeyboardPage>(caps.actuation ? 'quick' : 'remap');
   const [settingsPage, setSettingsPage] = useState<SettingsPage>(
     confirmable.needsLayoutConfirmation ? 'device' : 'general'
   );
@@ -64,6 +75,14 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
   const [saveSlot, setSaveSlot] = useState<HTMLElement | null>(null);
   const [, setLayoutConfirmed] = useState(0);
   const actuation = useActuationDraft(driver, profile);
+  // The board as an OpenAula model, so OpenAula's pages and preview draw it.
+  const model = useMemo(() => {
+    const id = registerDriverBoard(driver);
+    setExtraKeyLabels(new Map(driver.layout.keys.map(k => [keyIdOf(k.index), k.label])));
+    return id;
+  }, [driver]);
+  const perf = useOpenAulaPerformance(model, actuation);
+  const hall = useDriverHall(driver, i => actuation.draft?.[i]?.actuationMm);
 
   useEffect(() => {
     driver
@@ -112,7 +131,11 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
     setProfile(next);
   };
 
+  const profileItems: NavItem<KeyboardPage>[] = [
+    { id: 'quick', label: 'Quick Settings', icon: <Zap size={18} />, show: caps.actuation }
+  ];
   const keyboardItems: NavItem<KeyboardPage>[] = [
+    ...profileItems,
     {
       id: 'actuation',
       label: 'Actuation Point',
@@ -125,7 +148,7 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
       icon: <RapidTriggerMenuIcon />,
       show: caps.rapidTrigger
     },
-    { id: 'travel', label: 'Live Travel', icon: <Activity size={18} />, show: caps.travelStream },
+    { id: 'stream', label: 'Hall Stream', icon: <Activity size={18} />, show: caps.travelStream },
     { id: 'remap', label: 'Key Remap', icon: <KeyRemapMenuIcon />, show: true },
     {
       id: 'advanced',
@@ -192,11 +215,14 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
       }
     }
     switch (activeKeyboard.id) {
+      case 'quick':
+        return <DriverQuickPage {...props} state={actuation} perf={perf} />;
       case 'actuation':
+        return <DriverActuationPage {...props} state={actuation} perf={perf} hall={hall} />;
       case 'rapid':
-        return <PerformancePage {...props} section={activeKeyboard.id} state={actuation} />;
-      case 'travel':
-        return <TravelPage driver={driver} />;
+        return <DriverRapidPage {...props} state={actuation} perf={perf} />;
+      case 'stream':
+        return <DriverStreamPage driver={driver} perf={perf} hall={hall} />;
       case 'advanced':
         return <AdvancedKeysPage {...props} />;
       case 'gamepad':
@@ -205,6 +231,18 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
         return <RemapPage {...props} />;
     }
   };
+
+  // OpenAula's pages lay themselves out inside the workspace; OpenHE's own
+  // pages get the content column.
+  const openAulaPage =
+    rail === 'keyboard' && ['quick', 'actuation', 'rapid', 'stream'].includes(activeKeyboard.id);
+
+  // Live travel only runs on the pages that show it.
+  const hallPage = rail === 'keyboard' && ['actuation', 'stream'].includes(activeKeyboard.id);
+  const { stop: stopHall } = hall;
+  useEffect(() => {
+    if (!hallPage) void stopHall();
+  }, [hallPage, stopHall]);
 
   const sidebarTitle =
     rail === 'keyboard' ? 'Keyboard Configuration' : rail === 'settings' ? 'Settings' : 'Help';
@@ -265,7 +303,7 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
                 {driver.info.name}
               </strong>
               <small className="drv-device-meta">
-                {driver.id === 'libhmk' ? 'libhmk' : 'RongYuan'} · fw {driver.info.firmwareVersion}
+                {driver.id === 'openhe' ? 'OpenHE' : 'RongYuan'} · fw {driver.info.firmwareVersion}
               </small>
             </span>
           </div>
@@ -302,9 +340,25 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
 
         {rail === 'keyboard' && (
           <>
+            {profileItems.some(i => i.show) && (
+              <>
+                <div className="sidebar-section-label">Profiles</div>
+                {profileItems
+                  .filter(i => i.show)
+                  .map(i => (
+                    <SidebarItem
+                      key={i.id}
+                      icon={i.icon}
+                      label={i.label}
+                      active={activeKeyboard.id === i.id}
+                      onClick={() => setPage(i.id)}
+                    />
+                  ))}
+              </>
+            )}
             <div className="sidebar-section-label">Keyboard Configuration</div>
             {keyboardItems
-              .filter(i => i.show)
+              .filter(i => i.show && !profileItems.includes(i))
               .map(i => (
                 <SidebarItem
                   key={i.id}
@@ -371,7 +425,7 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
           </div>
         </header>
         <SaveSlotContext.Provider value={saveSlot}>
-          <div className="drv-content">{pageBody()}</div>
+          {openAulaPage ? pageBody() : <div className="drv-content">{pageBody()}</div>}
         </SaveSlotContext.Provider>
       </main>
     </div>

@@ -157,6 +157,7 @@ export class RongyuanDriver implements KeyboardDriver {
       gamepad: false,
       pollingRates: [],
       releasePoint: columns !== null,
+      topDeadzone: false,
       bottomDeadzone: columns !== null,
       writable: { keymap: true, actuation: switchWrites, advancedKeys: false },
       actuationActiveProfileOnly: true,
@@ -400,13 +401,22 @@ export class RongyuanDriver implements KeyboardDriver {
     const v = (col: number, slot: number) => cols.get(col)?.[slot] ?? 0;
     return this.slots.map(slot => {
       const rt = (v(Col.MODE, slot) & MODE_RAPID_TRIGGER) !== 0;
+      const press = f.toMm(Col.RT_PRESS, v(Col.RT_PRESS, slot));
+      const release = f.toMm(Col.RT_LIFT, v(Col.RT_LIFT, slot));
+      const bottom = f.toMm(Col.DEAD_BOTTOM, v(Col.DEAD_BOTTOM, slot));
       return {
         actuationMm: f.toMm(Col.TRAVEL, v(Col.TRAVEL, slot)),
-        rtPressMm: rt ? f.toMm(Col.RT_PRESS, v(Col.RT_PRESS, slot)) : 0,
-        rtReleaseMm: rt ? f.toMm(Col.RT_LIFT, v(Col.RT_LIFT, slot)) : 0,
+        rapidTrigger: rt,
+        // the firmware has no split flag: two different values are a split
+        splitSensitivity: Math.abs(press - release) > 1e-6,
+        rtPressMm: press,
+        rtReleaseMm: release,
         continuous: false,
-        releaseMm: f.toMm(Col.LIFT, v(Col.LIFT, slot)),
-        bottomDeadzoneMm: f.toMm(Col.DEAD_BOTTOM, v(Col.DEAD_BOTTOM, slot))
+        // nor a dead zone switch: a zero bottom dead zone is "off"
+        deadzoneEnabled: bottom > 0,
+        topDeadzoneMm: 0,
+        bottomDeadzoneMm: bottom,
+        releaseMm: f.toMm(Col.LIFT, v(Col.LIFT, slot))
       };
     });
   }
@@ -429,17 +439,15 @@ export class RongyuanDriver implements KeyboardDriver {
         const arr = next.get(col);
         if (arr) arr[slot] = value;
       };
-      const rt = a.rtPressMm > 0;
       const mode = cols.get(Col.MODE)?.[slot] ?? 0;
-      set(Col.MODE, (mode & 0x7f) | (rt ? MODE_RAPID_TRIGGER : 0));
+      set(Col.MODE, (mode & 0x7f) | (a.rapidTrigger ? MODE_RAPID_TRIGGER : 0));
       set(Col.TRAVEL, f.toWire(Col.TRAVEL, a.actuationMm));
-      if (rt) {
-        set(Col.RT_PRESS, f.toWire(Col.RT_PRESS, a.rtPressMm));
-        set(Col.RT_LIFT, f.toWire(Col.RT_LIFT, a.rtReleaseMm > 0 ? a.rtReleaseMm : a.rtPressMm));
-      }
+      // sensitivities are written even with Rapid Trigger off, so turning it
+      // back on restores them
+      set(Col.RT_PRESS, f.toWire(Col.RT_PRESS, a.rtPressMm));
+      set(Col.RT_LIFT, f.toWire(Col.RT_LIFT, a.splitSensitivity ? a.rtReleaseMm : a.rtPressMm));
       if (a.releaseMm !== undefined) set(Col.LIFT, f.toWire(Col.LIFT, a.releaseMm));
-      if (a.bottomDeadzoneMm !== undefined)
-        set(Col.DEAD_BOTTOM, f.toWire(Col.DEAD_BOTTOM, a.bottomDeadzoneMm));
+      set(Col.DEAD_BOTTOM, f.toWire(Col.DEAD_BOTTOM, a.deadzoneEnabled ? a.bottomDeadzoneMm : 0));
     });
 
     const changedSlots = new Set<number>();

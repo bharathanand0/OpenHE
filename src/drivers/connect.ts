@@ -3,7 +3,7 @@
  * device, then hand it to the driver whose collection it exposes.
  */
 
-import { isLibhmkDevice, LIBHMK_HID_FILTER, LibhmkDriver } from './libhmk/driver';
+import { isOpenHEDevice, OPENHE_HID_FILTER, OpenHEDriver } from './openhe/driver';
 import {
   connectRongyuan,
   isRongyuanSettingsDevice,
@@ -23,13 +23,13 @@ export function webHid(): NavigatorHid | null {
   return hid ?? null;
 }
 
-export const DRIVER_HID_FILTERS: object[] = [LIBHMK_HID_FILTER, ...RY_HID_FILTERS];
+export const DRIVER_HID_FILTERS: object[] = [OPENHE_HID_FILTER, ...RY_HID_FILTERS];
 
 export async function openDriver(
   device: HidDeviceLike,
   siblings: readonly HidDeviceLike[] = []
 ): Promise<KeyboardDriver> {
-  if (isLibhmkDevice(device)) return LibhmkDriver.fromHidDevice(device);
+  if (isOpenHEDevice(device)) return OpenHEDriver.fromHidDevice(device);
   if (isRongyuanSettingsDevice(device))
     return connectRongyuan(device as FeatureHidDevice, siblings);
   throw new DriverError(
@@ -39,7 +39,7 @@ export async function openDriver(
 
 /** Pick the settings collection among the interfaces the browser returned. */
 function pickSettings(devices: readonly HidDeviceLike[]): HidDeviceLike | null {
-  return devices.find(isLibhmkDevice) ?? devices.find(isRongyuanSettingsDevice) ?? null;
+  return devices.find(isOpenHEDevice) ?? devices.find(isRongyuanSettingsDevice) ?? null;
 }
 
 /** Prompt for a keyboard and connect to it. */

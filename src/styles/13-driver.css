@@ -864,3 +864,26 @@
   min-height: 36px;
   padding: 0 16px;
 }
+
+/* OpenAula pages on driver boards */
+.drv-app .tachyon-card {
+  display: none;
+}
+.drv-openaula.no-top-deadzone .deadzone-card:first-child,
+.drv-openaula.no-top-deadzone .rapid-deadzone-control-card:first-child {
+  display: none;
+}
+.drv-openaula.no-deadzone .deadzone-setting-card,
+.drv-openaula.no-deadzone .rapid-deadzone-card {
+  display: none;
+}
+.drv-openaula-notice {
+  margin: 16px var(--page-inline-pad) 0;
+}
+.drv-openaula-extra {
+  padding: 0 var(--page-inline-pad) 32px;
+  max-width: var(--content-width);
+}
+.drv-openaula-extra .setting-card {
+  max-width: 560px;
+}

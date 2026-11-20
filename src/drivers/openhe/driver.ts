@@ -1,7 +1,8 @@
 /**
- * libhmk driver: any board running libhmk firmware (the same boards hmkconf
- * talks to). Everything about the board comes from its own metadata, so no
- * per-board registry entry is needed.
+ * OpenHE firmware driver: boards running OpenHE's own firmware (libhmk-based,
+ * gk68tmr_firmware). The board identifies itself with COMMAND_FIRMWARE_INFO
+ * and describes itself (sizes, layout, default keymap) through its metadata,
+ * so no per-board registry entry is needed.
  */
 
 import {
@@ -46,6 +47,11 @@ import {
   encodeActuation,
   encodeAdvancedKey,
   formatFirmwareVersion,
+  decodeFirmwareInfo,
+  ActFlag,
+  Feature,
+  OPENHE_PROTOCOL_VERSION,
+  type FirmwareInfo,
   gunzipJson,
   rd16,
   rd32,
@@ -58,35 +64,38 @@ import {
 const GAMEPAD_GET_CHUNK = 63;
 const GAMEPAD_SET_CHUNK = 60;
 
-/** libhmk stores travel as 0..255 over the full stroke; hmkconf assumes 4 mm. */
-export const HMK_TRAVEL_MM = 4;
+/** Advanced keys and the gamepad curve still use 0..255 of full travel. */
 const UNITS = 255;
 
-export const LIBHMK_HID_FILTER = { usagePage: HMK_USAGE_PAGE, usage: HMK_USAGE } as const;
+export const OPENHE_HID_FILTER = { usagePage: HMK_USAGE_PAGE, usage: HMK_USAGE } as const;
 
-export function isLibhmkDevice(device: HidDeviceLike): boolean {
+export function isOpenHEDevice(device: HidDeviceLike): boolean {
   return hasCollection(device, HMK_USAGE_PAGE, HMK_USAGE);
 }
 
-export class LibhmkDriver implements KeyboardDriver {
-  readonly id = 'libhmk' as const;
+export class OpenHEDriver implements KeyboardDriver {
+  readonly id = 'openhe' as const;
+  /** Full travel of the switches, mm. */
+  readonly travelMm: number;
   readonly capabilities: DriverCapabilities;
   readonly layout: BoardLayout;
 
   private constructor(
     private readonly transport: ReportTransport,
     readonly info: DeviceInfo,
-    readonly metadata: HmkMetadata
+    readonly metadata: HmkMetadata,
+    readonly firmware: FirmwareInfo
   ) {
+    this.travelMm = firmware.travelCmm / 100;
     this.capabilities = {
       profiles: metadata.numProfiles,
       layers: metadata.numLayers,
-      travelMm: HMK_TRAVEL_MM,
-      travelStepMm: HMK_TRAVEL_MM / UNITS,
+      travelMm: this.travelMm,
+      travelStepMm: 0.01,
       actuation: true,
       rapidTrigger: true,
       rapidTriggerSplit: true,
-      continuousRapidTrigger: true,
+      continuousRapidTrigger: (firmware.features & Feature.CONTINUOUS_RT) !== 0,
       advancedKeys: ['nullBind', 'dynamicKeystroke', 'tapHold', 'toggle', 'macro'],
       maxAdvancedKeys: metadata.numAdvancedKeys,
       dynamicKeystrokeBindings: metadata.numDynamicKeystrokeMaxBindings,
@@ -94,22 +103,23 @@ export class LibhmkDriver implements KeyboardDriver {
       travelStream: true,
       calibration: true,
       rgb: false,
-      gamepad: true,
+      gamepad: (firmware.features & Feature.GAMEPAD) !== 0,
       pollingRates: metadata.usbHighSpeed ? [8000, 1000] : [1000],
       releasePoint: false,
-      bottomDeadzone: false,
+      topDeadzone: (firmware.features & Feature.DEADZONE) !== 0,
+      bottomDeadzone: (firmware.features & Feature.DEADZONE) !== 0,
       writable: { keymap: true, actuation: true, advancedKeys: true },
       actuationActiveProfileOnly: false
     };
     this.layout = { ...layoutFromMetadata(metadata), source: 'board' };
   }
 
-  /** Open a WebHID device (already granted by the user) as a libhmk board. */
-  static async fromHidDevice(device: HidDeviceLike): Promise<LibhmkDriver> {
+  /** Open a WebHID device (already granted by the user) as an OpenHE board. */
+  static async fromHidDevice(device: HidDeviceLike): Promise<OpenHEDriver> {
     if (!device.opened) await device.open();
     const transport = new InputReportTransport(device, 0);
     try {
-      return await LibhmkDriver.connect(transport, {
+      return await OpenHEDriver.connect(transport, {
         vendorId: device.vendorId,
         productId: device.productId,
         productName: device.productName
@@ -123,13 +133,26 @@ export class LibhmkDriver implements KeyboardDriver {
   static async connect(
     transport: ReportTransport,
     usb: { vendorId: number; productId: number; productName: string }
-  ): Promise<LibhmkDriver> {
+  ): Promise<OpenHEDriver> {
     const call = (cmd: number, payload: number[] = []) => exchange(transport, cmd, payload);
-    const version = rd16(await call(Cmd.FIRMWARE_VERSION), 1);
+    const firmware = await call(Cmd.FIRMWARE_INFO)
+      .then(decodeFirmwareInfo)
+      .catch(() => null);
+    if (!firmware) {
+      throw new DriverError(
+        'This keyboard is not running OpenHE firmware. Flash the OpenHE build for it first.'
+      );
+    }
+    if (firmware.protocolVersion > OPENHE_PROTOCOL_VERSION) {
+      throw new DriverError(
+        `This keyboard's firmware speaks a newer OpenHE protocol (${firmware.protocolVersion}); update OpenHE.`
+      );
+    }
+    const version = firmware.firmwareVersion;
     const metadata = await readMetadata(transport);
     const serialBytes = (await call(Cmd.GET_SERIAL)).subarray(1, 33);
     const serial = new TextDecoder().decode(serialBytes).replace(/\0.*$/s, '');
-    return new LibhmkDriver(
+    return new OpenHEDriver(
       transport,
       {
         name: metadata.name || usb.productName,
@@ -138,7 +161,8 @@ export class LibhmkDriver implements KeyboardDriver {
         vendorId: usb.vendorId,
         productId: usb.productId
       },
-      metadata
+      metadata,
+      firmware
     );
   }
 
@@ -150,12 +174,18 @@ export class LibhmkDriver implements KeyboardDriver {
     return exchange(this.transport, cmd, payload);
   }
 
+  /** 0..255 of full travel (advanced keys, gamepad) to mm. */
   private toMm(units: number): number {
-    return (units * HMK_TRAVEL_MM) / UNITS;
+    return (units * this.travelMm) / UNITS;
   }
 
   private toUnits(mm: number): number {
-    return Math.max(0, Math.min(UNITS, Math.round((mm * UNITS) / HMK_TRAVEL_MM)));
+    return Math.max(0, Math.min(UNITS, Math.round((mm * UNITS) / this.travelMm)));
+  }
+
+  /** mm to the firmware's 0.01 mm, clamped to [min, full travel]. */
+  private toCmm(mm: number, min = 0): number {
+    return Math.max(min, Math.min(Math.round(this.travelMm * 100), Math.round(mm * 100)));
   }
 
   private checkProfile(profile: number) {
@@ -185,7 +215,7 @@ export class LibhmkDriver implements KeyboardDriver {
     const codes = keymap.map((kc, i) => {
       const code = uiToHmk(kc);
       if (code === null)
-        throw new DriverError(`Key ${i}: this keycode is not available on libhmk boards`);
+        throw new DriverError(`Key ${i}: this keycode is not available on this keyboard`);
       return code;
     });
     if (codes.length !== this.metadata.numKeys)
@@ -212,10 +242,15 @@ export class LibhmkDriver implements KeyboardDriver {
       for (let i = 0; i < len; i++) {
         const a = decodeActuation(reply, 1 + i * ACTUATION_SIZE);
         out.push({
-          actuationMm: this.toMm(a.actuationPoint),
-          rtPressMm: this.toMm(a.rtDown),
-          rtReleaseMm: this.toMm(a.rtUp),
-          continuous: a.continuous
+          actuationMm: a.actuation / 100,
+          rapidTrigger: (a.flags & ActFlag.RT) !== 0,
+          splitSensitivity: (a.flags & ActFlag.SPLIT) !== 0,
+          rtPressMm: a.rtPress / 100,
+          rtReleaseMm: a.rtRelease / 100,
+          continuous: (a.flags & ActFlag.CONTINUOUS) !== 0,
+          deadzoneEnabled: (a.flags & ActFlag.DEADZONE) !== 0,
+          topDeadzoneMm: a.topDeadzone / 100,
+          bottomDeadzoneMm: a.bottomDeadzone / 100
         });
       }
     }
@@ -230,11 +265,17 @@ export class LibhmkDriver implements KeyboardDriver {
       const chunk = actuation.slice(offset, offset + ACTUATION_CHUNK);
       const bytes = chunk.flatMap(a =>
         encodeActuation({
-          // 0 would never actuate; libhmk treats actuation as a distance threshold.
-          actuationPoint: Math.max(1, this.toUnits(a.actuationMm)),
-          rtDown: this.toUnits(a.rtPressMm),
-          rtUp: this.toUnits(a.rtReleaseMm),
-          continuous: a.continuous
+          // the firmware refuses an actuation point of 0 or past full travel
+          actuation: this.toCmm(a.actuationMm, 1),
+          rtPress: this.toCmm(a.rtPressMm),
+          rtRelease: this.toCmm(a.rtReleaseMm),
+          topDeadzone: Math.min(255, this.toCmm(a.topDeadzoneMm)),
+          bottomDeadzone: Math.min(255, this.toCmm(a.bottomDeadzoneMm)),
+          flags:
+            (a.rapidTrigger ? ActFlag.RT : 0) |
+            (a.splitSensitivity ? ActFlag.SPLIT : 0) |
+            (a.continuous ? ActFlag.CONTINUOUS : 0) |
+            (a.deadzoneEnabled ? ActFlag.DEADZONE : 0)
         })
       );
       await this.call(Cmd.SET_ACTUATION_MAP, [profile, offset, chunk.length, ...bytes]);
@@ -288,8 +329,8 @@ export class LibhmkDriver implements KeyboardDriver {
       const reply = await this.call(Cmd.ANALOG_INFO, [offset]);
       const len = Math.min(ANALOG_INFO_CHUNK, n - offset);
       for (let i = 0; i < len; i++) {
-        const o = 1 + i * 3;
-        out.push({ index: offset + i, raw: rd16(reply, o), travelMm: this.toMm(reply[o + 2]) });
+        const o = 1 + i * 4;
+        out.push({ index: offset + i, raw: rd16(reply, o), travelMm: rd16(reply, o + 2) / 100 });
       }
     }
     return out;
@@ -355,7 +396,7 @@ export class LibhmkDriver implements KeyboardDriver {
     if (config.buttons.length !== this.metadata.numKeys) {
       throw new RangeError('gamepad map length does not match the board');
     }
-    if (config.curve.length !== 4) throw new RangeError('libhmk curves have exactly 4 points');
+    if (config.curve.length !== 4) throw new RangeError('gamepad curves have exactly 4 points');
     const codes = config.buttons.map((b: GamepadButton) => Math.max(0, GAMEPAD_BUTTONS.indexOf(b)));
     for (let offset = 0; offset < codes.length; offset += GAMEPAD_SET_CHUNK) {
       const chunk = codes.slice(offset, offset + GAMEPAD_SET_CHUNK);

@@ -1,7 +1,8 @@
 /**
- * libhmk raw HID protocol (firmware 0x0108, include/commands.h).
+ * OpenHE firmware raw HID protocol (gk68tmr_firmware, include/commands.h):
+ * libhmk's command set with OpenHE's actuation model. Not hmkconf-compatible.
  *
- * 64-byte output reports on usage page 0xFFAB usage 0xAB, report ID 0. Every
+ * 64-byte output reports on usage page 0xFF48 usage 0x45, report ID 0. Every
  * request gets one 64-byte input report; byte 0 echoes the command ID, or is
  * 0xFF (COMMAND_UNKNOWN) when the board rejected it. All integers are
  * little-endian, all structs packed.
@@ -10,8 +11,8 @@
 import type { AdvancedKey, DksAction } from '../types';
 import { hmkToUi, uiToHmk } from './keycodes';
 
-export const HMK_USAGE_PAGE = 0xffab;
-export const HMK_USAGE = 0xab;
+export const HMK_USAGE_PAGE = 0xff48;
+export const HMK_USAGE = 0x45;
 export const HMK_REPORT_SIZE = 64;
 
 export const Cmd = {
@@ -31,6 +32,7 @@ export const Cmd = {
   GET_METADATA: 13,
   GET_SERIAL: 14,
   SAVE_CALIBRATION_THRESHOLD: 15,
+  FIRMWARE_INFO: 16,
   GET_KEYMAP: 128,
   SET_KEYMAP: 129,
   GET_ACTUATION_MAP: 130,
@@ -51,13 +53,37 @@ export const Cmd = {
 /** Per-packet chunk sizes fixed by the command structs. */
 export const KEYMAP_CHUNK = 59; // SET; GET returns up to 63
 export const KEYMAP_GET_CHUNK = 63;
-export const ACTUATION_CHUNK = 15;
-export const ANALOG_INFO_CHUNK = 21;
+export const ACTUATION_CHUNK = 6;
+export const ANALOG_INFO_CHUNK = 15;
 export const STAGED_SET_CHUNK = 59;
 export const STAGED_GET_CHUNK = 62;
 export const METADATA_CHUNK = 59;
 
-export const ACTUATION_SIZE = 4;
+export const ACTUATION_SIZE = 9;
+
+/** COMMAND_FIRMWARE_INFO signature, "OPHE" little-endian. */
+export const OPENHE_SIGNATURE = 0x4548504f;
+export const OPENHE_PROTOCOL_VERSION = 1;
+export const Feature = { DEADZONE: 1, CONTINUOUS_RT: 2, GAMEPAD: 4, WIRELESS: 8 } as const;
+
+export type FirmwareInfo = {
+  protocolVersion: number;
+  firmwareVersion: number;
+  /** Full travel, 0.01 mm */
+  travelCmm: number;
+  features: number;
+};
+
+/** null when the board is not running OpenHE firmware. */
+export function decodeFirmwareInfo(r: Uint8Array): FirmwareInfo | null {
+  if (rd32(r, 1) !== OPENHE_SIGNATURE) return null;
+  return {
+    protocolVersion: rd16(r, 5),
+    firmwareVersion: rd16(r, 7),
+    travelCmm: rd16(r, 9),
+    features: rd32(r, 11)
+  };
+}
 export const MACRO_NODE_SIZE = 4;
 
 /** Board metadata, the gzipped JSON from COMMAND_GET_METADATA (scripts/metadata.py). */
@@ -98,19 +124,38 @@ export const rd32 = (b: Uint8Array, o: number) =>
 
 // ---------------------------------------------------------------- actuation
 
+export const ActFlag = { RT: 0x01, SPLIT: 0x02, CONTINUOUS: 0x04, DEADZONE: 0x08 } as const;
+
+/** actuation_t: all distances in 0.01 mm. */
 export type HmkActuation = {
-  actuationPoint: number;
-  rtDown: number;
-  rtUp: number;
-  continuous: boolean;
+  actuation: number;
+  rtPress: number;
+  rtRelease: number;
+  topDeadzone: number;
+  bottomDeadzone: number;
+  flags: number;
 };
 
 export function decodeActuation(b: Uint8Array, o: number): HmkActuation {
-  return { actuationPoint: b[o], rtDown: b[o + 1], rtUp: b[o + 2], continuous: b[o + 3] !== 0 };
+  return {
+    actuation: rd16(b, o),
+    rtPress: rd16(b, o + 2),
+    rtRelease: rd16(b, o + 4),
+    topDeadzone: b[o + 6],
+    bottomDeadzone: b[o + 7],
+    flags: b[o + 8]
+  };
 }
 
 export function encodeActuation(a: HmkActuation): number[] {
-  return [a.actuationPoint, a.rtDown, a.rtUp, a.continuous ? 1 : 0];
+  return [
+    ...u16(a.actuation),
+    ...u16(a.rtPress),
+    ...u16(a.rtRelease),
+    a.topDeadzone & 0xff,
+    a.bottomDeadzone & 0xff,
+    a.flags & 0xff
+  ];
 }
 
 // ------------------------------------------------------------ advanced keys
@@ -196,7 +241,7 @@ export function decodeAdvancedKey(
 function keycodeOrThrow(value: number): number {
   const code = uiToHmk(value);
   if (code === null)
-    throw new RangeError(`keycode 0x${value.toString(16)} is not supported by libhmk`);
+    throw new RangeError(`keycode 0x${value.toString(16)} is not supported by OpenHE firmware`);
   return code;
 }
 
