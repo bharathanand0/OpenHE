@@ -147,7 +147,26 @@ export type AdvancedKey =
       holdOnOtherKeyPress: boolean;
     }
   | { kind: 'toggle'; layer: number; key: number; keycode: UiKeycode; tappingTermMs: number }
-  | { kind: 'macro'; layer: number; key: number; macro: number };
+  | {
+      kind: 'macro';
+      layer: number;
+      key: number;
+      steps: MacroStep[];
+      mode: MacroMode;
+      /** Plays for mode 'repeat'. */
+      repeat: number;
+      /** Library macro this came from, when known (not stored on the board). */
+      name?: string;
+    };
+
+export type MacroMode = 'once' | 'repeat' | 'hold' | 'toggle';
+
+/** One macro step; `delayMs` is the wait after it, before the next step. */
+export type MacroStep = {
+  keycode: UiKeycode;
+  action: 'press' | 'release' | 'tap';
+  delayMs: number;
+};
 
 export type DksAction = 'hold' | 'press' | 'release' | 'tap';
 

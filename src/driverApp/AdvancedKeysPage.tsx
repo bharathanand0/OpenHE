@@ -3,7 +3,16 @@ import { Plus, Trash2 } from 'lucide-react';
 import { RangeControl } from '../app/components/RangeControl';
 import { Toggle } from '../app/components/Toggle';
 import type { UiKeycode } from '../drivers/keycodes';
-import type { AdvancedKey, AdvancedKeyKind, DksAction, KeyboardDriver } from '../drivers/types';
+import type {
+  AdvancedKey,
+  AdvancedKeyKind,
+  DksAction,
+  KeyboardDriver,
+  MacroMode,
+  MacroStep
+} from '../drivers/types';
+import { MACRO_LIBRARY_EVENT, loadMacroLibrary, type MacroDefinition } from '../state/macros';
+import { macroAdvancedKey, macroToSteps, nameMacros } from './macroSteps';
 import Hero68Preview from '../components/Hero68Preview';
 import type { HeroDeviceModelId } from '../keyboard/devices';
 import type { AdvancedBinding } from '../protocol/hero68/advanced';
@@ -12,7 +21,7 @@ import { KeycodePicker } from './KeycodePicker';
 import { keyLabel } from './RemapPage';
 import { SaveBar } from './SaveBar';
 
-type EditableKind = Exclude<AdvancedKeyKind, 'macro'>;
+type EditableKind = AdvancedKeyKind;
 
 const KINDS: Record<EditableKind, { title: string; short: string; blurb: string }> = {
   nullBind: {
@@ -36,8 +45,21 @@ const KINDS: Record<EditableKind, { title: string; short: string; blurb: string 
     short: 'TG',
     blurb:
       'A tap latches the key down, the next tap releases it. Held longer, it acts as a normal key.'
+  },
+  macro: {
+    title: 'Macro',
+    short: 'M',
+    blurb: 'Plays a macro from your library (Macros page) when the key is pressed.'
   }
 };
+
+const MACRO_MODES: Array<{ value: MacroMode; label: string }> = [
+  { value: 'once', label: 'Play once' },
+  { value: 'repeat', label: 'Repeat a number of times' },
+  { value: 'hold', label: 'Repeat while held' },
+  { value: 'toggle', label: 'Press to start, press again to stop' }
+];
+const STEP_LABEL: Record<MacroStep['action'], string> = { press: '↓', release: '↑', tap: '↕' };
 
 const NB_BEHAVIORS: Array<{
   value: Extract<AdvancedKey, { kind: 'nullBind' }>['behavior'];
@@ -85,6 +107,8 @@ function fresh(
       return { kind, layer, key, tap: 0, hold: 0, tappingTermMs: 200, holdOnOtherKeyPress: false };
     case 'toggle':
       return { kind, layer, key, keycode: 0, tappingTermMs: 200 };
+    case 'macro':
+      return { kind, layer, key, steps: [], mode: 'once', repeat: 1 };
   }
 }
 
@@ -101,11 +125,21 @@ function problem(ak: AdvancedKey, all: readonly AdvancedKey[], self: number): st
   if (ak.kind === 'tapHold' && (ak.tap === 0 || ak.hold === 0))
     return 'Pick both a tap and a hold keycode.';
   if (ak.kind === 'toggle' && ak.keycode === 0) return 'Pick a keycode.';
+  if (ak.kind === 'macro' && ak.steps.length === 0) return 'Pick a macro from your library.';
   const mine = keysOf(ak);
   const clash = all.some(
     (o, i) => i !== self && o.layer === ak.layer && keysOf(o).some(k => mine.includes(k))
   );
   return clash ? 'Another advanced key already uses this key on this layer.' : null;
+}
+
+/** The saved macro library; an unreadable one counts as empty. */
+function readLibrary(): MacroDefinition[] {
+  try {
+    return loadMacroLibrary();
+  } catch {
+    return [];
+  }
 }
 
 type Target =
@@ -126,7 +160,17 @@ export function AdvancedKeysPage({
   run: (label: string, task: () => Promise<void>) => Promise<boolean>;
 }) {
   const caps = driver.capabilities;
-  const kinds = caps.advancedKeys.filter((k): k is EditableKind => k !== 'macro');
+  const kinds = caps.advancedKeys.filter(k => k !== 'macro' || caps.macros);
+  const [library, setLibrary] = useState<MacroDefinition[]>(readLibrary);
+  useEffect(() => {
+    const reload = () => setLibrary(readLibrary());
+    window.addEventListener(MACRO_LIBRARY_EVENT, reload);
+    window.addEventListener('storage', reload);
+    return () => {
+      window.removeEventListener(MACRO_LIBRARY_EVENT, reload);
+      window.removeEventListener('storage', reload);
+    };
+  }, []);
   const [saved, setSaved] = useState<AdvancedKey[] | null>(null);
   const [draft, setDraft] = useState<AdvancedKey[] | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
@@ -142,8 +186,9 @@ export function AdvancedKeysPage({
     setLoadError(null);
     driver
       .getAdvancedKeys?.(profile)
-      .then(list => {
+      .then(read => {
         if (!live) return;
+        const list = nameMacros(read, readLibrary());
         setSaved(list);
         setDraft(list.map(k => structuredClone(k)));
       })
@@ -168,7 +213,7 @@ export function AdvancedKeysPage({
   const onLayer = draft.map((ak, i) => ({ ak, i })).filter(({ ak }) => ak.layer === layer);
   const badge = new Map<number, string>();
   for (const { ak } of onLayer) {
-    const short = ak.kind === 'macro' ? 'M' : KINDS[ak.kind].short;
+    const short = KINDS[ak.kind].short;
     for (const k of keysOf(ak)) badge.set(k, short);
   }
   const errors = draft.map((ak, i) => problem(ak, draft, i));
@@ -315,7 +360,7 @@ export function AdvancedKeysPage({
                 className="drv-ak-row-main"
                 onClick={() => setEditing(editing === i ? null : i)}
               >
-                <b>{ak.kind === 'macro' ? 'Macro' : KINDS[ak.kind].title}</b>
+                <b>{ak.kind === 'macro' ? (ak.name ?? 'Macro') : KINDS[ak.kind].title}</b>
                 <small>
                   {keysOf(ak)
                     .filter((k, n, all) => all.indexOf(k) === n)
@@ -354,11 +399,6 @@ export function AdvancedKeysPage({
         <section className="drv-panel drv-ak-editor">
           {!current ? (
             <p className="drv-muted">Add an advanced key, or click one on the board to edit it.</p>
-          ) : current.kind === 'macro' ? (
-            <p className="drv-muted">
-              Macro {current.macro + 1} on {label(current.key)}. Macros cannot be edited here yet;
-              it is kept as is.
-            </p>
           ) : (
             <>
               <h3>{KINDS[current.kind].title}</h3>
@@ -501,6 +541,90 @@ export function AdvancedKeysPage({
                     value={current.tappingTermMs}
                     onChange={v => update(ak => ({ ...ak, tappingTermMs: v }))}
                   />
+                </>
+              )}
+
+              {current.kind === 'macro' && (
+                <>
+                  <div className="drv-slots">{keyButton('key', current.key, 'Key')}</div>
+                  <label className="drv-field">
+                    <span>Macro</span>
+                    <select
+                      className="drv-select"
+                      value={library.find(m => m.name === current.name)?.id ?? ''}
+                      onChange={e => {
+                        const macro = library.find(m => m.id === e.target.value);
+                        if (macro) update(ak => macroAdvancedKey(macro, ak.layer, ak.key));
+                      }}
+                    >
+                      <option value="" disabled>
+                        {library.length
+                          ? current.steps.length
+                            ? `${current.name ?? 'Macro on the keyboard'} (not in library)`
+                            : 'Choose a saved macro…'
+                          : 'No saved macros yet (Macros page)'}
+                      </option>
+                      {library.map(m => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {(() => {
+                    const lib = library.find(m => m.name === current.name);
+                    const unknown = lib ? macroToSteps(lib).unknown : [];
+                    return unknown.length ? (
+                      <div className="drv-notice">
+                        Left out, this keyboard cannot send: {unknown.join(', ')}
+                      </div>
+                    ) : null;
+                  })()}
+                  <label className="drv-field">
+                    <span>Playback</span>
+                    <select
+                      className="drv-select"
+                      value={current.mode}
+                      onChange={e => update(ak => ({ ...ak, mode: e.target.value as MacroMode }))}
+                    >
+                      {MACRO_MODES.map(m => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {current.mode === 'repeat' && (
+                    <label className="drv-field">
+                      <span>Times</span>
+                      <span className="drv-term">
+                        <input
+                          type="range"
+                          min={1}
+                          max={255}
+                          value={current.repeat}
+                          onChange={e => update(ak => ({ ...ak, repeat: Number(e.target.value) }))}
+                        />
+                        <b>{current.repeat}×</b>
+                      </span>
+                    </label>
+                  )}
+                  {current.steps.length > 0 && (
+                    <div className="drv-macro-steps" aria-label="Macro steps">
+                      {current.steps.map((step, n) => (
+                        <span key={n} className="drv-macro-step">
+                          <b>
+                            {STEP_LABEL[step.action]} {keyLabel(driver, step.keycode, false)}
+                          </b>
+                          {step.delayMs > 0 && <small>{step.delayMs} ms</small>}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="drv-muted">
+                    {current.steps.length} step{current.steps.length === 1 ? '' : 's'}. Held keys
+                    are let go at the end of each play.
+                  </p>
                 </>
               )}
 

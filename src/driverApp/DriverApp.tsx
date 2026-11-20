@@ -10,6 +10,7 @@ import {
   Info,
   Keyboard,
   Layers3,
+  ListOrdered,
   Loader2,
   Settings,
   SlidersHorizontal,
@@ -29,6 +30,7 @@ import { SwitchesPage } from './SwitchesPage';
 import { useSwitchSetup } from './useSwitchSetup';
 import type { KeyboardDriver } from '../drivers/types';
 import { AdvancedKeysPage } from './AdvancedKeysPage';
+import MacroPage from '../components/MacroPage';
 import { BoardThumb } from './BoardThumb';
 import { DevicePage } from './DevicePage';
 import { GamepadPage } from './GamepadPage';
@@ -55,7 +57,8 @@ import {
 import { driverConnection } from './store';
 
 type Rail = 'keyboard' | 'settings' | 'help';
-type KeyboardPage = 'quick' | 'actuation' | 'rapid' | 'stream' | 'remap' | 'advanced' | 'gamepad';
+type KeyboardPage =
+  'quick' | 'actuation' | 'rapid' | 'stream' | 'remap' | 'advanced' | 'macros' | 'gamepad';
 type SettingsPage = 'general' | 'switches' | 'profiles' | 'calibration' | 'device';
 
 type NavItem<T> = { id: T; label: string; icon: ReactNode; show: boolean };
@@ -170,6 +173,12 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
       show: caps.advancedKeys.length > 0 && !!driver.getAdvancedKeys
     },
     {
+      id: 'macros',
+      label: 'Macros',
+      icon: <ListOrdered size={18} />,
+      show: caps.macros && caps.advancedKeys.includes('macro') && !!driver.setAdvancedKeys
+    },
+    {
       id: 'gamepad',
       label: 'Gamepad',
       icon: <Gamepad2 size={18} />,
@@ -246,6 +255,14 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
         return <DriverStreamPage driver={driver} perf={perf} hall={hall} />;
       case 'advanced':
         return <AdvancedKeysPage {...props} model={model} />;
+      case 'macros':
+        return (
+          <MacroPage
+            localLibrary={{
+              assignHint: 'To play a macro, assign it to a key in Advanced Keys → Add Macro.'
+            }}
+          />
+        );
       case 'gamepad':
         return <GamepadPage {...props} model={model} />;
       default:
@@ -257,7 +274,7 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
   // pages get the content column.
   const openAulaPage =
     (rail === 'keyboard' &&
-      ['quick', 'actuation', 'rapid', 'stream'].includes(activeKeyboard.id)) ||
+      ['quick', 'actuation', 'rapid', 'stream', 'macros'].includes(activeKeyboard.id)) ||
     (rail === 'settings' && activeSettings.id === 'switches');
 
   // Live travel only runs on the pages that show it.

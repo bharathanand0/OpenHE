@@ -26,6 +26,7 @@ import {
   type DriverCapabilities,
   type KeyActuation,
   type KeyboardDriver,
+  type MacroStep,
   type LayoutKey,
   type TravelSample
 } from '../types';
@@ -58,6 +59,10 @@ import {
   KEY_SWITCH_SET_CHUNK,
   SWITCH_PROFILE_SIZE,
   type HmkSwitchProfile,
+  MACRO_NODE_NONE,
+  MACRO_NODE_SIZE,
+  decodeMacroNode,
+  encodeMacroNode,
   type FirmwareInfo,
   gunzipJson,
   rd16,
@@ -307,7 +312,35 @@ export class OpenHEDriver implements KeyboardDriver {
       const ak = decodeAdvancedKey(bytes, i * item, dks, u => this.toMm(u));
       if (ak) out.push(ak);
     }
+    if (out.some(ak => ak.kind === 'macro') && this.metadata.numMacroNodes > 0) {
+      const nodes = await this.readStaged(
+        Cmd.GET_MACROS,
+        profile,
+        MACRO_NODE_SIZE * this.metadata.numMacroNodes
+      );
+      for (const ak of out) {
+        if (ak.kind !== 'macro') continue;
+        const withHead = ak as typeof ak & { head?: number };
+        ak.steps = this.readMacroChain(nodes, withHead.head ?? MACRO_NODE_NONE);
+        delete withHead.head;
+      }
+    }
     return out;
+  }
+
+  /** Follow one macro's linked list of nodes into steps (loops are cut). */
+  private readMacroChain(nodes: Uint8Array, head: number): MacroStep[] {
+    const steps: MacroStep[] = [];
+    const seen = new Set<number>();
+    for (let id = head; id !== MACRO_NODE_NONE && id < this.metadata.numMacroNodes;) {
+      if (seen.has(id)) break;
+      seen.add(id);
+      const n = decodeMacroNode(nodes, id * MACRO_NODE_SIZE);
+      if (n.action)
+        steps.push({ keycode: hmkToUi(n.keycode), action: n.action, delayMs: n.delayMs });
+      id = n.next;
+    }
+    return steps;
   }
 
   async setAdvancedKeys(profile: number, keys: readonly AdvancedKey[]): Promise<void> {
@@ -316,8 +349,45 @@ export class OpenHEDriver implements KeyboardDriver {
     if (keys.length > max) throw new DriverError(`This board holds at most ${max} advanced keys`);
     const dks = this.metadata.numDynamicKeystrokeMaxBindings;
     const item = advancedKeySize(dks);
+
+    // Lay every macro key's steps out in the node table, one linked list each.
+    const nodeCount = this.metadata.numMacroNodes;
+    const nodes: number[] = [];
+    const placed = keys.map(ak => {
+      if (ak.kind !== 'macro') return ak;
+      if (!ak.steps.length) return { ...ak, head: MACRO_NODE_NONE };
+      const head = nodes.length / MACRO_NODE_SIZE;
+      if (head + ak.steps.length > nodeCount) {
+        throw new DriverError(
+          `Macros on this profile need more than the keyboard's ${nodeCount} macro steps. Shorten or remove a macro.`
+        );
+      }
+      ak.steps.forEach((step, i) => {
+        const code = uiToHmk(step.keycode);
+        if (code === null) {
+          throw new DriverError(`A macro step uses a key this keyboard cannot send.`);
+        }
+        const next = i + 1 < ak.steps.length ? head + i + 1 : MACRO_NODE_NONE;
+        nodes.push(...encodeMacroNode(code, step.action, step.delayMs, next));
+      });
+      return { ...ak, head };
+    });
+
+    if (nodeCount > 0 && keys.some(ak => ak.kind === 'macro')) {
+      const table = new Uint8Array(nodeCount * MACRO_NODE_SIZE);
+      table.set(nodes);
+      // unused nodes: action none, next none
+      for (let i = nodes.length / MACRO_NODE_SIZE; i < nodeCount; i++) {
+        table[i * MACRO_NODE_SIZE + 3] = MACRO_NODE_NONE;
+      }
+      for (let offset = 0; offset < table.length; offset += STAGED_SET_CHUNK) {
+        const chunk = table.subarray(offset, offset + STAGED_SET_CHUNK);
+        await this.call(Cmd.SET_MACROS, [profile, ...u16(offset), chunk.length, ...chunk]);
+      }
+    }
+
     const bytes = new Uint8Array(item * max);
-    keys.forEach((ak, i) =>
+    placed.forEach((ak, i) =>
       bytes.set(
         encodeAdvancedKey(ak, dks, mm => this.toUnits(mm)),
         i * item

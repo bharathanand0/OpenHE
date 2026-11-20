@@ -8,7 +8,7 @@
  * little-endian, all structs packed.
  */
 
-import type { AdvancedKey, DksAction } from '../types';
+import type { AdvancedKey, DksAction, MacroMode, MacroStep } from '../types';
 import { hmkToUi, uiToHmk } from './keycodes';
 
 export const HMK_USAGE_PAGE = 0xff48;
@@ -101,6 +101,34 @@ export function decodeFirmwareInfo(r: Uint8Array): FirmwareInfo | null {
   };
 }
 export const MACRO_NODE_SIZE = 4;
+export const MACRO_NODE_NONE = 0xff;
+export const MACRO_MODES: readonly MacroMode[] = ['once', 'repeat', 'hold', 'toggle'];
+const MACRO_ACTIONS: ReadonlyArray<MacroStep['action'] | null> = [null, 'press', 'tap', 'release'];
+/** macro_node_t delay is 13 bits. */
+export const MACRO_MAX_DELAY_MS = 8191;
+
+/** macro_node_t: keycode, action:3 | delay:13 (LE), next. */
+export function decodeMacroNode(b: Uint8Array, o: number) {
+  const bits = b[o + 1] | (b[o + 2] << 8);
+  return {
+    keycode: b[o],
+    action: MACRO_ACTIONS[bits & 7] ?? null,
+    delayMs: bits >> 3,
+    next: b[o + 3]
+  };
+}
+
+export function encodeMacroNode(
+  keycode: number,
+  action: MacroStep['action'],
+  delayMs: number,
+  next: number
+) {
+  const bits =
+    (MACRO_ACTIONS.indexOf(action) & 7) |
+    (Math.min(MACRO_MAX_DELAY_MS, Math.max(0, Math.round(delayMs))) << 3);
+  return [keycode & 0xff, bits & 0xff, (bits >> 8) & 0xff, next & 0xff];
+}
 
 /** Board metadata, the gzipped JSON from COMMAND_GET_METADATA (scripts/metadata.py). */
 export type HmkMetadata = {
@@ -248,7 +276,16 @@ export function decodeAdvancedKey(
     case AK_TYPE.TOGGLE:
       return { kind: 'toggle', layer, key, keycode: hmkToUi(b[p]), tappingTermMs: rd16(b, p + 1) };
     case AK_TYPE.MACRO:
-      return { kind: 'macro', layer, key, macro: b[p] };
+      return {
+        kind: 'macro',
+        layer,
+        key,
+        // steps are filled in by the driver from the macro node table
+        steps: [],
+        mode: MACRO_MODES[b[p + 1]] ?? 'once',
+        repeat: b[p + 2] || 1,
+        head: b[p]
+      } as AdvancedKey & { head: number };
     default:
       return null;
   }
@@ -305,8 +342,11 @@ export function encodeAdvancedKey(
       out.set(u16(ak.tappingTermMs), p + 1);
       break;
     case 'macro':
+      // the driver places the steps in the node table and passes the head
       out[2] = AK_TYPE.MACRO;
-      out[p] = ak.macro;
+      out[p] = (ak as AdvancedKey & { head?: number }).head ?? MACRO_NODE_NONE;
+      out[p + 1] = Math.max(0, MACRO_MODES.indexOf(ak.mode));
+      out[p + 2] = Math.min(255, Math.max(1, Math.round(ak.repeat || 1)));
       break;
   }
   return out;

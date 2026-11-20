@@ -913,3 +913,23 @@
   flex-direction: column;
   gap: 14px;
 }
+
+.drv-macro-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.drv-macro-step {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--surface-2, rgba(127, 127, 127, 0.12));
+  font-size: 12px;
+}
+.drv-macro-step small {
+  opacity: 0.65;
+}

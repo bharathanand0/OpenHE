@@ -32,11 +32,35 @@ function fakeOpenHE(md = metadata, opts = {}) {
     keymap: Array.from({ length: L }, () => new Uint8Array(N)),
     actuation: (() => { const a = new Uint8Array(N * 9); for (let k = 0; k < N; k++) a.set([200, 0, 30, 0, 30, 0, 10, 10, 1], k * 9); return a })(),
     advanced: new Uint8Array(akSize * md.numAdvancedKeys),
+    macros: new Uint8Array(4 * md.numMacroNodes),
     gamepad: new Uint8Array(N),
     gpOptions: Uint8Array.from([4, 20, 85, 95, 165, 170, 255, 255, 0b1001]),
     tick: 30
   }))
   const staged = { id: 0, profile: 0, offset: 0, buf: new Uint8Array(akSize) }
+  // libhmk's command_stage_write: whole items only, in order, per staged id
+  const stagedWrite = (req, id, field, item) => {
+    const prof = req[1]
+    const off = req[2] | (req[3] << 8), len = req[4]
+    if (off + len > field.length || len > 59 || len === 0) return false
+    if (off % item === 0) Object.assign(staged, { id, profile: prof, offset: off })
+    if (staged.id !== id || staged.offset !== off || staged.profile !== prof) return false
+    for (let i = 0; i < len;) {
+      const cur = staged.offset % item
+      const w = Math.min(len - i, item - cur)
+      staged.buf.set(req.subarray(5 + i, 5 + i + w), cur)
+      if (len - i >= item - cur) field.set(staged.buf.subarray(0, item), staged.offset - cur)
+      staged.offset += w; i += w
+    }
+    return true
+  }
+  const stagedRead = (out, field, off) => {
+    if (off >= field.length) return false
+    const len = Math.min(62, field.length - off)
+    out[1] = len
+    out.set(field.subarray(off, off + len), 2)
+    return true
+  }
   const log = []
   const cal = { rest: 4095, bottom: 500 }
   let switchProfiles = Array.from({ length: 4 }, () => [0, 400 & 0xff, 400 >> 8, 15])
@@ -98,31 +122,10 @@ function fakeOpenHE(md = metadata, opts = {}) {
         profiles[prof].actuation.set(req.subarray(4, 4 + len * 9), off * 9)
         break
       }
-      case 132: {
-        if (req[1] >= P) return fail()
-        const off = req[2] | (req[3] << 8)
-        if (off >= p.advanced.length) return fail()
-        const len = Math.min(62, p.advanced.length - off)
-        out[1] = len
-        out.set(p.advanced.subarray(off, off + len), 2)
-        break
-      }
-      case 133: {
-        const prof = req[1]; if (prof >= P) return fail()
-        const off = req[2] | (req[3] << 8), len = req[4]
-        const field = profiles[prof].advanced
-        if (off + len > field.length || len > 59 || len === 0) return fail()
-        if (off % akSize === 0) Object.assign(staged, { id: 1, profile: prof, offset: off })
-        if (staged.id !== 1 || staged.offset !== off || staged.profile !== prof) return fail()
-        for (let i = 0; i < len;) {
-          const cur = staged.offset % akSize
-          const w = Math.min(len - i, akSize - cur)
-          staged.buf.set(req.subarray(5 + i, 5 + i + w), cur)
-          if (len - i >= akSize - cur) field.set(staged.buf, staged.offset - cur)
-          staged.offset += w; i += w
-        }
-        break
-      }
+      case 132: if (req[1] >= P || !stagedRead(out, p.advanced, req[2] | (req[3] << 8))) return fail(); break
+      case 133: if (req[1] >= P || !stagedWrite(req, 1, profiles[req[1]].advanced, akSize)) return fail(); break
+      case 140: if (req[1] >= P || !stagedRead(out, p.macros, req[2] | (req[3] << 8))) return fail(); break
+      case 141: if (req[1] >= P || !stagedWrite(req, 2, profiles[req[1]].macros, 4)) return fail(); break
       case 4: log.push('recalibrate'); break
       case 6: out.set([...u16(cal.rest), ...u16(cal.bottom)], 1); break
       case 7: cal.rest = req[1] | (req[2] << 8); cal.bottom = req[3] | (req[4] << 8); break
@@ -287,13 +290,24 @@ test('advanced keys survive the staged write protocol', async () => {
       actions: [['press', 'hold', 'release', 'tap'], ['tap', 'tap', 'tap', 'tap'], ['hold', 'hold', 'hold', 'hold'], ['hold', 'hold', 'hold', 'hold']],
       bottomOutMm: 3.5
     },
-    { kind: 'macro', layer: 0, key: 5, macro: 3 }
+    {
+      kind: 'macro', layer: 0, key: 5, mode: 'repeat', repeat: 3,
+      steps: [
+        { keycode: 0x10000, action: 'press', delayMs: 0 },
+        { keycode: 0x06, action: 'tap', delayMs: 25 },
+        { keycode: 0x10000, action: 'release', delayMs: 8191 }
+      ]
+    },
+    {
+      kind: 'macro', layer: 1, key: 6, mode: 'toggle', repeat: 1,
+      steps: [{ keycode: 0x04, action: 'tap', delayMs: 100 }]
+    }
   ]
   await d.setAdvancedKeys(3, keys)
   // the whole 32-entry table was written (staging must commit every item)
   assert.equal(profiles[3].advanced[1 * akSize + 2], 3) // tap-hold type
   const back = await d.getAdvancedKeys(3)
-  assert.equal(back.length, 5)
+  assert.equal(back.length, 6)
   assert.deepEqual(back[0], keys[0])
   assert.deepEqual(back[1], keys[1])
   assert.deepEqual(back[2], keys[2])
@@ -301,6 +315,13 @@ test('advanced keys survive the staged write protocol', async () => {
   assert.deepEqual(back[3].keycodes, keys[3].keycodes)
   assert.ok(Math.abs(back[3].bottomOutMm - 3.5) < 0.02)
   assert.deepEqual(back[4], keys[4])
+  assert.deepEqual(back[5], keys[5])
+  // the second macro's nodes follow the first's
+  assert.equal(profiles[3].macros[3 * 4], 0x02) // libhmk KC_A
+  await assert.rejects(
+    d.setAdvancedKeys(3, [{ ...keys[4], steps: Array(129).fill(keys[4].steps[1]) }]),
+    /128 macro steps/
+  )
   await assert.rejects(d.setAdvancedKeys(0, Array(33).fill(keys[0])), /at most 32/)
 })
 

@@ -84,7 +84,17 @@ const mouseButtonToMacroKey: Record<number, string> = {
  * keyboard's onboard macro memory. Key assignment and playback mode (Once, Repeat N, Hold, Toggle)
  * are configured per key in Key Remap -> Macros.
  */
-export default function MacroPage() {
+export type MacroLocalLibrary = {
+  /** Where saved macros are put to use, shown in the help and notes. */
+  assignHint: string;
+};
+
+/**
+ * `localLibrary` (OpenHE driver boards): the library stays on this computer
+ * and macros reach the keyboard when assigned to a key, so the AULA sync and
+ * its wording are left out.
+ */
+export default function MacroPage({ localLibrary }: { localLibrary?: MacroLocalLibrary } = {}) {
   const { tr } = useI18n();
   const initial = useMemo(loadWorkspace, []);
   const [macros, setMacros] = useState(initial.macros);
@@ -320,6 +330,10 @@ export default function MacroPage() {
       store(next);
       setDraft(clean);
       setError('');
+      if (localLibrary) {
+        setNotice(tr('Saved to your macro library. {hint}', { hint: localLibrary.assignHint }));
+        return true;
+      }
       if (!hero68DeviceManager.connected) {
         setNotice(
           tr(
@@ -542,7 +556,9 @@ export default function MacroPage() {
               title="Macros"
               paragraphs={[
                 'Build a sequence of key presses, releases and delays. Record a sequence or add keystrokes, then edit each event.',
-                'Save keeps an editable local copy and, while HERO68 is connected, also writes the macro definition library with the recovered CMD 0x05 protocol. Assign saved macros to physical keys from Key Remap → Macros; the on-device playback mode and count are selected there. Preview only animates the sequence; it does not send keys to other applications.'
+                localLibrary
+                  ? `Save keeps the macro in your library on this computer. ${localLibrary.assignHint} Preview only animates the sequence; it does not send keys to other applications.`
+                  : 'Save keeps an editable local copy and, while HERO68 is connected, also writes the macro definition library with the recovered CMD 0x05 protocol. Assign saved macros to physical keys from Key Remap → Macros; the on-device playback mode and count are selected there. Preview only animates the sequence; it does not send keys to other applications.'
               ]}
             />
           </h1>
@@ -655,9 +671,11 @@ export default function MacroPage() {
               {tr('Create macro')}
             </button>
             <p className="macro-hardware-note">
-              {tr(
-                'Connect HERO68 to write saved macro definitions to the keyboard, then use Key Remap → Macros to assign one to a key.'
-              )}
+              {localLibrary
+                ? localLibrary.assignHint
+                : tr(
+                    'Connect HERO68 to write saved macro definitions to the keyboard, then use Key Remap → Macros to assign one to a key.'
+                  )}
             </p>
           </section>
         ) : (
@@ -684,7 +702,7 @@ export default function MacroPage() {
                   ? tr('Writing to HERO68…')
                   : dirty
                     ? tr('Draft')
-                    : deviceSynced
+                    : deviceSynced && !localLibrary
                       ? tr('Saved to HERO68')
                       : tr('Saved locally')}
               </span>
@@ -727,12 +745,14 @@ export default function MacroPage() {
                 </button>
                 <button
                   className="apply-button"
-                  disabled={locked || (!dirty && device.state !== 'connected')}
+                  disabled={
+                    locked || (!dirty && (Boolean(localLibrary) || device.state !== 'connected'))
+                  }
                   onClick={() => void save()}
                 >
                   {deviceSaving
                     ? tr('Saving…')
-                    : device.state === 'connected' && !dirty && !deviceSynced
+                    : !localLibrary && device.state === 'connected' && !dirty && !deviceSynced
                       ? tr('Sync to HERO68')
                       : tr('Save macro')}
                 </button>
@@ -1093,18 +1113,22 @@ export default function MacroPage() {
               </p>
               <div className="macro-hardware-note">
                 <strong>
-                  {device.state === 'connected'
-                    ? tr('On-device sync ready')
-                    : tr('Local + device library')}
+                  {localLibrary
+                    ? tr('Macro library')
+                    : device.state === 'connected'
+                      ? tr('On-device sync ready')
+                      : tr('Local + device library')}
                 </strong>
                 <span>
-                  {device.state === 'connected'
-                    ? tr(
-                        'Save writes the complete macro definition library to HERO68 using CMD 0x05. Playback behavior takes effect only after a macro is assigned to a key.'
-                      )
-                    : tr(
-                        'Your editable copy is kept locally. Connect HERO68, then save to write the definitions; assign them from Key Remap → Macros.'
-                      )}
+                  {localLibrary
+                    ? localLibrary.assignHint
+                    : device.state === 'connected'
+                      ? tr(
+                          'Save writes the complete macro definition library to HERO68 using CMD 0x05. Playback behavior takes effect only after a macro is assigned to a key.'
+                        )
+                      : tr(
+                          'Your editable copy is kept locally. Connect HERO68, then save to write the definitions; assign them from Key Remap → Macros.'
+                        )}
                 </span>
               </div>
             </footer>
