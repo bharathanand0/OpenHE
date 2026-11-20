@@ -1,28 +1,69 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Activity, Gauge, Keyboard, Layers, Loader2, Plug, Settings } from 'lucide-react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import {
+  Activity,
+  ArrowDownToLine,
+  ChevronLeft,
+  ChevronRight,
+  CircleHelp,
+  Crosshair,
+  Gamepad2,
+  Info,
+  Keyboard,
+  Layers3,
+  Loader2,
+  Settings,
+  SlidersHorizontal
+} from 'lucide-react';
+import { version as uiVersion } from '../../package.json';
 import logo from '../assets/openhero68-logo.png';
 import { BRAND } from '../brand';
+import { AdvancedKeysMenuIcon } from '../app/components/AdvancedKeysMenuIcon';
+import { KeyboardMenuIcon } from '../app/components/KeyboardMenuIcon';
+import { KeyRemapMenuIcon } from '../app/components/KeyRemapMenuIcon';
+import { RailItem } from '../app/components/RailItem';
+import { RapidTriggerMenuIcon } from '../app/components/RapidTriggerMenuIcon';
+import { SidebarItem } from '../app/components/SidebarItem';
 import type { KeyboardDriver } from '../drivers/types';
 import { AdvancedKeysPage } from './AdvancedKeysPage';
+import { BoardThumb } from './BoardThumb';
 import { DevicePage } from './DevicePage';
-import { PerformancePage } from './PerformancePage';
+import { GamepadPage } from './GamepadPage';
+import { HelpPage } from './HelpPage';
+import { PerformancePage, useActuationDraft } from './PerformancePage';
 import { RemapPage } from './RemapPage';
+import { SaveSlotContext } from './SaveBar';
+import {
+  CalibrationSettingsPage,
+  GeneralSettingsPage,
+  ProfilesSettingsPage
+} from './SettingsPages';
 import { driverConnection } from './store';
 import { TravelPage } from './TravelPage';
 
-type Page = 'performance' | 'remap' | 'advanced' | 'travel' | 'device';
+type Rail = 'keyboard' | 'settings' | 'help';
+type KeyboardPage = 'actuation' | 'rapid' | 'travel' | 'remap' | 'advanced' | 'gamepad';
+type SettingsPage = 'general' | 'profiles' | 'calibration' | 'device';
 
-/** Workspace for boards behind the driver layer (libhmk, RongYuan). */
+type NavItem<T> = { id: T; label: string; icon: ReactNode; show: boolean };
+
+/** Workspace for boards behind the driver layer (libhmk, RongYuan), laid out like OpenAula. */
 export function DriverApp({ driver }: { driver: KeyboardDriver }) {
   const caps = driver.capabilities;
   const confirmable = driver as KeyboardDriver & { needsLayoutConfirmation?: boolean };
-  const [page, setPage] = useState<Page>(
-    confirmable.needsLayoutConfirmation ? 'device' : caps.actuation ? 'performance' : 'remap'
+  const [rail, setRail] = useState<Rail>(
+    confirmable.needsLayoutConfirmation ? 'settings' : 'keyboard'
   );
+  const [page, setPage] = useState<KeyboardPage>(caps.actuation ? 'actuation' : 'remap');
+  const [settingsPage, setSettingsPage] = useState<SettingsPage>(
+    confirmable.needsLayoutConfirmation ? 'device' : 'general'
+  );
+  const [compact, setCompact] = useState(false);
   const [profile, setProfile] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [status, setStatus] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [saveSlot, setSaveSlot] = useState<HTMLElement | null>(null);
   const [, setLayoutConfirmed] = useState(0);
+  const actuation = useActuationDraft(driver, profile);
 
   useEffect(() => {
     driver
@@ -36,7 +77,12 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
     setStatus(null);
     try {
       await task();
-      setStatus({ kind: 'ok', text: `${label.replace(/^Writing/, 'Saved')} — done.` });
+      setStatus({
+        kind: 'ok',
+        text: label.startsWith('Writing ')
+          ? label.replace(/^Writing /, 'Saved ')
+          : `${label} — done`
+      });
       return true;
     } catch (err) {
       setStatus({ kind: 'error', text: err instanceof Error ? err.message : String(err) });
@@ -46,116 +92,287 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
     }
   }, []);
 
-  const nav: Array<{ id: Page; label: string; icon: typeof Gauge; show: boolean }> = [
-    { id: 'performance', label: 'Actuation & RT', icon: Gauge, show: caps.actuation },
-    { id: 'remap', label: 'Key remap', icon: Keyboard, show: true },
+  useEffect(() => {
+    if (status?.kind !== 'ok') return;
+    const t = setTimeout(() => setStatus(null), 4000);
+    return () => clearTimeout(t);
+  }, [status]);
+
+  const selectProfile = async (next: number) => {
+    if (next === profile || busy) return;
+    if (caps.actuationActiveProfileOnly) {
+      const setter = (driver as KeyboardDriver & { setProfile?: (p: number) => Promise<void> })
+        .setProfile;
+      if (
+        setter &&
+        !(await run(`Switching to profile ${next + 1}`, () => setter.call(driver, next)))
+      )
+        return;
+    }
+    setProfile(next);
+  };
+
+  const keyboardItems: NavItem<KeyboardPage>[] = [
+    {
+      id: 'actuation',
+      label: 'Actuation Point',
+      icon: <ArrowDownToLine size={18} />,
+      show: caps.actuation
+    },
+    {
+      id: 'rapid',
+      label: 'Rapid Trigger',
+      icon: <RapidTriggerMenuIcon />,
+      show: caps.rapidTrigger
+    },
+    { id: 'travel', label: 'Live Travel', icon: <Activity size={18} />, show: caps.travelStream },
+    { id: 'remap', label: 'Key Remap', icon: <KeyRemapMenuIcon />, show: true },
     {
       id: 'advanced',
-      label: 'Advanced keys',
-      icon: Layers,
+      label: 'Advanced Keys',
+      icon: <AdvancedKeysMenuIcon />,
       show: caps.advancedKeys.length > 0 && !!driver.getAdvancedKeys
     },
-    { id: 'travel', label: 'Live travel', icon: Activity, show: caps.travelStream },
-    { id: 'device', label: 'Device', icon: Settings, show: true }
+    {
+      id: 'gamepad',
+      label: 'Gamepad',
+      icon: <Gamepad2 size={18} />,
+      show: caps.gamepad && !!driver.getGamepad
+    }
   ];
+  const settingsItems: NavItem<SettingsPage>[] = [
+    {
+      id: 'general',
+      label: 'General Settings',
+      icon: <KeyboardMenuIcon />,
+      show: !!(driver.setOptions || driver.setTickRate)
+    },
+    {
+      id: 'profiles',
+      label: 'Profiles',
+      icon: <Layers3 size={18} />,
+      show: caps.profiles > 1 && !!(driver.resetProfile || driver.duplicateProfile)
+    },
+    {
+      id: 'calibration',
+      label: 'Calibration',
+      icon: <Crosshair size={18} />,
+      show: !!(driver.recalibrate || driver.setCalibration)
+    },
+    { id: 'device', label: 'About this Keyboard', icon: <Info size={18} />, show: true }
+  ];
+  const activeKeyboard =
+    keyboardItems.find(i => i.id === page && i.show) ?? keyboardItems.find(i => i.show)!;
+  const activeSettings =
+    settingsItems.find(i => i.id === settingsPage && i.show) ?? settingsItems.find(i => i.show)!;
+  const current =
+    rail === 'keyboard' ? activeKeyboard : rail === 'settings' ? activeSettings : null;
 
-  return (
-    <div className="drv-shell">
-      <aside className="drv-sidebar">
-        <div className="drv-brand">
-          <img src={logo} alt="" />
-          <strong>{BRAND.displayName}</strong>
-        </div>
-        <div className="drv-device">
-          <span className="device-status-dot" aria-hidden="true" />
-          <div>
-            <b>{driver.info.name}</b>
-            <small>
-              {driver.id === 'libhmk' ? 'libhmk' : 'RongYuan'} · fw {driver.info.firmwareVersion}
-            </small>
-          </div>
-        </div>
-        <nav className="drv-nav">
-          {nav
-            .filter(n => n.show)
-            .map(n => (
-              <button
-                type="button"
-                key={n.id}
-                className={`drv-nav-item${page === n.id ? ' is-active' : ''}`}
-                onClick={() => setPage(n.id)}
-                disabled={!!busy}
-              >
-                <n.icon size={18} />
-                <span>{n.label}</span>
-              </button>
-            ))}
-        </nav>
-        <button
-          type="button"
-          className="ghost-button drv-disconnect"
-          disabled={!!busy}
-          onClick={() => void driverConnection.disconnect()}
-        >
-          <Plug size={16} /> Disconnect
-        </button>
-      </aside>
-      <main className="drv-main">
-        <header className="drv-topbar">
-          <label className="drv-profile">
-            Profile
-            <select
-              value={profile ?? 0}
-              disabled={profile === null || !!busy}
-              onChange={async e => {
-                const next = Number(e.target.value);
-                if (caps.actuationActiveProfileOnly) {
-                  const setter = (
-                    driver as KeyboardDriver & { setProfile?: (p: number) => Promise<void> }
-                  ).setProfile;
-                  if (setter && !(await run('Switching profile', () => setter.call(driver, next))))
-                    return;
-                }
-                setProfile(next);
-              }}
-            >
-              {Array.from({ length: caps.profiles }, (_, i) => (
-                <option key={i} value={i}>
-                  {i + 1}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className={`drv-status${status ? ` is-${status.kind}` : ''}`}>
-            {busy ? (
-              <>
-                <Loader2 size={16} className="rotate" /> {busy}…
-              </>
-            ) : (
-              status?.text
-            )}
-          </div>
-        </header>
-        <div className="drv-content">
-          {profile === null ? (
-            <div className="drv-notice">Connecting…</div>
-          ) : page === 'performance' ? (
-            <PerformancePage driver={driver} profile={profile} busy={!!busy} run={run} />
-          ) : page === 'remap' ? (
-            <RemapPage driver={driver} profile={profile} busy={!!busy} run={run} />
-          ) : page === 'advanced' ? (
-            <AdvancedKeysPage driver={driver} profile={profile} busy={!!busy} run={run} />
-          ) : page === 'travel' ? (
-            <TravelPage driver={driver} />
-          ) : (
+  const pageBody = () => {
+    if (profile === null) return <div className="drv-notice">Connecting…</div>;
+    const props = { driver, profile, busy: !!busy, run };
+    if (rail === 'help') return <HelpPage driver={driver} />;
+    if (rail === 'settings') {
+      switch (activeSettings.id) {
+        case 'general':
+          return <GeneralSettingsPage {...props} />;
+        case 'profiles':
+          return <ProfilesSettingsPage {...props} />;
+        case 'calibration':
+          return <CalibrationSettingsPage driver={driver} busy={!!busy} run={run} />;
+        default:
+          return (
             <DevicePage
               driver={driver}
               busy={!!busy}
               run={run}
               onLayoutConfirmed={() => setLayoutConfirmed(n => n + 1)}
             />
-          )}
+          );
+      }
+    }
+    switch (activeKeyboard.id) {
+      case 'actuation':
+      case 'rapid':
+        return <PerformancePage {...props} section={activeKeyboard.id} state={actuation} />;
+      case 'travel':
+        return <TravelPage driver={driver} />;
+      case 'advanced':
+        return <AdvancedKeysPage {...props} />;
+      case 'gamepad':
+        return <GamepadPage {...props} />;
+      default:
+        return <RemapPage {...props} />;
+    }
+  };
+
+  const sidebarTitle =
+    rail === 'keyboard' ? 'Keyboard Configuration' : rail === 'settings' ? 'Settings' : 'Help';
+
+  return (
+    <div className={`app-shell drv-app ${compact ? 'is-sidebar-compact' : ''}`}>
+      <aside className="rail">
+        <div className="brand-mark">
+          <img src={logo} alt={BRAND.displayName} />
         </div>
+        <div className="rail-stack">
+          <RailItem
+            icon={<Keyboard size={22} />}
+            label="Keyboard"
+            active={rail === 'keyboard'}
+            onClick={() => setRail('keyboard')}
+          />
+          <RailItem
+            icon={<Settings size={22} />}
+            label="Settings"
+            active={rail === 'settings'}
+            onClick={() => setRail('settings')}
+          />
+          <RailItem
+            icon={<CircleHelp size={22} />}
+            label="Help"
+            active={rail === 'help'}
+            onClick={() => setRail('help')}
+          />
+        </div>
+      </aside>
+
+      <aside className="sidebar">
+        <div className="sidebar-title">
+          <strong>{sidebarTitle}</strong>
+          <button
+            type="button"
+            className="icon-button compact"
+            aria-label={compact ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={compact ? 'Expand sidebar' : 'Collapse sidebar'}
+            onClick={() => setCompact(c => !c)}
+          >
+            {compact ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        </div>
+
+        <div className="device-panel is-connected">
+          <div className="device-card device-card-static">
+            <span className="device-thumb drv-device-thumb">
+              <BoardThumb layout={driver.layout} />
+            </span>
+            <span className="device-copy">
+              <small>
+                <span className="device-status-dot" aria-hidden="true" />
+                Connected
+              </small>
+              <strong className="drv-device-name" title={driver.info.name}>
+                {driver.info.name}
+              </strong>
+              <small className="drv-device-meta">
+                {driver.id === 'libhmk' ? 'libhmk' : 'RongYuan'} · fw {driver.info.firmwareVersion}
+              </small>
+            </span>
+          </div>
+          <div className="device-controls">
+            {caps.profiles > 1 && (
+              <div className="profile-slot-row">
+                <span>Profile</span>
+                <div className="profile-slot-buttons" role="group" aria-label="Profile">
+                  {Array.from({ length: caps.profiles }, (_, i) => (
+                    <button
+                      type="button"
+                      key={i}
+                      className={profile === i ? 'is-active' : ''}
+                      aria-pressed={profile === i}
+                      disabled={!!busy || profile === null}
+                      onClick={() => void selectProfile(i)}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <button
+              type="button"
+              className="device-connect-button is-connected"
+              disabled={!!busy}
+              onClick={() => void driverConnection.disconnect()}
+            >
+              Disconnect
+            </button>
+          </div>
+        </div>
+
+        {rail === 'keyboard' && (
+          <>
+            <div className="sidebar-section-label">Keyboard Configuration</div>
+            {keyboardItems
+              .filter(i => i.show)
+              .map(i => (
+                <SidebarItem
+                  key={i.id}
+                  icon={i.icon}
+                  label={i.label}
+                  active={activeKeyboard.id === i.id}
+                  onClick={() => setPage(i.id)}
+                />
+              ))}
+          </>
+        )}
+        {rail === 'settings' && (
+          <>
+            <div className="sidebar-section-label">Keyboard settings</div>
+            {settingsItems
+              .filter(i => i.show)
+              .map(i => (
+                <SidebarItem
+                  key={i.id}
+                  icon={i.icon}
+                  label={i.label}
+                  active={activeSettings.id === i.id}
+                  onClick={() => setSettingsPage(i.id)}
+                />
+              ))}
+          </>
+        )}
+        {rail === 'help' && (
+          <div className="help-sidebar-copy">
+            <p>Connecting, saving, and what each setting does.</p>
+          </div>
+        )}
+        <div className="sidebar-version">
+          {BRAND.displayName} <span>v{uiVersion} UI</span>
+        </div>
+      </aside>
+
+      <main className={`workspace ${rail === 'settings' ? 'workspace-settings' : ''}`}>
+        <header className="topbar">
+          <div className="profile-control-wrap">
+            <div className="page-title-bar">
+              <span className="profile-icon">
+                {current?.icon ?? <SlidersHorizontal size={17} />}
+              </span>
+              <strong>{current?.label ?? 'Help'}</strong>
+              {rail === 'keyboard' && profile !== null && caps.profiles > 1 && (
+                <kbd className="woot-shortcut-pill">Profile {profile + 1}</kbd>
+              )}
+            </div>
+          </div>
+          <div className="topbar-actions">
+            {(busy || status) && (
+              <span className={`profile-status drv-status${status ? ` is-${status.kind}` : ''}`}>
+                {busy ? (
+                  <>
+                    <Loader2 size={14} className="drv-spin" /> {busy}…
+                  </>
+                ) : (
+                  status?.text
+                )}
+              </span>
+            )}
+            <span ref={setSaveSlot} className="drv-save-slot" />
+          </div>
+        </header>
+        <SaveSlotContext.Provider value={saveSlot}>
+          <div className="drv-content">{pageBody()}</div>
+        </SaveSlotContext.Provider>
       </main>
     </div>
   );

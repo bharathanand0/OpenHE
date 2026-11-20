@@ -4,6 +4,7 @@ import type { UiKeycode } from '../drivers/keycodes';
 import type { KeyboardDriver } from '../drivers/types';
 import { BoardView } from './BoardView';
 import { useKeycodeGroups } from './KeycodePicker';
+import { SaveBar } from './SaveBar';
 
 export function keyLabel(driver: KeyboardDriver, value: UiKeycode, fnLayer: boolean): string {
   if (value === 0) return fnLayer ? '▽' : '—';
@@ -164,28 +165,17 @@ export function RemapPage({
           </div>
         </div>
       )}
-      <div className="drv-actions">
-        <button
-          type="button"
-          className="secondary-button"
-          disabled={!dirty || busy}
-          onClick={() => saved && setDraft([...saved])}
-        >
-          Discard
-        </button>
-        <button
-          type="button"
-          className="ghost-button apply-button"
-          disabled={!dirty || busy || !driver.capabilities.writable.keymap}
-          onClick={async () => {
-            const next = draft!;
-            const ok = await run('Writing keymap', () => driver.setKeymap(profile, layer, next));
-            if (ok) setSaved([...next]);
-          }}
-        >
-          Save to keyboard
-        </button>
-      </div>
+      <SaveBar
+        dirty={dirty}
+        busy={busy}
+        canSave={driver.capabilities.writable.keymap}
+        onDiscard={() => saved && setDraft([...saved])}
+        onSave={async () => {
+          const next = draft!;
+          const ok = await run('Writing keymap', () => driver.setKeymap(profile, layer, next));
+          if (ok) setSaved([...next]);
+        }}
+      />
     </div>
   );
 }

@@ -4,32 +4,37 @@ import { Toggle } from '../app/components/Toggle';
 import { formatMillimeters } from '../app/helpers';
 import type { KeyActuation, KeyboardDriver } from '../drivers/types';
 import { BoardView, nextSelection } from './BoardView';
+import { SaveBar } from './SaveBar';
 
 type Field = 'actuationMm' | 'rtPressMm' | 'rtReleaseMm' | 'releaseMm' | 'bottomDeadzoneMm';
 
-/** Actuation point, rapid trigger, release point and dead zone per key. */
-export function PerformancePage({
-  driver,
-  profile,
-  busy,
-  run
-}: {
-  driver: KeyboardDriver;
-  profile: number;
-  busy: boolean;
-  run: (label: string, task: () => Promise<void>) => Promise<boolean>;
-}) {
-  const caps = driver.capabilities;
+export type ActuationDraft = {
+  saved: KeyActuation[] | null;
+  draft: KeyActuation[] | null;
+  setDraft: React.Dispatch<React.SetStateAction<KeyActuation[] | null>>;
+  markSaved: (next: KeyActuation[]) => void;
+  selected: Set<number>;
+  setSelected: React.Dispatch<React.SetStateAction<Set<number>>>;
+  error: string | null;
+  dirty: boolean;
+};
+
+/**
+ * Actuation state shared by the Actuation Point and Rapid Trigger pages, so
+ * switching between them keeps unsaved edits and the key selection.
+ */
+export function useActuationDraft(driver: KeyboardDriver, profile: number | null): ActuationDraft {
   const [saved, setSaved] = useState<KeyActuation[] | null>(null);
   const [draft, setDraft] = useState<KeyActuation[] | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (profile === null || !driver.capabilities.actuation) return;
     let live = true;
     setSaved(null);
     setDraft(null);
-    setLoadError(null);
+    setError(null);
     driver
       .getActuation(profile)
       .then(a => {
@@ -37,16 +42,11 @@ export function PerformancePage({
         setSaved(a);
         setDraft(a.map(k => ({ ...k })));
       })
-      .catch(err => live && setLoadError(err instanceof Error ? err.message : String(err)));
+      .catch(err => live && setError(err instanceof Error ? err.message : String(err)));
     return () => {
       live = false;
     };
   }, [driver, profile]);
-
-  const targets = useMemo(
-    () => (selected.size ? [...selected] : driver.layout.keys.map(k => k.index)),
-    [selected, driver.layout.keys]
-  );
 
   const dirty = useMemo(
     () =>
@@ -54,7 +54,44 @@ export function PerformancePage({
     [draft, saved]
   );
 
-  if (loadError) return <div className="drv-notice is-error">{loadError}</div>;
+  return {
+    saved,
+    draft,
+    setDraft,
+    markSaved: next => setSaved(next.map(k => ({ ...k }))),
+    selected,
+    setSelected,
+    error,
+    dirty
+  };
+}
+
+/** Actuation Point page (`section="actuation"`) or Rapid Trigger page (`section="rapid"`). */
+export function PerformancePage({
+  driver,
+  profile,
+  section,
+  state,
+  busy,
+  run
+}: {
+  driver: KeyboardDriver;
+  profile: number;
+  section: 'actuation' | 'rapid';
+  state: ActuationDraft;
+  busy: boolean;
+  run: (label: string, task: () => Promise<void>) => Promise<boolean>;
+}) {
+  const caps = driver.capabilities;
+  const { saved, draft, setDraft, selected, setSelected, dirty } = state;
+  const [justSaved, setJustSaved] = useState(false);
+
+  const targets = useMemo(
+    () => (selected.size ? [...selected] : driver.layout.keys.map(k => k.index)),
+    [selected, driver.layout.keys]
+  );
+
+  if (state.error) return <div className="drv-notice is-error">{state.error}</div>;
   if (!draft) return <div className="drv-notice">Reading switch settings…</div>;
 
   const values = (f: Field) => targets.map(i => draft[i]?.[f] ?? 0);
@@ -66,8 +103,10 @@ export function PerformancePage({
   const rtMixed = rtOn.some(v => v !== rtOn[0]);
   const continuous = targets.map(i => draft[i]?.continuous ?? false);
 
-  const update = (fn: (k: KeyActuation) => KeyActuation) =>
+  const update = (fn: (k: KeyActuation) => KeyActuation) => {
+    setJustSaved(false);
     setDraft(d => (d ? d.map((k, i) => (targets.includes(i) ? fn(k) : k)) : d));
+  };
 
   const step = Math.max(caps.travelStepMm, 0.01);
   const travel = caps.ranges?.actuation ?? { min: step, max: caps.travelMm };
@@ -97,6 +136,20 @@ export function PerformancePage({
     );
   };
 
+  const keyValue = (i: number) =>
+    section === 'actuation' ? (
+      <b>{formatMillimeters(draft[i]?.actuationMm ?? 0)}</b>
+    ) : (draft[i]?.rtPressMm ?? 0) > 0 ? (
+      <b>
+        {formatMillimeters(draft[i].rtPressMm)}
+        {caps.rapidTriggerSplit && draft[i].rtReleaseMm !== draft[i].rtPressMm
+          ? `/${formatMillimeters(draft[i].rtReleaseMm)}`
+          : ''}
+      </b>
+    ) : (
+      <b className="drv-off">off</b>
+    );
+
   return (
     <div className="drv-page">
       <BoardView
@@ -106,8 +159,8 @@ export function PerformancePage({
         render={i => (
           <>
             <small>{driver.layout.keys[i]?.label}</small>
-            <b>{formatMillimeters(draft[i]?.actuationMm ?? 0)}</b>
-            {(draft[i]?.rtPressMm ?? 0) > 0 && <em>RT</em>}
+            {keyValue(i)}
+            {section === 'actuation' && (draft[i]?.rtPressMm ?? 0) > 0 && <em>RT</em>}
           </>
         )}
       />
@@ -115,7 +168,7 @@ export function PerformancePage({
         <span>
           {selected.size
             ? `${selected.size} key${selected.size === 1 ? '' : 's'} selected`
-            : 'All keys'}{' '}
+            : 'No keys selected: changes apply to all keys'}{' '}
           · Shift-click to pick several
         </span>
         <span className="drv-toolbar-actions">
@@ -138,19 +191,33 @@ export function PerformancePage({
         </div>
       )}
       <div className="drv-panels">
-        <section className="drv-panel">
-          <h3>Actuation</h3>
-          {slider(
-            'Actuation point',
-            'actuationMm',
-            travel,
-            'How far the key travels before it registers'
-          )}
-          {caps.releasePoint &&
-            slider('Release point', 'releaseMm', travel, 'Used when rapid trigger is off')}
-          {caps.bottomDeadzone && slider('Bottom dead zone', 'bottomDeadzoneMm', dead)}
-        </section>
-        {caps.rapidTrigger && (
+        {section === 'actuation' ? (
+          <>
+            <section className="drv-panel">
+              <h3>Actuation point</h3>
+              {slider(
+                'Actuation point',
+                'actuationMm',
+                travel,
+                'How far the key travels before it registers'
+              )}
+            </section>
+            {(caps.releasePoint || caps.bottomDeadzone) && (
+              <section className="drv-panel">
+                <h3>Release and dead zone</h3>
+                {caps.releasePoint &&
+                  slider('Release point', 'releaseMm', travel, 'Used when rapid trigger is off')}
+                {caps.bottomDeadzone &&
+                  slider(
+                    'Bottom dead zone',
+                    'bottomDeadzoneMm',
+                    dead,
+                    'Travel near the bottom that counts as fully pressed'
+                  )}
+              </section>
+            )}
+          </>
+        ) : (
           <section className="drv-panel">
             <h3>
               Rapid trigger
@@ -168,13 +235,24 @@ export function PerformancePage({
                 }
               />
             </h3>
+            <p className="drv-muted">
+              With rapid trigger the key releases as soon as it moves up by the release sensitivity,
+              and presses again as soon as it moves down by the press sensitivity, wherever it is in
+              its travel.
+            </p>
             {rtOn.some(Boolean) ? (
               <>
                 {slider('Press sensitivity', 'rtPressMm', rt)}
                 {caps.rapidTriggerSplit && slider('Release sensitivity', 'rtReleaseMm', rt)}
                 {caps.continuousRapidTrigger && (
                   <div className="drv-field drv-field-row">
-                    <span>Continuous (resets only at full release)</span>
+                    <span>
+                      Continuous rapid trigger
+                      <small className="drv-muted">
+                        {' '}
+                        Stays active until the key is fully released.
+                      </small>
+                    </span>
                     <Toggle
                       label="Continuous rapid trigger"
                       checked={continuous[0] ?? false}
@@ -191,30 +269,22 @@ export function PerformancePage({
           </section>
         )}
       </div>
-      <div className="drv-actions">
-        <button
-          type="button"
-          className="secondary-button"
-          disabled={!dirty || busy}
-          onClick={() => setDraft(saved!.map(k => ({ ...k })))}
-        >
-          Discard
-        </button>
-        <button
-          type="button"
-          className="ghost-button apply-button"
-          disabled={!dirty || busy || readOnly}
-          onClick={async () => {
-            const next = draft;
-            const ok = await run('Writing switch settings', () =>
-              driver.setActuation(profile, next)
-            );
-            if (ok) setSaved(next.map(k => ({ ...k })));
-          }}
-        >
-          Save to keyboard
-        </button>
-      </div>
+      <SaveBar
+        dirty={dirty}
+        busy={busy}
+        saved={justSaved}
+        canSave={!readOnly}
+        title={readOnly ? 'This board is read-only for switch settings' : undefined}
+        onDiscard={() => saved && setDraft(saved.map(k => ({ ...k })))}
+        onSave={async () => {
+          const next = draft;
+          const ok = await run('Writing switch settings', () => driver.setActuation(profile, next));
+          if (ok) {
+            state.markSaved(next);
+            setJustSaved(true);
+          }
+        }}
+      />
     </div>
   );
 }

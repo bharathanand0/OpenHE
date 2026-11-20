@@ -7,6 +7,7 @@ import type { AdvancedKey, AdvancedKeyKind, DksAction, KeyboardDriver } from '..
 import { BoardView } from './BoardView';
 import { KeycodePicker } from './KeycodePicker';
 import { keyLabel } from './RemapPage';
+import { SaveBar } from './SaveBar';
 
 type EditableKind = Exclude<AdvancedKeyKind, 'macro'>;
 
@@ -496,34 +497,23 @@ export function AdvancedKeysPage({
       {!writable && (
         <div className="drv-notice">This board's advanced keys can be read but not written.</div>
       )}
-      <div className="drv-actions">
-        <button
-          type="button"
-          className="secondary-button"
-          disabled={!dirty || busy}
-          onClick={() => {
-            setDraft(saved!.map(k => structuredClone(k)));
-            setEditing(null);
-          }}
-        >
-          Discard
-        </button>
-        <button
-          type="button"
-          className="ghost-button apply-button"
-          disabled={!dirty || busy || !writable || errors.some(Boolean)}
-          title={errors.some(Boolean) ? 'Fix the highlighted advanced keys first' : undefined}
-          onClick={async () => {
-            const next = draft;
-            const ok = await run('Writing advanced keys', () =>
-              driver.setAdvancedKeys!(profile, next)
-            );
-            if (ok) setSaved(next.map(k => structuredClone(k)));
-          }}
-        >
-          Save to keyboard
-        </button>
-      </div>
+      <SaveBar
+        dirty={dirty}
+        busy={busy}
+        canSave={writable && !errors.some(Boolean)}
+        title={errors.some(Boolean) ? 'Fix the highlighted advanced keys first' : undefined}
+        onDiscard={() => {
+          setDraft(saved!.map(k => structuredClone(k)));
+          setEditing(null);
+        }}
+        onSave={async () => {
+          const next = draft;
+          const ok = await run('Writing advanced keys', () =>
+            driver.setAdvancedKeys!(profile, next)
+          );
+          if (ok) setSaved(next.map(k => structuredClone(k)));
+        }}
+      />
     </div>
   );
 }

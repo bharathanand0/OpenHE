@@ -12,8 +12,13 @@ import {
 } from '../transport';
 import {
   DriverError,
+  GAMEPAD_BUTTONS,
   type AdvancedKey,
   type BoardLayout,
+  type CalibrationSettings,
+  type DeviceOptions,
+  type GamepadButton,
+  type GamepadConfig,
   type DeviceInfo,
   type DriverCapabilities,
   type KeyActuation,
@@ -49,6 +54,9 @@ import {
   u32,
   type HmkMetadata
 } from './protocol';
+
+const GAMEPAD_GET_CHUNK = 63;
+const GAMEPAD_SET_CHUNK = 60;
 
 /** libhmk stores travel as 0..255 over the full stroke; hmkconf assumes 4 mm. */
 export const HMK_TRAVEL_MM = 4;
@@ -315,6 +323,129 @@ export class LibhmkDriver implements KeyboardDriver {
 
   async recalibrate(): Promise<void> {
     await this.call(Cmd.RECALIBRATE);
+  }
+
+  async getGamepad(profile: number): Promise<GamepadConfig> {
+    this.checkProfile(profile);
+    const n = this.metadata.numKeys;
+    const codes: number[] = [];
+    for (let offset = 0; offset < n; offset += GAMEPAD_GET_CHUNK) {
+      const reply = await this.call(Cmd.GET_GAMEPAD_BUTTONS, [profile, offset]);
+      const len = Math.min(GAMEPAD_GET_CHUNK, n - offset);
+      codes.push(...reply.subarray(1, 1 + len));
+    }
+    const o = await this.call(Cmd.GET_GAMEPAD_OPTIONS, [profile]);
+    const curve = [0, 1, 2, 3].map(i => ({
+      travelMm: this.toMm(o[1 + i * 2]),
+      output: o[2 + i * 2] / 255
+    }));
+    const flags = o[9];
+    return {
+      buttons: codes.map(c => GAMEPAD_BUTTONS[c] ?? 'none'),
+      curve,
+      keyboardEnabled: (flags & 1) !== 0,
+      gamepadOverride: (flags & 2) !== 0,
+      squareJoystick: (flags & 4) !== 0,
+      snappyJoystick: (flags & 8) !== 0
+    };
+  }
+
+  async setGamepad(profile: number, config: GamepadConfig): Promise<void> {
+    this.checkProfile(profile);
+    if (config.buttons.length !== this.metadata.numKeys) {
+      throw new RangeError('gamepad map length does not match the board');
+    }
+    if (config.curve.length !== 4) throw new RangeError('libhmk curves have exactly 4 points');
+    const codes = config.buttons.map((b: GamepadButton) => Math.max(0, GAMEPAD_BUTTONS.indexOf(b)));
+    for (let offset = 0; offset < codes.length; offset += GAMEPAD_SET_CHUNK) {
+      const chunk = codes.slice(offset, offset + GAMEPAD_SET_CHUNK);
+      await this.call(Cmd.SET_GAMEPAD_BUTTONS, [profile, offset, chunk.length, ...chunk]);
+    }
+    // x must not fall along the curve (xinput.c walks the segments in order)
+    const points: number[] = [];
+    let lastX = 0;
+    for (const p of config.curve) {
+      const x = Math.min(255, Math.max(lastX, this.toUnits(p.travelMm)));
+      lastX = x;
+      points.push(x, Math.min(255, Math.max(0, Math.round(p.output * 255))));
+    }
+    const flags =
+      (config.keyboardEnabled ? 1 : 0) |
+      (config.gamepadOverride ? 2 : 0) |
+      (config.squareJoystick ? 4 : 0) |
+      (config.snappyJoystick ? 8 : 0);
+    await this.call(Cmd.SET_GAMEPAD_OPTIONS, [profile, ...points, flags]);
+  }
+
+  async getOptions(): Promise<DeviceOptions> {
+    const raw = rd16(await this.call(Cmd.GET_OPTIONS), 1);
+    return {
+      xinput: (raw & 1) !== 0,
+      ...(this.metadata.usbHighSpeed ? { highPollingRate: (raw & 4) !== 0 } : {})
+    };
+  }
+
+  async setOptions(options: DeviceOptions): Promise<void> {
+    // read-modify-write so reserved bits survive
+    let raw = rd16(await this.call(Cmd.GET_OPTIONS), 1);
+    if (options.xinput !== undefined) raw = options.xinput ? raw | 1 : raw & ~1;
+    if (options.highPollingRate !== undefined && this.metadata.usbHighSpeed) {
+      raw = options.highPollingRate ? raw | 4 : raw & ~4;
+    }
+    await this.call(Cmd.SET_OPTIONS, u16(raw & 0xffff));
+  }
+
+  async getCalibration(): Promise<CalibrationSettings> {
+    const r = await this.call(Cmd.GET_CALIBRATION);
+    return { initialRest: rd16(r, 1), initialBottomOutThreshold: rd16(r, 3) };
+  }
+
+  async setCalibration(c: CalibrationSettings): Promise<void> {
+    const max = (1 << this.metadata.adcResolution) - 1;
+    const clamp = (v: number) => Math.min(max, Math.max(0, Math.round(v)));
+    await this.call(Cmd.SET_CALIBRATION, [
+      ...u16(clamp(c.initialRest)),
+      ...u16(clamp(c.initialBottomOutThreshold))
+    ]);
+  }
+
+  async saveCalibration(): Promise<void> {
+    await this.call(Cmd.SAVE_CALIBRATION_THRESHOLD);
+  }
+
+  async getTickRate(profile: number): Promise<number> {
+    this.checkProfile(profile);
+    return (await this.call(Cmd.GET_TICK_RATE, [profile]))[1];
+  }
+
+  async setTickRate(profile: number, tickRate: number): Promise<void> {
+    this.checkProfile(profile);
+    await this.call(Cmd.SET_TICK_RATE, [profile, Math.min(255, Math.max(0, Math.round(tickRate)))]);
+  }
+
+  async resetProfile(profile: number): Promise<void> {
+    this.checkProfile(profile);
+    await this.call(Cmd.RESET_PROFILE, [profile]);
+  }
+
+  async duplicateProfile(profile: number, from: number): Promise<void> {
+    this.checkProfile(profile);
+    this.checkProfile(from);
+    if (profile === from) return;
+    await this.call(Cmd.DUPLICATE_PROFILE, [profile, from]);
+  }
+
+  /** The board resets right after answering; a missing reply is expected. */
+  private async fireAndForget(cmd: number) {
+    await this.transport.exchange(request(cmd), 300).catch(() => undefined);
+  }
+
+  reboot(): Promise<void> {
+    return this.fireAndForget(Cmd.REBOOT);
+  }
+
+  enterBootloader(): Promise<void> {
+    return this.fireAndForget(Cmd.BOOTLOADER);
   }
 
   async factoryReset(): Promise<void> {

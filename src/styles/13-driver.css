@@ -1,137 +1,76 @@
 /* Workspace for driver-backed boards (libhmk, RongYuan). */
-.drv-shell {
-  display: grid;
-  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
-  min-height: 100vh;
-  background: var(--bg-0);
-  color: var(--text-1);
-}
-.drv-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 18px var(--sidebar-inline-pad);
-  background: var(--bg-1);
-  border-right: 1px solid var(--line);
-}
-.drv-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.drv-brand img {
-  width: 28px;
-  height: 28px;
-}
-.drv-device {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  border-radius: 10px;
-  background: var(--bg-2);
-}
-.drv-device .device-status-dot {
-  width: 8px;
-  height: 8px;
-  flex: none;
-  border-radius: 50%;
-  background: #6fd38f;
-}
-.drv-device b,
-.drv-device small {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.drv-device small {
-  color: var(--text-3);
-}
-.drv-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.drv-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 40px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-2);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.drv-nav-item:hover:not(:disabled) {
-  background: var(--bg-2);
-  color: var(--text-1);
-}
-.drv-nav-item.is-active {
-  background: var(--brand-soft);
-  color: var(--brand);
-}
-.drv-disconnect {
-  margin-top: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.drv-main {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-.drv-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  min-height: 58px;
-  padding: 0 var(--page-inline-pad);
-  border-bottom: 1px solid var(--line);
-  background: rgba(31, 34, 35, 0.94);
-  backdrop-filter: blur(14px);
-}
-.drv-profile {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-2);
-}
-.drv-profile select {
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--line-strong);
-  border-radius: 7px;
-  background: var(--bg-2);
-  color: var(--text-1);
-  font: inherit;
-}
 .drv-status {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: var(--text-2);
 }
 .drv-status.is-ok {
   color: #6fd38f;
 }
 .drv-status.is-error {
+  max-width: 420px;
   color: #ff8a80;
+}
+.drv-save-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.drv-save-slot:empty {
+  display: none;
+}
+.drv-discard {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.drv-app .woot-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 .drv-content {
   width: 100%;
   max-width: var(--content-width);
   margin: 0 auto;
   padding: 24px var(--page-inline-pad) 48px;
+}
+.drv-app .workspace-settings .drv-content {
+  max-width: none;
+  padding: 0;
+}
+.drv-spin {
+  animation: drv-spin 0.9s linear infinite;
+}
+@keyframes drv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.drv-device-thumb {
+  display: grid;
+  place-items: center;
+  background: var(--bg-3);
+}
+.drv-thumb {
+  width: 86%;
+  height: auto;
+}
+.drv-thumb-case {
+  fill: #15181a;
+}
+.drv-thumb-key {
+  fill: #5a6268;
+}
+.drv-device-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.drv-device-meta {
+  color: var(--text-3);
 }
 .drv-page {
   display: flex;
@@ -379,23 +318,6 @@
   flex-direction: column;
   gap: 6px;
   margin-top: 8px;
-}
-@media (max-width: 760px) {
-  .drv-shell {
-    grid-template-columns: 1fr;
-  }
-  .drv-sidebar {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .drv-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-  .drv-disconnect {
-    margin-top: 0;
-  }
 }
 
 /* Advanced keys */
@@ -725,4 +647,220 @@
 }
 .device-home-link:hover {
   color: var(--text-1);
+}
+
+.drv-off {
+  color: var(--text-3);
+  font-weight: 500 !important;
+}
+
+/* Gamepad */
+.drv-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--bg-1);
+  color: var(--text-2);
+}
+.drv-banner > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.drv-banner b {
+  color: var(--text-1);
+}
+.drv-banner small {
+  color: var(--text-3);
+  line-height: 1.45;
+}
+.drv-banner.is-on {
+  border-color: rgba(255, 212, 92, 0.35);
+}
+.drv-banner.is-on > svg {
+  color: var(--brand);
+}
+.drv-gp-group {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+.drv-gp-group small {
+  color: var(--text-3);
+}
+.drv-gp-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.drv-gp-buttons .drv-pick {
+  min-width: 58px;
+}
+.drv-pick.is-analog {
+  border-style: dashed;
+}
+.drv-key-cap b.drv-gp-digital {
+  color: #8fd0ff;
+}
+.drv-key-cap b.drv-gp-analog {
+  color: var(--brand);
+}
+.drv-curve {
+  max-height: 300px;
+}
+.drv-curve polygon {
+  fill: rgba(255, 212, 92, 0.18);
+}
+.drv-curve polyline {
+  stroke: var(--brand);
+}
+.drv-curve circle {
+  fill: var(--brand);
+}
+.drv-curve circle:focus-visible {
+  outline: none;
+  stroke: #fff;
+  stroke-width: 2;
+}
+.drv-presets {
+  margin: 0;
+}
+.drv-preset {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 82px;
+  padding: 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--bg-2);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.drv-preset:hover:not(:disabled) {
+  border-color: var(--brand);
+  color: var(--text-1);
+}
+.drv-preset svg {
+  width: 60px;
+  height: 44px;
+}
+.drv-preset polyline {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 2.5;
+}
+.drv-app .gp-stick {
+  width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.drv-app .gp-stick svg {
+  width: 110px;
+}
+.drv-app .gp-stick circle {
+  fill: #171c20;
+  stroke: var(--line-strong);
+}
+.drv-app .gp-stick circle.drv-stick-dot {
+  fill: var(--brand);
+  stroke: none;
+}
+.drv-app .gp-test-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.drv-trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.drv-trigger::before {
+  content: '';
+}
+.drv-trigger span {
+  display: block;
+  width: 18px;
+  height: 0;
+  border-radius: 4px;
+  background: var(--brand);
+  box-shadow: 0 0 0 1px var(--line-strong);
+}
+.drv-trigger {
+  justify-content: flex-end;
+  height: 120px;
+}
+.drv-pad-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.drv-pad-buttons span {
+  min-width: 34px;
+  padding: 3px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--text-3);
+  font-size: 12px;
+  text-align: center;
+}
+.drv-pad-buttons span.is-on {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+/* Calibration */
+.drv-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.drv-cal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.drv-cal-field input {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: var(--bg-2);
+  color: var(--text-1);
+  font: inherit;
+}
+.drv-cal-field small {
+  color: var(--text-3);
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .drv-gp-group {
+    grid-template-columns: 1fr;
+  }
+}
+.drv-app .device-setting-section > button,
+.drv-app .device-setting-section > .drv-toolbar-actions {
+  justify-self: start;
+}
+.drv-app .device-setting-section .secondary-button {
+  min-height: 36px;
+  padding: 0 16px;
 }

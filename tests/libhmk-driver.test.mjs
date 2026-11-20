@@ -31,10 +31,16 @@ function fakeLibhmk(md = metadata) {
   const profiles = Array.from({ length: P }, () => ({
     keymap: Array.from({ length: L }, () => new Uint8Array(N)),
     actuation: new Uint8Array(N * 4).map((_, i) => (i % 4 === 0 ? 128 : 0)),
-    advanced: new Uint8Array(akSize * md.numAdvancedKeys)
+    advanced: new Uint8Array(akSize * md.numAdvancedKeys),
+    gamepad: new Uint8Array(N),
+    gpOptions: Uint8Array.from([4, 20, 85, 95, 165, 170, 255, 255, 0b1001]),
+    tick: 30
   }))
   const staged = { id: 0, profile: 0, offset: 0, buf: new Uint8Array(akSize) }
   const log = []
+  const cal = { rest: 4095, bottom: 500 }
+  let options = 0b100
+  const u16 = v => [v & 0xff, (v >> 8) & 0xff]
   const handle = req => {
     const cmd = req[0]
     const out = new Uint8Array(64)
@@ -110,6 +116,29 @@ function fakeLibhmk(md = metadata) {
         break
       }
       case 4: log.push('recalibrate'); break
+      case 6: out.set([...u16(cal.rest), ...u16(cal.bottom)], 1); break
+      case 7: cal.rest = req[1] | (req[2] << 8); cal.bottom = req[3] | (req[4] << 8); break
+      case 9: out.set(u16(options), 1); break
+      case 10: options = req[1] | (req[2] << 8); break
+      case 11: if (req[1] >= P) return fail(); log.push(`reset ${req[1]}`); break
+      case 12: if (req[1] >= P || req[2] >= P) return fail(); log.push(`dup ${req[2]}->${req[1]}`); break
+      case 15: log.push('save-cal'); break
+      case 134: if (req[1] >= P) return fail(); out[1] = p.tick; break
+      case 135: if (req[1] >= P) return fail(); p.tick = req[2]; break
+      case 136: {
+        const [, prof, off] = req
+        if (prof >= P || off >= N) return fail()
+        out.set(p.gamepad.subarray(off, off + 63), 1)
+        break
+      }
+      case 137: {
+        const [, prof, off, len] = req
+        if (prof >= P || off >= N || len > 60 || len > N - off) return fail()
+        profiles[prof].gamepad.set(req.subarray(4, 4 + len), off)
+        break
+      }
+      case 138: if (req[1] >= P) return fail(); out.set(p.gpOptions, 1); break
+      case 139: if (req[1] >= P) return fail(); profiles[req[1]].gpOptions = req.slice(2, 11); break
       default: return fail()
     }
     return out
@@ -123,7 +152,7 @@ function fakeLibhmk(md = metadata) {
     },
     async close() {}
   }
-  return { transport, profiles, log, akSize }
+  return { transport, profiles, log, akSize, cal, get options() { return options } }
 }
 
 const usb = { vendorId: 0x3151, productId: 0x5030, productName: 'GK68' }
@@ -263,4 +292,56 @@ test('every libhmk keycode maps to a UI keycode and back', () => {
   assert.equal(kc.hmkToUi(0x9b), 0x01010100) // left mouse, as in the remap catalog
   assert.equal(kc.hmkCodeFromName('MO(2)'), 0xc2)
   assert.equal(kc.hmkCodeFromName('KC_RIGHT_ALT'), 0x81)
+})
+
+test('gamepad map, curve and flags round-trip', async () => {
+  const { transport, profiles } = fakeLibhmk()
+  const d = await LibhmkDriver.connect(transport, usb)
+  const gp = await d.getGamepad(1)
+  assert.equal(gp.buttons.length, 68)
+  assert.ok(gp.buttons.every(b => b === 'none'))
+  assert.equal(gp.keyboardEnabled, true)
+  assert.equal(gp.snappyJoystick, true)
+  assert.equal(gp.gamepadOverride, false)
+  assert.ok(Math.abs(gp.curve[1].travelMm - (85 * 4) / 255) < 1e-9)
+  assert.ok(Math.abs(gp.curve[1].output - 95 / 255) < 1e-9)
+
+  gp.buttons[17] = 'leftStickUp' // W
+  gp.buttons[31] = 'leftStickLeft' // A
+  gp.buttons[61] = 'a' // space
+  gp.buttons[67] = 'rightTrigger'
+  gp.gamepadOverride = true
+  gp.curve[2] = { travelMm: 0.5, output: 0.5 } // below point 1: must be pushed up, not left falling
+  await d.setGamepad(1, gp)
+  const raw = profiles[1].gamepad
+  assert.equal(raw[17], 16)
+  assert.equal(raw[31], 18)
+  assert.equal(raw[61], 1)
+  assert.equal(raw[67], 25)
+  const o = profiles[1].gpOptions
+  assert.equal(o[8], 0b1011)
+  assert.ok(o[4] >= o[2], 'curve x never falls')
+  const back = await d.getGamepad(1)
+  assert.deepEqual(back.buttons, gp.buttons)
+  assert.equal(back.gamepadOverride, true)
+})
+
+test('options keep reserved bits; calibration, tick rate and profiles', async () => {
+  const board = fakeLibhmk()
+  const d = await LibhmkDriver.connect(board.transport, usb)
+  assert.deepEqual(await d.getOptions(), { xinput: false, highPollingRate: true })
+  await d.setOptions({ xinput: true })
+  assert.equal(board.options, 0b101)
+  await d.setOptions({ highPollingRate: false })
+  assert.equal(board.options, 0b001)
+  assert.deepEqual(await d.getCalibration(), { initialRest: 4095, initialBottomOutThreshold: 500 })
+  await d.setCalibration({ initialRest: 4090, initialBottomOutThreshold: 400 })
+  assert.deepEqual(board.cal, { rest: 4090, bottom: 400 })
+  await d.saveCalibration()
+  assert.equal(await d.getTickRate(0), 30)
+  await d.setTickRate(0, 10)
+  assert.equal(await d.getTickRate(0), 10)
+  await d.resetProfile(2)
+  await d.duplicateProfile(3, 0)
+  assert.deepEqual(board.log, ['save-cal', 'reset 2', 'dup 0->3'])
 })

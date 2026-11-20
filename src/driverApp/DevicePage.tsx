@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { KeyboardDriver } from '../drivers/types';
 import { BoardView } from './BoardView';
+import { driverConnection } from './store';
 
 type LayoutCheck = KeyboardDriver & {
   needsLayoutConfirmation?: boolean;
@@ -86,27 +87,47 @@ export function DevicePage({
         </section>
       )}
 
-      {(driver.recalibrate || driver.factoryReset) && (
+      {(driver.reboot || driver.enterBootloader || driver.factoryReset) && (
         <section className="drv-panel">
           <h3>Maintenance</h3>
-          {driver.recalibrate && (
+          {(driver.reboot || driver.enterBootloader) && (
             <div className="drv-field drv-field-row">
               <span>
-                Recalibrate
+                Restart
                 <small className="drv-muted">
                   {' '}
-                  Release every key first. Rest values are taken again and saved bottom-out values
-                  are cleared.
+                  Restart the keyboard, or start its bootloader to flash new firmware. The keyboard
+                  disconnects either way.
                 </small>
               </span>
-              <button
-                type="button"
-                className="secondary-button"
-                disabled={busy}
-                onClick={() => run('Recalibrating', () => driver.recalibrate!())}
-              >
-                Recalibrate
-              </button>
+              <span className="drv-toolbar-actions">
+                {driver.reboot && (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={busy}
+                    onClick={async () => {
+                      await run('Restarting', () => driver.reboot!());
+                      await driverConnection.disconnect();
+                    }}
+                  >
+                    Restart
+                  </button>
+                )}
+                {driver.enterBootloader && (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={busy}
+                    onClick={async () => {
+                      await run('Starting the bootloader', () => driver.enterBootloader!());
+                      await driverConnection.disconnect();
+                    }}
+                  >
+                    Bootloader
+                  </button>
+                )}
+              </span>
             </div>
           )}
           {driver.factoryReset && (

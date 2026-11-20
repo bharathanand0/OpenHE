@@ -137,6 +137,67 @@ export type AdvancedKey =
 
 export type DksAction = 'hold' | 'press' | 'release' | 'tap';
 
+export const GAMEPAD_BUTTONS = [
+  'none',
+  'a',
+  'b',
+  'x',
+  'y',
+  'dpadUp',
+  'dpadDown',
+  'dpadLeft',
+  'dpadRight',
+  'start',
+  'back',
+  'home',
+  'leftStickClick',
+  'rightStickClick',
+  'leftBumper',
+  'rightBumper',
+  'leftStickUp',
+  'leftStickDown',
+  'leftStickLeft',
+  'leftStickRight',
+  'rightStickUp',
+  'rightStickDown',
+  'rightStickLeft',
+  'rightStickRight',
+  'leftTrigger',
+  'rightTrigger'
+] as const;
+export type GamepadButton = (typeof GAMEPAD_BUTTONS)[number];
+
+/** One point of the analog response: key travel (mm) -> output (0..1). */
+export type CurvePoint = { travelMm: number; output: number };
+
+export type GamepadConfig = {
+  /** Button per layout key. */
+  buttons: GamepadButton[];
+  curve: CurvePoint[];
+  /** Keys keep typing while the gamepad is on. */
+  keyboardEnabled: boolean;
+  /** A key mapped to a button stops sending its keyboard keycode. */
+  gamepadOverride: boolean;
+  squareJoystick: boolean;
+  /** Opposite directions take the larger value instead of cancelling. */
+  snappyJoystick: boolean;
+};
+
+/** Board-wide settings; each field present only where the board has it. */
+export type DeviceOptions = {
+  /** XInput controller interface (takes effect after the board reconnects). */
+  xinput?: boolean;
+  /** 8 kHz polling on high-speed USB, 1 kHz otherwise. */
+  highPollingRate?: boolean;
+};
+
+export type CalibrationSettings = {
+  /** Raw sensor value assumed at rest before a key is calibrated. */
+  initialRest: number;
+  /** Minimum raw change for a key to count as bottomed out before it has been. */
+  initialBottomOutThreshold: number;
+};
+
 export interface KeyboardDriver {
   readonly id: DriverId;
   readonly info: DeviceInfo;
@@ -162,6 +223,26 @@ export interface KeyboardDriver {
   readTravel?(): Promise<TravelSample[]>;
   /** Push-style travel updates; resolves to a stop function. */
   subscribeTravel?(listener: (samples: TravelSample[]) => void): Promise<() => Promise<void>>;
+
+  getGamepad?(profile: number): Promise<GamepadConfig>;
+  setGamepad?(profile: number, config: GamepadConfig): Promise<void>;
+
+  getOptions?(): Promise<DeviceOptions>;
+  setOptions?(options: DeviceOptions): Promise<void>;
+
+  getCalibration?(): Promise<CalibrationSettings>;
+  setCalibration?(calibration: CalibrationSettings): Promise<void>;
+  /** Keep the bottom-out values learned so far across reboots. */
+  saveCalibration?(): Promise<void>;
+
+  /** Ticks per advanced-key timing step (libhmk tick rate). */
+  getTickRate?(profile: number): Promise<number>;
+  setTickRate?(profile: number, tickRate: number): Promise<void>;
+
+  resetProfile?(profile: number): Promise<void>;
+  duplicateProfile?(profile: number, from: number): Promise<void>;
+  reboot?(): Promise<void>;
+  enterBootloader?(): Promise<void>;
 
   /** Label for a keycode only this board knows (driver-native codes). */
   keycodeLabel?(value: UiKeycode): string | null;
