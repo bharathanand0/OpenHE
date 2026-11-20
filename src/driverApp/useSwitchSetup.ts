@@ -11,23 +11,41 @@ import {
   type SwitchOption,
   type SwitchTone
 } from '../app/switchAssets';
-import type { KeyboardDriver, SwitchSetup } from '../drivers/types';
+import type { KeyboardDriver, SwitchCatalogEntry, SwitchSetup } from '../drivers/types';
+import ufoFront from '../assets/switches/ufo-front.webp';
+import ufoTop from '../assets/switches/ufo-top.webp';
+import crystalBlueFront from '../assets/switches/crystal-blue-front.webp';
+import crystalBlueTop from '../assets/switches/crystal-blue-top.webp';
 import type { HeroDeviceModelId } from '../keyboard/devices';
 
-/** OpenAula photo to borrow for each OpenHE switch. */
+/** Pictures for OpenHE's own switches, recoloured from OpenAula's clear switch (scripts/switch-recolor.py). */
+const OWN_IMAGES: Record<string, { front: string; top: string }> = {
+  'gravastar-ufo': { front: ufoFront, top: ufoTop },
+  'skyloong-crystal-blue': { front: crystalBlueFront, top: crystalBlueTop }
+};
+/** OpenAula pictures for the other OpenHE catalog entries. */
 const PHOTO: Record<string, SwitchTone> = {
   generic: 'black' as SwitchTone,
-  'gravastar-ufo': 'clear' as SwitchTone,
-  'skyloong-crystal-blue': 'blue' as SwitchTone,
   unset: 'white' as SwitchTone
 };
-const FALLBACK_PHOTOS = ['white', 'black', 'blue', 'clear', 'uranus', 'jade-pro'] as SwitchTone[];
+/** Switches known by name (RongYuan's vendor lists), to OpenAula pictures. */
+const BY_NAME: Array<[RegExp, SwitchTone]> = [[/jade\s*(pro|gaming)/i, 'jade-pro' as SwitchTone]];
 const ACCENT: Record<string, string> = {
   generic: '#5b6268',
-  'gravastar-ufo': '#c9b6ff',
-  'skyloong-crystal-blue': '#4aa8ff',
+  'gravastar-ufo': '#8b5cf6',
+  'skyloong-crystal-blue': '#5fd3bd',
   unset: '#9ba3a8'
 };
+
+function imagesFor(c: SwitchCatalogEntry) {
+  if (OWN_IMAGES[c.id]) return OWN_IMAGES[c.id];
+  const named = BY_NAME.find(([re]) => re.test(c.name))?.[1];
+  // anything else: the plain clear switch
+  return SWITCH_IMAGES[PHOTO[c.id] ?? named ?? ('clear' as SwitchTone)] ?? {};
+}
+
+const accentFor = (c: SwitchCatalogEntry) =>
+  ACCENT[c.id] ?? (/jade/i.test(c.name) ? '#3fbf8f' : '#9ba3a8');
 
 export const switchOptionId = (catalogId: string) => `drv:${catalogId}` as SwitchTone;
 export const catalogIdOf = (optionId: string) => optionId.replace(/^drv:/, '');
@@ -40,8 +58,7 @@ export function useSwitchSetup(driver: KeyboardDriver, model: HeroDeviceModelId)
 
   const options: SwitchOption[] = useMemo(
     () =>
-      catalog.map((c, i) => {
-        const photo = PHOTO[c.id] ?? FALLBACK_PHOTOS[i % FALLBACK_PHOTOS.length];
+      catalog.map(c => {
         const tuning = draft?.tuning[c.id];
         const travel = tuning?.travelMm ?? c.travelMm;
         return {
@@ -49,14 +66,14 @@ export function useSwitchSetup(driver: KeyboardDriver, model: HeroDeviceModelId)
           name: c.name,
           fullName: c.name,
           brand: c.brand,
-          accent: ACCENT[c.id] ?? '#9ba3a8',
+          accent: accentFor(c),
           note: c.tunable
             ? `${travel.toFixed(2)} mm travel`
             : c.id === 'unset'
               ? 'Left as it is'
               : '',
           travelMm: travel,
-          ...SWITCH_IMAGES[photo]
+          ...imagesFor(c)
         };
       }),
     [catalog, draft]
