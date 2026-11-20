@@ -43,6 +43,8 @@ type SwitchOption = {
   xsydFirmwareId?: number;
   front?: string;
   top?: string;
+  /** Press-animation measurements to use (a SWITCH_SIM_BY_PROFILE key) when `id` has none. */
+  simProfile?: string;
 };
 
 const SWITCH_IMAGES: Partial<Record<SwitchTone, { front: string; top: string }>> = {

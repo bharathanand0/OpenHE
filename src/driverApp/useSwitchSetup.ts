@@ -20,21 +20,27 @@ import ttcKomFront from '../assets/switches/ttc-kom-front.webp';
 import ttcKomTop from '../assets/switches/ttc-kom-top.webp';
 import type { HeroDeviceModelId } from '../keyboard/devices';
 
-/** Pictures for OpenHE's own switches, recoloured from OpenAula's clear switch (scripts/switch-recolor.py). */
-const OWN_IMAGES: Record<string, { front: string; top: string }> = {
-  'gravastar-ufo': { front: ufoFront, top: ufoTop },
-  'skyloong-crystal-blue': { front: crystalBlueFront, top: crystalBlueTop }
-};
-/** OpenAula pictures for the other OpenHE catalog entries. */
-const PHOTO: Record<string, SwitchTone> = {
-  generic: 'black' as SwitchTone,
-  unset: 'white' as SwitchTone
+type Pictures = { front?: string; top?: string; simProfile?: string };
+const openAula = (tone: string): Pictures => ({
+  ...(SWITCH_IMAGES[tone as SwitchTone] ?? {}),
+  simProfile: tone
+});
+/** Recolours of OpenAula's clear switch (scripts/switch-recolor.py) keep its animation. */
+const recolour = (front: string, top: string): Pictures => ({ front, top, simProfile: 'clear' });
+
+/** Pictures for OpenHE's own switches. */
+const OWN_IMAGES: Record<string, Pictures> = {
+  'gravastar-ufo': recolour(ufoFront, ufoTop),
+  'skyloong-crystal-blue': recolour(crystalBlueFront, crystalBlueTop),
+  generic: openAula('black'),
+  unset: openAula('white')
 };
 /** Switches known by name (RongYuan's vendor lists). */
-const BY_NAME: Array<[RegExp, { front?: string; top?: string }]> = [
-  [/jade\s*(pro|gaming)/i, SWITCH_IMAGES['jade-pro' as SwitchTone] ?? {}],
-  // TTC KOM is sold as "Magneto"; "Magneto PRO" is a different switch
-  [/^\s*magneto\s*$/i, { front: ttcKomFront, top: ttcKomTop }]
+const BY_NAME: Array<[RegExp, Pictures]> = [
+  [/jade\s*(pro|gaming)/i, openAula('jade-pro')],
+  // TTC KOM is sold as "Magneto"; the PRO is the white-stem, white-base one
+  [/^\s*magneto\s*pro\s*$/i, openAula('white')],
+  [/^\s*magneto\s*$/i, recolour(ttcKomFront, ttcKomTop)]
 ];
 const ACCENT: Record<string, string> = {
   generic: '#5b6268',
@@ -43,12 +49,13 @@ const ACCENT: Record<string, string> = {
   unset: '#9ba3a8'
 };
 
-function imagesFor(c: SwitchCatalogEntry) {
-  if (OWN_IMAGES[c.id]) return OWN_IMAGES[c.id];
-  if (PHOTO[c.id]) return SWITCH_IMAGES[PHOTO[c.id]] ?? {};
-  const named = BY_NAME.find(([re]) => re.test(c.name))?.[1];
-  // anything else: the plain clear switch
-  return named ?? SWITCH_IMAGES['clear' as SwitchTone] ?? {};
+function imagesFor(c: SwitchCatalogEntry): Pictures {
+  return (
+    OWN_IMAGES[c.id] ??
+    BY_NAME.find(([re]) => re.test(c.name))?.[1] ??
+    // anything else: the plain clear switch
+    openAula('clear')
+  );
 }
 
 const accentFor = (c: SwitchCatalogEntry) =>

@@ -339,11 +339,13 @@ export const SWITCH_SIM_BY_PROFILE: Record<string, Omit<SwitchSimSpriteConfig, '
 };
 
 export function resolveSwitchSimConfig(
-  switchOption: Pick<SwitchOption, 'id' | 'name' | 'front'>,
+  switchOption: Pick<SwitchOption, 'id' | 'name' | 'front' | 'simProfile'>,
   naturalWidth?: number
 ): SwitchSimSpriteConfig {
   const src = switchOption.front ?? '';
-  const byId = SWITCH_SIM_BY_PROFILE[switchOption.id];
+  const byId =
+    SWITCH_SIM_BY_PROFILE[switchOption.id] ??
+    (switchOption.simProfile ? SWITCH_SIM_BY_PROFILE[switchOption.simProfile] : undefined);
   if (byId) {
     return { ...byId, label: switchOption.name || byId.label, src };
   }
