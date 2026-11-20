@@ -20,6 +20,10 @@ export type FamilyOps = {
   /** yc500 needs about 4 s after a factory reset. */
   resetSettleMs: number;
   reportRate: { set: number; get: number } | null;
+  setSleep: number;
+  getSleep: number;
+  /** Where the four u16 sleep values sit in the GET reply (yc500 answers at 1, writes at 8). */
+  sleepReplyAt: number;
 };
 
 export const LightOp = {
@@ -42,7 +46,10 @@ export function familyOps(family: Family): FamilyOps {
         setMacro: 0x0b,
         reset: 0x01,
         resetSettleMs: 4000,
-        reportRate: { set: 0x03, get: 0x83 }
+        reportRate: { set: 0x03, get: 0x83 },
+        setSleep: 0x11,
+        getSleep: 0x91,
+        sleepReplyAt: 8
       }
     : {
         setDebounce: 0x11,
@@ -52,7 +59,10 @@ export function familyOps(family: Family): FamilyOps {
         setMacro: 0x16,
         reset: 0x02,
         resetSettleMs: 4000,
-        reportRate: null
+        reportRate: null,
+        setSleep: 0x12,
+        getSleep: 0x92,
+        sleepReplyAt: 1
       };
 }
 
@@ -252,6 +262,29 @@ export function kbOptionsPacket(o: KbOptions, setOp: number, current: Uint8Array
 export function debouncePacket(ops: FamilyOps, value: number): Uint8Array {
   const v = clamp(value, 1, 10);
   return packet(ops.setDebounce, ops.debounceAt === 1 ? [v] : [0, v]);
+}
+
+/** Wireless sleep timeouts in seconds (sharkfin SleepTimes). */
+export type SleepTimes = { sleepBt: number; sleep24: number; deepBt: number; deep24: number };
+const SLEEP_ORDER = ['sleepBt', 'sleep24', 'deepBt', 'deep24'] as const;
+
+/** Four u16 LE at bytes 8..15 on both families. */
+export function sleepPacket(ops: FamilyOps, t: SleepTimes): Uint8Array {
+  const buf = packet(ops.setSleep);
+  SLEEP_ORDER.forEach((k, i) => {
+    const v = clamp(t[k], 0, 0xffff);
+    buf[8 + i * 2] = v & 0xff;
+    buf[9 + i * 2] = v >> 8;
+  });
+  // the checksum covers bytes 0..6 only, so the values do not change it
+  return buf;
+}
+
+export function parseSleep(reply: Uint8Array, ops: FamilyOps): SleepTimes | null {
+  const at = ops.sleepReplyAt;
+  if (reply.length < at + 8 || reply[0] !== ops.getSleep) return null;
+  const u16 = (i: number) => reply[at + i] | (reply[at + i + 1] << 8);
+  return { sleepBt: u16(0), sleep24: u16(2), deepBt: u16(4), deep24: u16(6) };
 }
 
 // ------------------------------------------------------------- macros

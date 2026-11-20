@@ -46,7 +46,9 @@
     "keyLayout": "Unknown",
     "profiles": 8,
     "family": "yc500",
-    "debounce": true
+    "debounce": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 1483,
@@ -103,7 +105,9 @@
     "profiles": 5,
     "family": "yc500",
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 1610,
@@ -141,7 +145,9 @@
       "travel": { "min": 0.1, "max": 3.7, "step": null, "default": null },
       "deadzone": { "min": 0.1, "max": 3.7, "step": null, "default": 3.4 }
     },
-    "light": "se"
+    "light": "se",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 1631,
@@ -176,7 +182,9 @@
     "profiles": 5,
     "family": "yc500",
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 1639,
@@ -326,7 +334,9 @@
     "keyLayout": "Common81_AGK75B~k1",
     "profiles": 4,
     "family": "yc500",
-    "light": "se"
+    "light": "se",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 1876,
@@ -339,7 +349,9 @@
     "profiles": 2,
     "family": "yc500",
     "light": "se",
-    "debounce": true
+    "debounce": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 1905,
@@ -381,7 +393,9 @@
     "family": "yc500",
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": null, "default": 2.9 } },
     "light": "se",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 1955,
@@ -399,7 +413,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": null, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.02, "default": 0.3 }
     },
-    "light": "se"
+    "light": "se",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 1981,
@@ -412,7 +428,9 @@
     "profiles": 2,
     "family": "yc500",
     "light": "se",
-    "debounce": true
+    "debounce": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2053,
@@ -424,7 +442,9 @@
     "keyLayout": "Common75_ER75~k3",
     "profiles": 8,
     "family": "yc500",
-    "light": "se"
+    "light": "se",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2068,
@@ -438,7 +458,9 @@
     "family": "yc500",
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": null, "default": 2.9 } },
     "light": "se",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2114,
@@ -555,7 +577,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2255,
@@ -633,7 +657,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 6, "name": "Cotai" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2299,
@@ -654,7 +680,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2300,
@@ -732,7 +760,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2306,
@@ -753,7 +783,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2307,
@@ -775,7 +807,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2308,
@@ -787,7 +821,9 @@
     "keyLayout": "Common67_beat65",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2310,
@@ -866,7 +902,9 @@
     "keyLayout": "Common81_AGK75B",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2330,
@@ -928,7 +966,9 @@
     "keyLayout": "Common68_K80X68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2338,
@@ -952,7 +992,9 @@
     "keyLayout": "Common68_K80X68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2344,
@@ -1022,7 +1064,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2368,
@@ -1040,7 +1084,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.1, "default": null }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2370,
@@ -1052,7 +1098,9 @@
     "keyLayout": "Common66_X68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2371,
@@ -1064,7 +1112,9 @@
     "keyLayout": "Common68_K80X68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2375,
@@ -1094,7 +1144,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": null, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.02, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2381,
@@ -1161,7 +1213,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2398,
@@ -1173,7 +1227,9 @@
     "keyLayout": "Common79_VKMAG75~k2",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2406,
@@ -1243,7 +1299,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 6, "name": "Cotai" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2426,
@@ -1266,7 +1324,9 @@
       { "code": 10, "name": "Magneto PRO" }
     ],
     "travel": { "deadzone": { "min": 0, "max": 0.5, "step": null, "default": null } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2436,
@@ -1278,7 +1338,9 @@
     "keyLayout": "Common67_beat65",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2445,
@@ -1290,7 +1352,9 @@
     "keyLayout": "Common82_B75PRO",
     "profiles": 2,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2446,
@@ -1320,7 +1384,9 @@
     "keyLayout": "Common68_K80AWQ68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2450,
@@ -1363,7 +1429,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2454,
@@ -1380,7 +1448,9 @@
       { "code": 14, "name": "Magneto God" },
       { "code": 38, "name": "Qinghua" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2464,
@@ -1475,7 +1545,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.5, "step": 0.01, "default": null } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2496,
@@ -1504,7 +1576,9 @@
       "firePress": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": null }
-    }
+    },
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2499,
@@ -1576,7 +1650,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "travel": { "deadzone": { "min": 0, "max": 0.5, "step": null, "default": null } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2515,
@@ -1593,7 +1669,9 @@
       { "code": 38, "name": "Qinghua" },
       { "code": 7, "name": "Mechanical Switch" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2516,
@@ -1605,7 +1683,9 @@
     "keyLayout": "Common81_AGK75B~k1",
     "profiles": 2,
     "family": "yc500",
-    "light": "se"
+    "light": "se",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2518,
@@ -1625,7 +1705,9 @@
       { "code": 13, "name": "POM Magnet King" },
       { "code": 69, "name": "Void Switch" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2520,
@@ -1652,7 +1734,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": null, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.02, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2527,
@@ -1674,7 +1758,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 10, "name": "Magneto PRO" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2534,
@@ -1687,7 +1773,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "Ud",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2535,
@@ -1722,7 +1810,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2546,
@@ -1794,7 +1884,9 @@
     "keyLayout": "Common82_NBD_IK75",
     "profiles": 2,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2560,
@@ -1806,7 +1898,9 @@
     "keyLayout": "Common68_FreeWolfF68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2563,
@@ -1872,7 +1966,9 @@
       { "code": 28, "name": "Magnetic Pole" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2576,
@@ -1895,7 +1991,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2578,
@@ -1919,7 +2017,9 @@
       { "code": 28, "name": "Magnetic Pole" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2581,
@@ -1932,7 +2032,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2585,
@@ -1945,7 +2047,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2586,
@@ -2006,7 +2110,9 @@
       { "code": 14, "name": "Magneto God" }
     ],
     "travel": { "deadzone": { "min": 0, "max": 0.5, "step": null, "default": null } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2592,
@@ -2024,7 +2130,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": null, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2593,
@@ -2042,7 +2150,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": null, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2594,
@@ -2054,7 +2164,9 @@
     "keyLayout": "Common68_FreeWolfF68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2599,
@@ -2072,7 +2184,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": null, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2600,
@@ -2098,7 +2212,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2605,
@@ -2110,7 +2226,9 @@
     "keyLayout": "Common68_ZAP68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2608,
@@ -2134,7 +2252,9 @@
     "keyLayout": "Common68_ZAP68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2611,
@@ -2158,7 +2278,9 @@
     "keyLayout": "Common61_gk06",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2619,
@@ -2171,7 +2293,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2621,
@@ -2232,7 +2356,9 @@
     "keyLayout": "Common102",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2626,
@@ -2282,7 +2408,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 6, "name": "Cotai" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2633,
@@ -2294,7 +2422,9 @@
     "keyLayout": "Common81_beat75",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2634,
@@ -2328,7 +2458,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 10, "name": "Magneto PRO" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2638,
@@ -2340,7 +2472,9 @@
     "keyLayout": "Common68_K80NS68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2642,
@@ -2357,7 +2491,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 6, "name": "Cotai" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2648,
@@ -2392,7 +2528,9 @@
     "keyLayout": "Common68_K80X68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2651,
@@ -2409,7 +2547,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 6, "name": "Cotai" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2652,
@@ -2469,7 +2609,9 @@
     "keyLayout": "Common84_sg9035",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2664,
@@ -2507,7 +2649,9 @@
       { "code": 3, "name": "Magnetic Jade Gaming" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2670,
@@ -2554,7 +2698,9 @@
       { "code": 14, "name": "Magneto God" },
       { "code": 7, "name": "Mechanical Switch" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2674,
@@ -2587,7 +2733,9 @@
     "keyLayout": "Common68_MK902",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2679,
@@ -2611,7 +2759,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2680,
@@ -2635,7 +2785,9 @@
       { "code": 14, "name": "Magneto God" }
     ],
     "travel": { "deadzone": { "min": 0, "max": 0.5, "step": null, "default": null } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2681,
@@ -2689,7 +2841,9 @@
     "keyLayout": "Common81_DK82US",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2699,
@@ -2727,7 +2881,9 @@
       { "code": 3, "name": "Magnetic Jade Gaming" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2704,
@@ -2779,7 +2935,9 @@
     "keyLayout": "Common83_KF810",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2710,
@@ -2803,7 +2961,9 @@
       { "code": 28, "name": "Magnetic Pole" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2711,
@@ -2839,7 +2999,9 @@
     "keyLayout": "Common87_MK25022B",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2721,
@@ -2860,7 +3022,9 @@
     ],
     "light": "v",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2723,
@@ -2902,7 +3066,9 @@
     "keyLayout": "Common81_K982D",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2737,
@@ -2927,7 +3093,9 @@
     "keyLayout": "Common79_MK25020",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2743,
@@ -2941,7 +3109,9 @@
     "family": "gen2",
     "light": "xt",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2746,
@@ -2953,7 +3123,9 @@
     "keyLayout": "Common68_ZAP68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2749,
@@ -2984,7 +3156,9 @@
     "keyLayout": "Common81_DK82UKDE",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2755,
@@ -3008,7 +3182,9 @@
     "keyLayout": "Common81_SG8995",
     "profiles": 3,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2757,
@@ -3020,7 +3196,9 @@
     "keyLayout": "Common68_FreeWolfF68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2761,
@@ -3041,7 +3219,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 33, "name": "Ice Jade" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2762,
@@ -3114,7 +3294,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2769,
@@ -3126,7 +3308,9 @@
     "keyLayout": "Common81_beat75_v2",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2770,
@@ -3147,7 +3331,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 46, "name": "Red Sky Axis" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2772,
@@ -3159,7 +3345,9 @@
     "keyLayout": "Common61_sg9040",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2773,
@@ -3183,7 +3371,9 @@
     "keyLayout": "Common80_MK25023",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2776,
@@ -3195,7 +3385,9 @@
     "keyLayout": "Common68_K80X68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2780,
@@ -3224,7 +3416,9 @@
       { "code": 44, "name": "\u7cbe\u7075\u738b\u8f74" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2782,
@@ -3259,7 +3453,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2788,
@@ -3277,7 +3473,9 @@
       "fireLift": { "min": 0.1, "max": 2, "step": 0.1, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.1, "default": null }
     },
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2789,
@@ -3289,7 +3487,9 @@
     "keyLayout": "Common91_MK25022",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2790,
@@ -3319,7 +3519,9 @@
     "keyLayout": "Common68_K2404",
     "profiles": 3,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2792,
@@ -3331,7 +3533,9 @@
     "keyLayout": "Common102_SG9009",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2793,
@@ -3343,7 +3547,9 @@
     "keyLayout": "Common89_SG8967",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2795,
@@ -3356,7 +3562,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2796,
@@ -3415,7 +3623,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 46, "name": "Red Sky Axis" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2799,
@@ -3427,7 +3637,9 @@
     "keyLayout": "Common81_beat75_v2",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2800,
@@ -3448,7 +3660,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2802,
@@ -3480,7 +3694,9 @@
     "keyLayout": "Common83_K2405UK",
     "profiles": 3,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2807,
@@ -3504,7 +3720,9 @@
     ],
     "light": "v",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2808,
@@ -3516,7 +3734,9 @@
     "keyLayout": "Common83_KF810B",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2810,
@@ -3549,7 +3769,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "EA",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2816,
@@ -3591,7 +3813,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2828,
@@ -3628,7 +3852,9 @@
     ],
     "light": "v",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2831,
@@ -3650,7 +3876,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2832,
@@ -3673,7 +3901,9 @@
     ],
     "light": "Cg",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2833,
@@ -3685,7 +3915,9 @@
     "keyLayout": "Common68_K80X68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2834,
@@ -3717,7 +3949,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2836,
@@ -3762,7 +3996,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2844,
@@ -3797,7 +4033,9 @@
     "family": "gen2",
     "light": "xt",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2848,
@@ -3822,7 +4060,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2853,
@@ -3885,7 +4125,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2858,
@@ -3906,7 +4148,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2859,
@@ -3923,7 +4167,9 @@
       { "code": 44, "name": "\u7cbe\u7075\u738b\u8f74" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2865,
@@ -3944,7 +4190,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 46, "name": "Red Sky Axis" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2866,
@@ -3968,7 +4216,9 @@
     "keyLayout": "Common81_K242UK",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2870,
@@ -4002,7 +4252,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2872,
@@ -4014,7 +4266,9 @@
     "keyLayout": "Common83_mod007sv3he_uk~k2",
     "profiles": 4,
     "family": "gen2",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2874,
@@ -4027,7 +4281,9 @@
     "profiles": 2,
     "family": "gen2",
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2875,
@@ -4066,7 +4322,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2879,
@@ -4109,7 +4367,9 @@
     ],
     "light": "xt",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2883,
@@ -4165,7 +4425,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2886,
@@ -4190,7 +4452,9 @@
     "keyLayout": "Common80_mk25023a",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2892,
@@ -4208,7 +4472,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": null, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2893,
@@ -4220,7 +4486,9 @@
     "keyLayout": "Common84_SY857",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2897,
@@ -4274,7 +4542,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 46, "name": "Red Sky Axis" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2902,
@@ -4318,7 +4588,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2904,
@@ -4348,7 +4620,9 @@
       { "code": 43, "name": "\u706d\u9738\u8f74" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2906,
@@ -4401,7 +4675,9 @@
     "keyLayout": "Common82_NBD_IK75_v3",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2917,
@@ -4440,7 +4716,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2920,
@@ -4453,7 +4731,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2921,
@@ -4564,7 +4844,9 @@
     "profiles": 3,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2938,
@@ -4577,7 +4859,9 @@
     "profiles": 3,
     "family": "gen2",
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2939,
@@ -4636,7 +4920,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2955,
@@ -4674,7 +4960,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2960,
@@ -4711,7 +4999,9 @@
     "keyLayout": "Common61_sg9040",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2967,
@@ -4733,7 +5023,9 @@
       { "code": 32, "name": "Crystal Blue" },
       { "code": 7, "name": "Mechanical Switch" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2968,
@@ -4746,7 +5038,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2969,
@@ -4770,7 +5064,9 @@
     "keyLayout": "Common68_K80X68",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2973,
@@ -4790,7 +5086,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2976,
@@ -4811,7 +5109,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2978,
@@ -4823,7 +5123,9 @@
     "keyLayout": "Common82_SG9000",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2980,
@@ -4835,7 +5137,9 @@
     "keyLayout": "Common87_MonsGeek_M3V5",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2981,
@@ -4887,7 +5191,9 @@
       { "code": 54, "name": "\u51ef\u534e\u7c89\u8f74" },
       { "code": 27, "name": "Blue Jade" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 2991,
@@ -4967,7 +5273,9 @@
       { "code": 32, "name": "Crystal Blue" },
       { "code": 7, "name": "Mechanical Switch" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3002,
@@ -4993,7 +5301,9 @@
       "fireLift": { "min": 0.01, "max": 2.5, "step": 0.01, "default": 1.5 },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3003,
@@ -5025,7 +5335,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3007,
@@ -5050,7 +5362,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3012,
@@ -5071,7 +5385,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3017,
@@ -5107,7 +5423,9 @@
       { "code": 20, "name": "Soldier King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3026,
@@ -5207,7 +5525,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 10, "name": "Magneto PRO" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3037,
@@ -5304,7 +5624,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3055,
@@ -5324,7 +5646,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3063,
@@ -5375,7 +5699,9 @@
     "profiles": 2,
     "family": "gen2",
     "switchTypes": [{ "code": 20, "name": "Soldier King" }],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3066,
@@ -5395,7 +5721,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3067,
@@ -5439,7 +5767,9 @@
     "keyLayout": "Special19_TK35_Knob",
     "profiles": 3,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3070,
@@ -5491,7 +5821,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3078,
@@ -5614,7 +5946,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3096,
@@ -5649,7 +5983,9 @@
     "profiles": 4,
     "family": "gen2",
     "travel": { "travel": { "min": 0.1, "max": 3.5, "step": 0.01, "default": null } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3099,
@@ -5690,7 +6026,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3105,
@@ -5711,7 +6049,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3106,
@@ -5731,7 +6071,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3107,
@@ -5773,7 +6115,9 @@
       { "code": 20, "name": "TTC Magnet King Pro" },
       { "code": 6, "name": "Ketai Magnet King" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3112,
@@ -5786,7 +6130,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3113,
@@ -5863,7 +6209,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3123,
@@ -5928,7 +6276,9 @@
     ],
     "light": "v",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3131,
@@ -5965,7 +6315,9 @@
     "profiles": 2,
     "family": "gen2",
     "switchTypes": [{ "code": 43, "name": "Purple Star" }],
-    "light": "Xi"
+    "light": "Xi",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3138,
@@ -5982,7 +6334,9 @@
       { "code": 57, "name": "Phoenix Silent Magnetic Axis" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3140,
@@ -6049,7 +6403,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3151,
@@ -6078,7 +6434,9 @@
       { "code": 23, "name": "Ice Mint" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3157,
@@ -6122,7 +6480,9 @@
     "keyLayout": "Common82_MOD007BHE",
     "profiles": 4,
     "family": "unknown",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3161,
@@ -6134,7 +6494,9 @@
     "keyLayout": "Common82_SG9000_v2",
     "profiles": 4,
     "family": "unknown",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3162,
@@ -6155,7 +6517,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3163,
@@ -6176,7 +6540,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3166,
@@ -6211,7 +6577,9 @@
       { "code": 56, "name": "Mercury" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3171,
@@ -6261,7 +6629,9 @@
       "fireLift": { "min": 0.1, "max": 2, "step": 0.1, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.1, "default": null }
     },
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3193,
@@ -6299,7 +6669,9 @@
       { "code": 20, "name": "TTC Magnet King Pro" },
       { "code": 6, "name": "Ketai Magnet King" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3195,
@@ -6330,7 +6702,9 @@
     "profiles": 2,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3200,
@@ -6374,7 +6748,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "Ud",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3203,
@@ -6394,7 +6770,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3204,
@@ -6464,7 +6842,9 @@
     "keyLayout": "Common68_Choc68",
     "profiles": 3,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3221,
@@ -6477,7 +6857,9 @@
     "profiles": 2,
     "family": "gen2",
     "light": "se",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3225,
@@ -6501,7 +6883,9 @@
     "profiles": 2,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3236,
@@ -6540,7 +6924,9 @@
       { "code": 61, "name": "Barbie Axis" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3242,
@@ -6571,7 +6957,9 @@
     "keyLayout": "Common79_VKMAG75",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3244,
@@ -6669,7 +7057,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3264,
@@ -6729,7 +7119,9 @@
     ],
     "light": "v",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3270,
@@ -6792,7 +7184,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3275,
@@ -6814,7 +7208,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3277,
@@ -6827,7 +7223,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3278,
@@ -6878,7 +7276,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3289,
@@ -6997,7 +7397,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3300,
@@ -7019,7 +7421,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3302,
@@ -7051,7 +7455,9 @@
     "keyLayout": "Common68_DK68HE",
     "profiles": 3,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3321,
@@ -7109,7 +7515,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3333,
@@ -7130,7 +7538,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "Xi",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3334,
@@ -7220,7 +7630,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3342,
@@ -7260,7 +7672,9 @@
       { "code": 51, "name": "Longhua Magnetism" },
       { "code": 14, "name": "Magneto God" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3345,
@@ -7354,7 +7768,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3359,
@@ -7374,7 +7790,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3362,
@@ -7416,7 +7834,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
     "light": "Xi",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3366,
@@ -7464,7 +7884,9 @@
       { "code": 43, "name": "\u706d\u9738\u8f74" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3376,
@@ -7486,7 +7908,9 @@
     ],
     "light": "v",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3378,
@@ -7540,7 +7964,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 73, "name": "\u6d77\u84dd\u8f74" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3383,
@@ -7587,7 +8013,9 @@
     "profiles": 2,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3389,
@@ -7599,7 +8027,9 @@
     "keyLayout": "Common81_MK830",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3390,
@@ -7629,7 +8059,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3397,
@@ -7650,7 +8082,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 7, "name": "Mechanical Switch" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3401,
@@ -7670,7 +8104,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3402,
@@ -7732,7 +8168,9 @@
       { "code": 69, "name": "Void Switch" },
       { "code": 7, "name": "Mechanical Switch" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3409,
@@ -7745,7 +8183,9 @@
     "profiles": 2,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3414,
@@ -7778,7 +8218,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 7, "name": "Mechanical Switch" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3421,
@@ -7824,7 +8266,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3425,
@@ -7848,7 +8292,9 @@
     "keyLayout": "Common102_SG9009",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3429,
@@ -7888,7 +8334,9 @@
       { "code": 90, "name": "WOMIER Switch" }
     ],
     "light": "se",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3436,
@@ -7968,7 +8416,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3454,
@@ -7999,7 +8449,9 @@
       { "code": 117, "name": "Eight Treasures Axis" },
       { "code": 120, "name": "Peach Axis" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3460,
@@ -8020,7 +8472,9 @@
     ],
     "light": "v",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3463,
@@ -8060,7 +8514,9 @@
       { "code": 64, "name": "Magnetic Jade Max" }
     ],
     "light": "se",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3465,
@@ -8123,7 +8579,9 @@
       { "code": 1, "name": "Magnetic Jade" },
       { "code": 90, "name": "WOMIER Switch" }
     ],
-    "light": "se"
+    "light": "se",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3468,
@@ -8174,7 +8632,9 @@
       { "code": 5, "name": "Magneto" },
       { "code": 79, "name": "Ice Jade Pro" }
     ],
-    "light": "se"
+    "light": "se",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3474,
@@ -8224,7 +8684,9 @@
     "keyLayout": "Common81_SG8995",
     "profiles": 3,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3486,
@@ -8245,7 +8707,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3487,
@@ -8265,7 +8729,9 @@
       { "code": 10, "name": "Magneto PRO" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3496,
@@ -8289,7 +8755,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3503,
@@ -8309,7 +8777,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3508,
@@ -8330,7 +8800,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3512,
@@ -8350,7 +8822,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3513,
@@ -8388,7 +8862,9 @@
       { "code": 93, "name": "Cloud Jade Magnetic Switch" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3520,
@@ -8439,7 +8915,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3531,
@@ -8481,7 +8959,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3537,
@@ -8502,7 +8982,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3539,
@@ -8687,7 +9169,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3591,
@@ -8705,7 +9189,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3595,
@@ -8722,7 +9208,9 @@
       { "code": 61, "name": "Barbie Axis" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3598,
@@ -8766,7 +9254,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3606,
@@ -8779,7 +9269,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3607,
@@ -8792,7 +9284,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3609,
@@ -8816,7 +9310,9 @@
       { "code": 70, "name": "Liyu Magnetism" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3611,
@@ -8858,7 +9354,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3627,
@@ -8879,7 +9377,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3628,
@@ -8900,7 +9400,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3629,
@@ -8921,7 +9423,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3640,
@@ -8942,7 +9446,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3643,
@@ -8963,7 +9469,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3650,
@@ -9093,7 +9601,9 @@
       { "code": 101, "name": "Gute Silent" },
       { "code": 0, "name": "Outemu" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3676,
@@ -9144,7 +9654,9 @@
       "fireLift": { "min": 0.1, "max": 2, "step": 0.1, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.1, "default": null }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3678,
@@ -9164,7 +9676,9 @@
       { "code": 13, "name": "POM Magnet King" },
       { "code": 69, "name": "Void Switch" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3679,
@@ -9207,7 +9721,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": null }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3682,
@@ -9220,7 +9736,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3683,
@@ -9274,7 +9792,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3693,
@@ -9296,7 +9816,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3694,
@@ -9320,7 +9842,9 @@
     ],
     "light": "v",
     "ledFlagsSwapped": true,
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3697,
@@ -9370,7 +9894,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3705,
@@ -9411,7 +9937,9 @@
     "profiles": 3,
     "family": "yc500",
     "light": "se",
-    "debounce": true
+    "debounce": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3708,
@@ -9430,7 +9958,9 @@
       { "code": 1, "name": "Magnetic Jade" }
     ],
     "light": "se",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3711,
@@ -9480,7 +10010,9 @@
       "fireLift": { "min": 0.1, "max": 2, "step": 0.1, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.1, "default": null }
     },
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3719,
@@ -9530,7 +10062,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": null }
     },
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3725,
@@ -9582,7 +10116,9 @@
     "profiles": 4,
     "family": "gen2",
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3733,
@@ -9639,7 +10175,9 @@
       { "code": 0, "name": "Outemu" },
       { "code": 33, "name": "Ice Jade" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3736,
@@ -9657,7 +10195,9 @@
       { "code": 0, "name": "Outemu" },
       { "code": 33, "name": "Ice Jade" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3737,
@@ -9679,7 +10219,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3738,
@@ -9706,7 +10248,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": null }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3743,
@@ -9772,7 +10316,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3754,
@@ -9814,7 +10360,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3756,
@@ -9871,7 +10419,9 @@
       "fireLift": { "min": 0.1, "max": 2, "step": 0.1, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.1, "default": null }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3760,
@@ -9927,7 +10477,9 @@
       { "code": 95, "name": "\u661f\u8292\u78c1\u8f74" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.001, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3779,
@@ -9945,7 +10497,9 @@
       { "code": 95, "name": "\u661f\u8292\u78c1\u8f74" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.001, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3782,
@@ -9962,7 +10516,9 @@
       { "code": 15, "name": "Kaihua Switch" },
       { "code": 95, "name": "\u661f\u8292\u78c1\u8f74" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3785,
@@ -9986,7 +10542,9 @@
       "fireLift": { "min": 0.005, "max": 2.5, "step": 0.005, "default": 1.5 },
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3791,
@@ -10005,7 +10563,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3793,
@@ -10025,7 +10585,9 @@
       { "code": 98, "name": "Light Green" },
       { "code": 7, "name": "Mechanical Switch" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3795,
@@ -10051,7 +10613,9 @@
       "firePress": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3796,
@@ -10120,7 +10684,9 @@
       { "code": 113, "name": "Purple Blade Switch" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3800,
@@ -10144,7 +10710,9 @@
       "fireLift": { "min": 0.005, "max": 2.5, "step": 0.005, "default": 1.5 },
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3801,
@@ -10171,7 +10739,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": null }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3802,
@@ -10190,7 +10760,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": null }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3804,
@@ -10210,7 +10782,9 @@
       { "code": 13, "name": "POM Magnet King" },
       { "code": 69, "name": "Void Switch" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3805,
@@ -10228,7 +10802,9 @@
       "fireLift": { "min": 0.1, "max": 2, "step": 0.1, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.1, "default": null }
     },
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3809,
@@ -10266,7 +10842,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3813,
@@ -10290,7 +10868,9 @@
       "fireLift": { "min": 0.005, "max": 2.5, "step": 0.005, "default": 1.5 },
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3814,
@@ -10310,7 +10890,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "se"
+    "light": "se",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3815,
@@ -10327,7 +10909,9 @@
       { "code": 15, "name": "Kaihua Switch" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.001, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3817,
@@ -10379,7 +10963,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3827,
@@ -10403,7 +10989,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": null }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3833,
@@ -10421,7 +11009,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.1, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3834,
@@ -10440,7 +11030,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3838,
@@ -10453,7 +11045,9 @@
     "profiles": 4,
     "family": "gen2",
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3842,
@@ -10477,7 +11071,9 @@
       "fireLift": { "min": 0.005, "max": 2.5, "step": 0.005, "default": 1.5 },
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3845,
@@ -10520,7 +11116,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3850,
@@ -10547,7 +11145,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": null }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3851,
@@ -10560,7 +11160,9 @@
     "profiles": 3,
     "family": "gen2",
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3853,
@@ -10579,7 +11181,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.4, "step": 0.005, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3856,
@@ -10624,7 +11228,9 @@
       { "code": 70, "name": "Liyu Magnetism" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3868,
@@ -10660,7 +11266,9 @@
       { "code": 95, "name": "\u661f\u8292\u78c1\u8f74" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.001, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3871,
@@ -10742,7 +11350,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3884,
@@ -10786,7 +11396,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3886,
@@ -10807,7 +11419,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3892,
@@ -10842,7 +11456,9 @@
       { "code": 15, "name": "Kaihua Switch" },
       { "code": 95, "name": "\u661f\u8292\u78c1\u8f74" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3901,
@@ -10868,7 +11484,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.1, "default": 0 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3902,
@@ -10894,7 +11512,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.1, "default": 0 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3903,
@@ -10937,7 +11557,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3906,
@@ -10958,7 +11580,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3909,
@@ -10997,7 +11621,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3911,
@@ -11033,7 +11659,9 @@
     "family": "gen2",
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3931,
@@ -11102,7 +11730,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3934,
@@ -11137,7 +11767,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3939,
@@ -11156,7 +11788,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3940,
@@ -11225,7 +11859,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3949,
@@ -11266,7 +11902,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3951,
@@ -11326,7 +11964,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.001, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.001, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3957,
@@ -11371,7 +12011,9 @@
       "fireLift": { "min": 0.001, "max": 2, "step": 0.001, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.001, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3965,
@@ -11392,7 +12034,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3968,
@@ -11489,7 +12133,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.001, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3984,
@@ -11544,7 +12190,9 @@
     "profiles": 4,
     "family": "gen2",
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 3989,
@@ -11592,7 +12240,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4002,
@@ -11614,7 +12264,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4004,
@@ -11660,7 +12312,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4008,
@@ -11685,7 +12339,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4014,
@@ -11778,7 +12434,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "xt",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4031,
@@ -11799,7 +12457,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.001, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.001, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4032,
@@ -11857,7 +12517,9 @@
       "firePress": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": null, "default": null }
-    }
+    },
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4048,
@@ -11877,7 +12539,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "se"
+    "light": "se",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4049,
@@ -11925,7 +12589,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.1, "default": 0 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4052,
@@ -12035,7 +12701,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4071,
@@ -12059,7 +12727,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4079,
@@ -12079,7 +12749,9 @@
       { "code": 4, "name": "Heavenly King" },
       { "code": 5, "name": "Magneto" }
     ],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4086,
@@ -12105,7 +12777,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4088,
@@ -12141,7 +12815,9 @@
     "profiles": 4,
     "family": "gen2",
     "switchTypes": [{ "code": 61, "name": "Barbie Axis" }],
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4095,
@@ -12166,7 +12842,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4096,
@@ -12229,7 +12907,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4107,
@@ -12270,7 +12950,9 @@
       { "code": 5, "name": "Magneto" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4110,
@@ -12295,7 +12977,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4111,
@@ -12341,7 +13025,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4116,
@@ -12393,7 +13079,9 @@
     "profiles": 4,
     "family": "gen2",
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
-    "light": "He"
+    "light": "He",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4123,
@@ -12448,7 +13136,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.001, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.001, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4132,
@@ -12470,7 +13160,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4133,
@@ -12539,7 +13231,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4138,
@@ -12613,7 +13307,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": 0.2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4145,
@@ -12637,7 +13333,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4151,
@@ -12707,7 +13405,9 @@
       { "code": 7, "name": "Mechanical Switch" }
     ],
     "light": "v",
-    "ledFlagsSwapped": true
+    "ledFlagsSwapped": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4161,
@@ -12779,7 +13479,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": null }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4166,
@@ -12898,7 +13600,9 @@
     "keyLayout": "Common80_GS75B",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4192,
@@ -12923,7 +13627,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4194,
@@ -12935,7 +13641,9 @@
     "keyLayout": "Common82_SG9000",
     "profiles": 4,
     "family": "gen2",
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4195,
@@ -12957,7 +13665,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4204,
@@ -12982,7 +13692,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4207,
@@ -13007,7 +13719,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4211,
@@ -13033,7 +13747,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4212,
@@ -13059,7 +13775,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4214,
@@ -13116,7 +13834,9 @@
     "family": "unknown",
     "switchTypes": [{ "code": 55, "name": "Tian Qing Switch" }],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": null } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4223,
@@ -13140,7 +13860,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4226,
@@ -13159,7 +13881,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4227,
@@ -13178,7 +13902,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.01, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4230,
@@ -13192,7 +13918,9 @@
     "family": "gen2",
     "switchTypes": [{ "code": 93, "name": "Cloud Jade Magnetic Switch" }],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4231,
@@ -13231,7 +13959,9 @@
       { "code": 148, "name": "Moonlight Magnetic Switch V2" }
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4242,
@@ -13256,7 +13986,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4244,
@@ -13281,7 +14013,9 @@
       "firePress": { "min": 0.01, "max": 2, "step": null, "default": null },
       "fireLift": { "min": 0.01, "max": 2, "step": null, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": null, "default": null }
-    }
+    },
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4248,
@@ -13359,7 +14093,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.01, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4257,
@@ -13383,7 +14119,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4260,
@@ -13483,7 +14221,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4264,
@@ -13508,7 +14248,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4266,
@@ -13620,7 +14362,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.001, "default": null }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4295,
@@ -13645,7 +14389,9 @@
       "deadzone": { "min": 0, "max": 1, "step": 0.005, "default": 0.3 }
     },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4297,
@@ -13818,7 +14564,9 @@
       "fireLift": { "min": 0.01, "max": 2, "step": 0.01, "default": null },
       "deadzone": { "min": 0, "max": 1, "step": 0.1, "default": null }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4332,
@@ -13868,7 +14616,9 @@
       "travel": { "min": 0.1, "max": 3.3, "step": 0.001, "default": 2 },
       "deadzone": { "min": 0, "max": 1, "step": 0.001, "default": 0.3 }
     },
-    "light": "v"
+    "light": "v",
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4343,
@@ -13890,7 +14640,9 @@
     ],
     "travel": { "travel": { "min": 0.1, "max": 3.3, "step": 0.005, "default": 2 } },
     "light": "v",
-    "sideLight": true
+    "sideLight": true,
+    "sleep24": true,
+    "sleepBT": true
   },
   {
     "id": 4367,

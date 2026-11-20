@@ -232,6 +232,17 @@ export type DeviceOptions = {
   autoOs?: boolean;
   /** Read-only: the board is in macOS mode. */
   macMode?: boolean;
+  /** Wireless sleep timeouts in seconds; only the links the board has. */
+  sleep?: SleepTimers;
+};
+
+export type SleepTimers = {
+  /** Light sleep on 2.4 GHz. */
+  sleep24?: number;
+  sleepBt?: number;
+  /** Deep sleep (wakes slower, saves more). */
+  deep24?: number;
+  deepBt?: number;
 };
 
 /** One lighting effect a board offers. */

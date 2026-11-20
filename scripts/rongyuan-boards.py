@@ -47,6 +47,10 @@ def main(sharkfin: Path) -> None:
             rec['sideLight'] = True
         if features.get('debounce'):
             rec['debounce'] = True
+        if features.get('sleep24'):
+            rec['sleep24'] = True
+        if features.get('sleepBT'):
+            rec['sleepBT'] = True
         boards.append(rec)
 
     (out / 'devices.json').write_text(json.dumps(boards, separators=(',', ':')) + '\n')

@@ -57,7 +57,7 @@ function fakeGen2({ id, revision = 0x0309, layout, profiles = 4 }) {
   })
   const state = {
     profile: 0, stream: 0, commits: 0, writes: [], bad: 0,
-    led: [3, 2, 4, 8, 0, 0, 0], side: [1, 2, 3, 7, 255, 0, 0], debounce: 5, autoOs: 0, resets: 0
+    led: [3, 2, 4, 8, 0, 0, 0], side: [1, 2, 3, 7, 255, 0, 0], debounce: 5, autoOs: 0, resets: 0, sleep: [180, 0, 240, 0, 1800 & 0xff, 1800 >> 8, 2400 & 0xff, 2400 >> 8]
   }
   const macros = Array.from({ length: 50 }, () => new Uint8Array(256))
   let reply = new Uint8Array(64)
@@ -115,6 +115,8 @@ function fakeGen2({ id, revision = 0x0309, layout, profiles = 4 }) {
       case 0x88: out[0] = 0x88; out.set(state.side, 1); break
       case 0x06: state.debounce = req[1]; state.writes.push(['debounce', req[1]]); break
       case 0x86: out[0] = 0x86; out[1] = state.debounce; break
+      case 0x11: state.sleep = [...req.subarray(8, 16)]; state.writes.push(['sleep']); break
+      case 0x91: out[0] = 0x91; out.set(state.sleep, 8); break
       case 0x17: state.autoOs = req[1]; break
       case 0x97: out[0] = 0x97; out[1] = state.autoOs; break
       case 0x01: state.resets++; break
@@ -461,4 +463,29 @@ test('board settings: debounce, auto OS and factory reset', async () => {
   assert.equal(board.state.autoOs, 1)
   await driver.factoryReset()
   assert.equal(board.state.resets, 1)
+})
+
+test('wireless sleep timers: read-modify-write of all four, at sharkfin\'s offsets', async () => {
+  const id = devices.find(d => d.family === 'gen2' && d.sleep24 && d.sleepBT && d.keyLayout === 'Common68_ZAP68')?.id ?? 2268
+  const spec = devices.find(d => d.id === id)
+  const { driver, board } = await connect({ id, layout: layoutFile(spec.keyLayout) })
+  const opts = await driver.getOptions()
+  if (!spec.sleep24) { assert.equal(opts.sleep, undefined); return }
+  assert.deepEqual(opts.sleep, { sleep24: 240, deep24: 2400, sleepBt: 180, deepBt: 1800 })
+  await driver.setOptions({ sleep: { sleep24: 600 } })
+  // order on the wire: BT, 2.4, deep BT, deep 2.4; the others kept
+  assert.deepEqual(board.state.sleep, [180, 0, 600 & 0xff, 600 >> 8, 1800 & 0xff, 1800 >> 8, 2400 & 0xff, 2400 >> 8])
+})
+
+test('sleep packets: yc500 writes at 8 but answers at 1; gen2 is symmetric', () => {
+  const yc = extras.familyOps('yc500'), g2 = extras.familyOps('gen2')
+  const t = { sleepBt: 300, sleep24: 120, deepBt: 1200, deep24: 900 }
+  const pkt = extras.sleepPacket(yc, t)
+  assert.equal(pkt[0], 0x12)
+  assert.deepEqual([...pkt.subarray(8, 16)], [44, 1, 120, 0, 176, 4, 132, 3])
+  assert.equal(extras.sleepPacket(g2, t)[0], 0x11)
+  const ycReply = new Uint8Array(64); ycReply[0] = 0x92; ycReply.set(pkt.subarray(8, 16), 1)
+  assert.deepEqual(extras.parseSleep(ycReply, yc), t)
+  const g2Reply = new Uint8Array(64); g2Reply[0] = 0x91; g2Reply.set(pkt.subarray(8, 16), 8)
+  assert.deepEqual(extras.parseSleep(g2Reply, g2), t)
 })

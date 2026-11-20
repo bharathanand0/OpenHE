@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Toggle } from '../app/components/Toggle';
-import type { CalibrationSettings, DeviceOptions, KeyboardDriver } from '../drivers/types';
+import type {
+  CalibrationSettings,
+  DeviceOptions,
+  KeyboardDriver,
+  SleepTimers
+} from '../drivers/types';
 
 type Run = (label: string, task: () => Promise<void>) => Promise<boolean>;
 
@@ -197,6 +202,19 @@ export function GeneralSettingsPage({
                 checked={options.wasdSwap}
                 disabled={busy}
                 onChange={on => setOpt({ wasdSwap: on }, 'Swapping WASD and the arrows', false)}
+              />
+            </Section>
+          )}
+          {options?.sleep && driver.setOptions && (
+            <Section
+              title="Wireless sleep"
+              text="How long the keyboard waits, unused, before it sleeps on each wireless link. Deep sleep saves more battery but takes longer to wake. Set here over the cable; the keyboard keeps it for wireless use."
+              hint="Sleep 1 to 60 minutes; deep sleep 10 to 60 minutes."
+            >
+              <SleepTimersEditor
+                value={options.sleep}
+                busy={busy}
+                onCommit={sleep => setOpt({ sleep }, 'Setting the sleep timers', false)}
               />
             </Section>
           )}
@@ -495,6 +513,57 @@ export function CalibrationSettingsPage({
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+const SLEEP_ROWS = [
+  ['sleep24', 'Sleep · 2.4 GHz', 60],
+  ['sleepBt', 'Sleep · Bluetooth', 60],
+  ['deep24', 'Deep sleep · 2.4 GHz', 600],
+  ['deepBt', 'Deep sleep · Bluetooth', 600]
+] as const;
+const SLEEP_MAX_S = 3600;
+
+function SleepTimersEditor({
+  value,
+  busy,
+  onCommit
+}: {
+  value: SleepTimers;
+  busy: boolean;
+  onCommit: (next: SleepTimers) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  return (
+    <div className="drv-sleep-grid">
+      {SLEEP_ROWS.filter(([key]) => draft[key] !== undefined).map(([key, label, min]) => {
+        const seconds = Math.min(SLEEP_MAX_S, Math.max(draft[key] ?? min, min));
+        const commit = () => {
+          if (draft[key] !== value[key]) onCommit({ ...value, [key]: seconds });
+        };
+        return (
+          <label key={key} className="drv-field">
+            <span>{label}</span>
+            <span className="drv-term">
+              <input
+                type="range"
+                min={min}
+                max={SLEEP_MAX_S}
+                step={60}
+                value={seconds}
+                disabled={busy}
+                aria-label={label}
+                onChange={e => setDraft(d => ({ ...d, [key]: Number(e.target.value) }))}
+                onPointerUp={commit}
+                onKeyUp={commit}
+              />
+              <b>{Math.round(seconds / 60)} min</b>
+            </span>
+          </label>
+        );
+      })}
     </div>
   );
 }

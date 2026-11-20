@@ -51,6 +51,8 @@ import {
   parseKbOptions,
   parseLed,
   parseSide,
+  parseSleep,
+  sleepPacket,
   RY_MACRO_SLOTS,
   sidePacket,
   type FamilyOps,
@@ -108,6 +110,9 @@ export type RySpec = {
   ledFlagsSwapped?: boolean;
   /** Has an edge / side light. */
   sideLight?: boolean;
+  /** Has 2.4 GHz / Bluetooth sleep timers. */
+  sleep24?: boolean;
+  sleepBT?: boolean;
 };
 
 /** One vendor light table (sharkfin data/light-layouts.json). */
@@ -777,6 +782,15 @@ export class RongyuanDriver implements KeyboardDriver {
         const o = parseKbOptions(await this.wire.roundtrip(packet(kb.get, [0])), kb.get);
         if (o) Object.assign(out, { winLock: o.winLock, wasdSwap: o.wasdSwap, macMode: o.macMode });
       }
+      if (this.spec.sleep24 || this.spec.sleepBT) {
+        const t = parseSleep(await this.wire.roundtrip(packet(this.ops.getSleep)), this.ops);
+        if (t) {
+          out.sleep = {
+            ...(this.spec.sleep24 ? { sleep24: t.sleep24, deep24: t.deep24 } : {}),
+            ...(this.spec.sleepBT ? { sleepBt: t.sleepBt, deepBt: t.deepBt } : {})
+          };
+        }
+      }
       try {
         const auto = await this.wire.roundtrip(packet(LightOp.GET_AUTO_OS));
         if (auto[0] === LightOp.GET_AUTO_OS) out.autoOs = auto[1] === 1;
@@ -803,6 +817,19 @@ export class RongyuanDriver implements KeyboardDriver {
         if (options.winLock !== undefined) o.winLock = options.winLock;
         if (options.wasdSwap !== undefined) o.wasdSwap = options.wasdSwap;
         await this.wire.send(kbOptionsPacket(o, kb.set, cur));
+        this.stamp();
+      }
+      if (options.sleep && (this.spec.sleep24 || this.spec.sleepBT)) {
+        // all four go in one packet: start from what the board has
+        await this.gap(SETTING_GAP_MS);
+        const cur = parseSleep(await this.wire.roundtrip(packet(this.ops.getSleep)), this.ops);
+        if (!cur) throw new DriverError('The keyboard gave an unexpected sleep timer reply.');
+        const next = { ...cur };
+        for (const k of ['sleep24', 'sleepBt', 'deep24', 'deepBt'] as const) {
+          const v = options.sleep[k];
+          if (v !== undefined) next[k] = Math.round(v);
+        }
+        await this.wire.send(sleepPacket(this.ops, next));
         this.stamp();
       }
       if (options.autoOs !== undefined) {
