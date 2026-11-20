@@ -88,6 +88,15 @@ export function DriverApp({ driver }: { driver: KeyboardDriver }) {
   const sw = useSwitchSetup(driver, model);
   const hall = useDriverHall(driver, i => actuation.draft?.[i]?.actuationMm);
 
+  // Browser tab: the connected keyboard's name
+  useEffect(() => {
+    const previous = document.title;
+    document.title = `${driver.info.name} · ${BRAND.displayName}`;
+    return () => {
+      document.title = previous;
+    };
+  }, [driver]);
+
   useEffect(() => {
     driver
       .getProfile()
