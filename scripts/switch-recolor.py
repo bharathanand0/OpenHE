@@ -10,7 +10,8 @@ tinted from its own brightness, so the render's shading and highlights stay.
 The outputs keep the clear switch's geometry, so its animation config fits.
 
 Recipes: stem colour; top housing tint (None keeps it clear) and how strongly;
-bottom housing colour and whether it is solid.
+bottom housing colour and whether it is solid. The gains scale brightness
+before tinting: below 1 for deep, saturated colours.
 """
 
 from pathlib import Path
@@ -26,6 +27,8 @@ RECIPES = {
     'ufo': {'stem': '#9b5cf6', 'top': '#a78bfa', 'top_mix': 0.55, 'bottom': '#6d28d9', 'bottom_solid': True},
     # Skyloong Crystal Blue: turquoise stem and bottom, clear top
     'crystal-blue': {'stem': '#4fcfb6', 'top': None, 'top_mix': 0.0, 'bottom': '#5fd3bd', 'bottom_solid': True},
+    # TTC KOM (sold as "Magneto" on RongYuan boards): bright red stem, clear top, deep purple base
+    'ttc-kom': {'stem': '#e0222c', 'stem_gain': 0.66, 'top': None, 'top_mix': 0.0, 'bottom': '#5a1f78', 'bottom_gain': 0.62, 'bottom_solid': True},
 }
 
 LIP = 800  # front view, px
@@ -64,14 +67,14 @@ def recolor(im, recipe, bottom_weight, spring_weight=None):
     # a clear top: drop the tint the original stem left in it
     top_rgb = 0.35 * rgb + 0.65 * lum[..., None] if recipe['top'] is None else (
         (1 - recipe['top_mix']) * rgb + recipe['top_mix'] * colorize(lum, recipe['top']))
-    bot_rgb = colorize(lum * 0.85 if recipe['bottom_solid'] else lum, recipe['bottom'])
+    bot_rgb = colorize(lum * recipe.get('bottom_gain', 0.85 if recipe['bottom_solid'] else 1), recipe['bottom'])
     w = bottom_weight[..., None]
     house = (1 - w) * top_rgb + w * bot_rgb
     if spring_weight is not None:
         # the spring, seen through the bottom housing
         sw = (spring_weight * bottom_weight)[..., None]
         house = (1 - sw) * house + sw * (0.6 * rgb + 0.4 * colorize(lum, recipe['bottom']))
-    out_rgb = stem[..., None] * colorize(lum * 1.05, recipe['stem']) + (1 - stem[..., None]) * house
+    out_rgb = stem[..., None] * colorize(lum * recipe.get('stem_gain', 1.05), recipe['stem']) + (1 - stem[..., None]) * house
     alpha = np.where(a > 0.12, (1 - bottom_weight) * np.clip(a * 1.15, 0, 1) + bottom_weight * a, a)
     if recipe['bottom_solid']:
         alpha = np.where((bottom_weight > 0.5) & (a > 0.12), 1.0, alpha)

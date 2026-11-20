@@ -16,6 +16,8 @@ import ufoFront from '../assets/switches/ufo-front.webp';
 import ufoTop from '../assets/switches/ufo-top.webp';
 import crystalBlueFront from '../assets/switches/crystal-blue-front.webp';
 import crystalBlueTop from '../assets/switches/crystal-blue-top.webp';
+import ttcKomFront from '../assets/switches/ttc-kom-front.webp';
+import ttcKomTop from '../assets/switches/ttc-kom-top.webp';
 import type { HeroDeviceModelId } from '../keyboard/devices';
 
 /** Pictures for OpenHE's own switches, recoloured from OpenAula's clear switch (scripts/switch-recolor.py). */
@@ -28,8 +30,12 @@ const PHOTO: Record<string, SwitchTone> = {
   generic: 'black' as SwitchTone,
   unset: 'white' as SwitchTone
 };
-/** Switches known by name (RongYuan's vendor lists), to OpenAula pictures. */
-const BY_NAME: Array<[RegExp, SwitchTone]> = [[/jade\s*(pro|gaming)/i, 'jade-pro' as SwitchTone]];
+/** Switches known by name (RongYuan's vendor lists). */
+const BY_NAME: Array<[RegExp, { front?: string; top?: string }]> = [
+  [/jade\s*(pro|gaming)/i, SWITCH_IMAGES['jade-pro' as SwitchTone] ?? {}],
+  // TTC KOM is sold as "Magneto"; "Magneto PRO" is a different switch
+  [/^\s*magneto\s*$/i, { front: ttcKomFront, top: ttcKomTop }]
+];
 const ACCENT: Record<string, string> = {
   generic: '#5b6268',
   'gravastar-ufo': '#8b5cf6',
@@ -39,13 +45,15 @@ const ACCENT: Record<string, string> = {
 
 function imagesFor(c: SwitchCatalogEntry) {
   if (OWN_IMAGES[c.id]) return OWN_IMAGES[c.id];
+  if (PHOTO[c.id]) return SWITCH_IMAGES[PHOTO[c.id]] ?? {};
   const named = BY_NAME.find(([re]) => re.test(c.name))?.[1];
   // anything else: the plain clear switch
-  return SWITCH_IMAGES[PHOTO[c.id] ?? named ?? ('clear' as SwitchTone)] ?? {};
+  return named ?? SWITCH_IMAGES['clear' as SwitchTone] ?? {};
 }
 
 const accentFor = (c: SwitchCatalogEntry) =>
-  ACCENT[c.id] ?? (/jade/i.test(c.name) ? '#3fbf8f' : '#9ba3a8');
+  ACCENT[c.id] ??
+  (/jade/i.test(c.name) ? '#3fbf8f' : /^\s*magneto\s*$/i.test(c.name) ? '#e0222c' : '#9ba3a8');
 
 export const switchOptionId = (catalogId: string) => `drv:${catalogId}` as SwitchTone;
 export const catalogIdOf = (optionId: string) => optionId.replace(/^drv:/, '');
