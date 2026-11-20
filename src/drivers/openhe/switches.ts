@@ -3,7 +3,7 @@
  * catalog id with each switch profile, so these ids are part of the protocol:
  * never renumber them, only add.
  *
- * Travel values are starting points; the Switch Selector lets you tune travel
+ * Travel values are the switches' rated travel; the Switch Selector lets you tune travel
  * and curve per switch, and the tuned values are what the board uses.
  */
 
@@ -25,7 +25,7 @@ export const OPENHE_SWITCHES: readonly OpenHESwitch[] = [
     id: 'gravastar-ufo',
     name: 'Gravastar UFO',
     brand: 'Gravastar',
-    travelMm: 4,
+    travelMm: 3.5,
     tunable: true
   },
   {
@@ -33,7 +33,7 @@ export const OPENHE_SWITCHES: readonly OpenHESwitch[] = [
     id: 'skyloong-crystal-blue',
     name: 'Skyloong Crystal Blue',
     brand: 'Skyloong',
-    travelMm: 4,
+    travelMm: 3.5,
     tunable: true
   }
 ];
